@@ -1,5 +1,4 @@
 
-BEGIN
 machine Cache[4] {
   (I, Issue(Read_Write)) {
     Send(GetM,Dir0);
@@ -46,6 +45,4 @@ machine Dir[1] {
      Trans(M);
    }
 }
-
-END
 
