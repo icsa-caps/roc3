@@ -10,8 +10,6 @@ import Ast
 %error { parseError }
 
 %token
-    BEGIN         { TokenBegin }
-    END           { TokenEnd }
 
     '{'           { TokenOpCrlBracket }
     '}'           { TokenClCrlBracket }
@@ -24,6 +22,10 @@ import Ast
     ';'           { TokenSemiColon }
     ','           { TokenComa }
     '='           { TokenEq }
+    '?'           { TokenQsMark }
+    '!'           { TokenExclMark}
+    '*'           { TokenStar }
+    ':'           { TokenColon }
 
 
     machine     { TokenMachine }
@@ -33,46 +35,49 @@ import Ast
     Stall       { TokenStall }
     Trans       { TokenTrans }
 
-
-    iden        { TokenIdentifier $$ }
     num         { TokenNum $$ }
-
-
+    iden        { TokenIdentifier $$ }
+    idenNoBr    { TokenIdentifierNoBr $$ }
 
 %%
 
-Model           : BEGIN Nodes END                                  { Model $2 }
+Model           : Machines                                          { Model $1 }
 
-Nodes           : Node                                          { [$1] }
-                | Nodes Node                                    { $2 : $1 }
+Machines        : Machine                                           { [$1] }
+                | Machines Machine                                  { $2 : $1 }
 
-Node            : machine iden '[' num ']' '{' States_Guards '}'   { Node $2 $4 $7 }
+Machine         : machine iden ':' Range '{' States_Guards '}'  { Machine $2 $4 $6 }
+
+Range           : '[' num ']'                                       { $2 }
 
 
-States_Guards   : State_Guard                                   { [$1] }
-                | States_Guards State_Guard                    { $2 : $1 }
+States_Guards   : State_Guard                                       { [$1] }
+                | States_Guards State_Guard                         { $2 : $1 }
 
-State_Guard     : '(' iden ',' Guard ')' '{' Responses '}'         { (State $2, $4, $7) }
+State_Guard     : '(' iden ',' Guard ')' '{' Responses '}'              { (State $2, $4, Nothing, $7) }
+                | '(' iden ',' Guard ',' iden ')' '{' Responses '}'     { (State $2, $4, Just (State $6), $9) }
 
-Guard           : Mail                                             { Guard $1 }
+Guard           : Mail                                              { Guard $1 }
 
 
 Mail            : Issue '(' Msg ')'                                { Issue $3 }
                 | Send '(' Msg ',' iden ')'                        { Send $3 $5}
                 | Receive '(' Msg ')'                              { Receive $3 }
                 | Receive '(' Msg ',' iden ')'                     { ReceiveFrom $3 $5 }
+                | '*' Msg                                          { Issue $2 }
+                | iden '!' Msg                                     { Send $3 $1 }
+                | iden '?' Msg                                     { ReceiveFrom $3 $1 }
 
 
 Msg             : iden                                             { Msg $1 }
                 | iden '<' iden '>'                                { MsgWithArg $1 $3 }
 
-Responses       : Response1                                        { [$1] }
+Responses       : {-- empty --}                                    { [] }
                 | Responses Response1                              { $2 : $1 }
 
 Response1       : Response ';'                                     { $1 }
 
 Response        : Mail                                              { Response $1 }
-                | Trans '(' iden ')'                                { Trans (State $3) }
                 | Assignment                                        { Update $1 }
                 | iden                                              { Other $1 }
 

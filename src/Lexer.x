@@ -9,14 +9,13 @@ $digit = 0-9
 @digits = [$digit]+
 $alpha = [a-zA-Z]
 $eol   = [\n]
-@iden  = $alpha [$alpha $digit \_]*
+@iden  = $alpha [$alpha $digit \_ ]* (  \[  ( @digits )   \]  )?
+@idenNoBr  = $alpha [$alpha $digit \_ ]*
 
 tokens :-
 
     $eol            ;
     $white+         ;
-    BEGIN           { \s -> TokenBegin }
-    END             { \s -> TokenEnd }
 
     \{              { \s -> TokenOpCrlBracket }
     \}              { \s -> TokenClCrlBracket }
@@ -29,6 +28,10 @@ tokens :-
     \;              { \s -> TokenSemiColon }
     \,              { \s -> TokenComa }
     \=              { \s -> TokenEq }
+    \?              { \s -> TokenQsMark }
+    \!              { \s -> TokenExclMark }
+    \*              { \s -> TokenStar }
+    \:              { \s -> TokenColon }
 
     machine         { \s -> TokenMachine }
     Issue           { \s -> TokenIssue }
@@ -37,8 +40,10 @@ tokens :-
     Stall           { \s -> TokenStall }
     Trans           { \s -> TokenTrans }
 
-    @iden           { \s -> TokenIdentifier s }
     @digits         { \s -> TokenNum (read s) }
+    @iden           { \s -> TokenIdentifier s }
+    @idenNoBr       { \s -> TokenIdentifierNoBr s }
+
 
 
 {
@@ -56,6 +61,10 @@ data Token = TokenBegin
            | TokenSemiColon
            | TokenComa
            | TokenEq
+           | TokenQsMark
+           | TokenExclMark
+           | TokenStar
+           | TokenColon
            | TokenMachine
            | TokenIssue
            | TokenReceive
@@ -63,6 +72,7 @@ data Token = TokenBegin
            | TokenStall
            | TokenTrans
            | TokenIdentifier String
+           | TokenIdentifierNoBr String
            | TokenNum Int
            deriving (Eq,Show)
 

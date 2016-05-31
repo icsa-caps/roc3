@@ -1,35 +1,37 @@
 
 module Ast where
 
-data Ast        = Model [ Node ]
+data Ast        = Model [ Machine ]
                   deriving(Show)
 
 
-data Node       = Node NodeType Int [ ( State, Guard, [Response] ) ]
+data Machine     = Machine MachineType Int [ ( State, Guard, Maybe State, [Response] ) ]
                   deriving(Show)
 
-type NodeType   = String
+type MachineType = String
 
-data State      = State String
+data State       = State String
                   deriving(Show)
 
-data Guard      = Guard Mail
+data Guard       = Guard Mail
                   deriving(Show)
 
-data Mail       = Issue Msg
-                |Send Msg NodeType
-                | Receive Msg
-                | ReceiveFrom Msg NodeType
+data Mail        = Issue Msg
+                 | Send Msg Rec
+                 | Receive Msg
+                 | ReceiveFrom Msg Src
                   deriving(Show)
+
+type Rec = String
+type Src = String
 
 
 data Msg        = Msg String
-                | MsgWithArg String NodeType
+                | MsgWithArg String MachineType
                   deriving(Show)
 
 
 data Response   = Response Mail
-                | Trans State
                 | Update Assignment
                 | Other String
                   deriving(Show)
@@ -37,6 +39,6 @@ data Response   = Response Mail
 
 data Assignment = Var VarName String
                 | VarNum VarName Int
-                deriving(Show)
+                  deriving(Show)
 
 type VarName = String
