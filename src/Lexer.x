@@ -11,11 +11,13 @@ $alpha = [a-zA-Z]
 $eol   = [\n]
 @iden  = $alpha [$alpha $digit \_ ]* (  \[  ( @digits )   \]  )?
 @idenNoBr  = $alpha [$alpha $digit \_ ]*
+@comment   = \/ \/ [^\n]* \n
 
 tokens :-
 
     $eol            ;
     $white+         ;
+    @comment        ;
 
     \{              { \s -> TokenOpCrlBracket }
     \}              { \s -> TokenClCrlBracket }
