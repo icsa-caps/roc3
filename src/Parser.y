@@ -29,6 +29,7 @@ import Ast
 
 
     machine     { TokenMachine }
+    fields      { TokenFields }
     Issue       { TokenIssue }
     Receive     { TokenReceive }
     Send        { TokenSend }
@@ -46,7 +47,14 @@ Model           : Machines                                          { Model $1 }
 Machines        : Machine                                           { [$1] }
                 | Machines Machine                                  { $2 : $1 }
 
-Machine         : machine iden ':' Range '{' States_Guards '}'  { Machine $2 $4 $6 }
+Machine         : machine iden ':' Range '{' Fields States_Guards '}'  { Machine $2 $4 $6 $7 }
+
+Fields          : {-- empty --}                                     { Fields []}
+                | fields ':' Fields1 ';'                            { Fields $3 }
+
+Fields1         : iden                                              { [$1] }
+                | Fields1 ',' iden                                  { $3 : $1 }
+
 
 Range           : '[' num ']'                                       { $2 }
 

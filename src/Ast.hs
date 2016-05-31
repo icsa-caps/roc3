@@ -5,7 +5,10 @@ data Ast        = Model [ Machine ]
                   deriving(Show)
 
 
-data Machine     = Machine MachineType Int [ ( State, Guard, Maybe State, [Response] ) ]
+data Machine    = Machine MachineType Int Fields [ ( State, Guard, Maybe State, [Response] ) ]
+                  deriving(Show)
+
+data Fields     = Fields [String]
                   deriving(Show)
 
 type MachineType = String
