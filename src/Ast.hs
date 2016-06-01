@@ -5,11 +5,19 @@ data Ast        = Model [ Machine ]
                   deriving(Show)
 
 
-data Machine    = Machine MachineType Int Fields [ ( State, Guard, Maybe State, [Response] ) ]
+data Machine    = Machine MachineType Int Fields MachineFunction
                   deriving(Show)
 
-data Fields     = Fields [String]
-                  deriving(Show)
+type MachineFunction = [ ( State, Guard, Maybe State, [Response] ) ]
+
+type Fields     = [Field]
+
+data Field      = Boolean VarName
+                | Integer VarName
+                | Enum VarName [String]
+                | Node MachineType VarName -- TODO: check MachineType is one of the machines
+                | Array Field
+                deriving(Show)
 
 type MachineType = String
 

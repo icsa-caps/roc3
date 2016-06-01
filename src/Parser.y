@@ -29,12 +29,16 @@ import Ast
 
 
     machine     { TokenMachine }
-    fields      { TokenFields }
+    boolean     { TokenBoolean }
+    int         { TokenInt }
+
+
     Issue       { TokenIssue }
     Receive     { TokenReceive }
     Send        { TokenSend }
     Stall       { TokenStall }
     Trans       { TokenTrans }
+
 
     num         { TokenNum $$ }
     iden        { TokenIdentifier $$ }
@@ -49,11 +53,21 @@ Machines        : Machine                                           { [$1] }
 
 Machine         : machine iden ':' Range '{' Fields States_Guards '}'  { Machine $2 $4 $6 $7 }
 
-Fields          : {-- empty --}                                     { Fields []}
-                | fields ':' Fields1 ';'                            { Fields $3 }
+Fields          : {-- empty --}                                     { [] }
+                | Fields1 ';'                                       { $1 }
 
-Fields1         : iden                                              { [$1] }
-                | Fields1 ',' iden                                  { $3 : $1 }
+Fields1         : Field                                             { [$1] }
+                | Fields1 ',' Field                                 { $3 : $1 }
+
+Field           : boolean iden                                      { Boolean $2 }
+                | int iden                                          { Integer $2 }
+                | iden '{' List '}'                                 { Enum $1 $3 }
+                | iden iden                                         { Node $1 $2 }
+                | '[' ']' Field                                     { Array $3 }
+
+
+List            : iden                                              { [$1] }
+                | List ',' iden                                     { $3 : $1 }
 
 
 Range           : '[' num ']'                                       { $2 }

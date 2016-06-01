@@ -35,8 +35,9 @@ tokens :-
     \*              { \s -> TokenStar }
     \:              { \s -> TokenColon }
 
-    fields          { \s-> TokenFields }
     machine         { \s -> TokenMachine }
+    boolean         { \s -> TokenBoolean }
+    int             { \s -> TokenInt }
     Issue           { \s -> TokenIssue }
     Receive         { \s -> TokenReceive }
     Send            { \s -> TokenSend }
@@ -68,8 +69,9 @@ data Token = TokenBegin
            | TokenExclMark
            | TokenStar
            | TokenColon
-           | TokenFields
            | TokenMachine
+           | TokenBoolean
+           | TokenInt
            | TokenIssue
            | TokenReceive
            | TokenSend
