@@ -1,48 +1,50 @@
 
-machine Cache[4] {
-  (I, Issue(Read_Write)) {
-    Send(GetM,Dir0);
-    Trans(IM);
+machine Cache:[4] {
+
+  // self-issued msgs are "Rules"
+  // not in the "Cache functions" part
+  // i.e. the receive function
+
+  (I, *Read_Write, IM) {
+    	Dir[0]!GetM;
   }
 
-  (M, Issue(Read_Write)) {
-    hit;
+  (M, *Read_Write) {
+    	hit;
   }
 
-  (M, Receive(Fwd_GetM<src1>)) {
-    Send(Data,src1);
-    Trans(I);
+  (IM, *Read_Write) {
+    	stall;
   }
 
-  (IM, Issue(Read_Write)) {
-    stall;
+  (IM, src?Data, M) {
+	Dir[0]!Ack;
   }
 
-  ( IM, Receive(Data,src)) {
-    Send(Ack,src);
-    Trans(M);
+  (M, Dir[0]?Fwd_GetM<cache src1, dir dir>,I) {
+   	 src1!Data;
   }
+
 }
 
-machine Dir[1] {
-  (I, Receive(GetM,src)) {
-    owner = src;
-    Send(Data,src);
-    Trans(IM);
+machine Dir:[1] {
+ []int[1..10] nums,  // integers must have ranges
+ boolean working, ack {sent,received,waiting}, 
+ []boolean staff, [][]Cache caches;
+  (I, src?GetM,IM) {
+    	owner = src;
+	src!Data;
   }
 
-  (M, Receive(GetM,src)) {
-    Send(Fwd_GetM<src>, owner);
-    owner = src;
-    Trans(IM);
+  (M, src?GetM,IM) {
+    owner!Fwd_GetM<cache src, dir dir>; // in murphi: Send(Fwd_GetM, owner, src)
+    owner = src;	   // the argument of the message becomes the sender
   }
 
-  (IM, Receive(GetM) ) {
+  (IM, src?GetM ) {
     stall;
   }
 
-  (IM, Receive(Ack)) {
-     Trans(M);
+  (IM, src?Ack, M) {
    }
 }
-
