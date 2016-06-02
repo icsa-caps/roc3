@@ -26,6 +26,7 @@ import Ast
     '!'           { TokenExclMark}
     '*'           { TokenStar }
     ':'           { TokenColon }
+    '.'           { TokenFullStop }
 
 
     machine     { TokenMachine }
@@ -60,7 +61,7 @@ Fields1         : Field                                             { [$1] }
                 | Fields1 ',' Field                                 { $3 : $1 }
 
 Field           : boolean iden                                      { Boolean $2 }
-                | int iden                                          { Integer $2 }
+                | int '[' num '.' '.' num ']' iden                  { Integer $8 $3 $6 }
                 | iden '{' List '}'                                 { Enum $1 $3 }
                 | iden iden                                         { Node $1 $2 }
                 | '[' ']' Field                                     { Array $3 }

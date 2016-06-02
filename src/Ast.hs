@@ -13,11 +13,14 @@ type MachineFunction = [ ( State, Guard, Maybe State, [Response] ) ]
 type Fields     = [Field]
 
 data Field      = Boolean VarName
-                | Integer VarName
+                | Integer VarName Low Hi
                 | Enum VarName [String]
                 | Node MachineType VarName -- TODO: check MachineType is one of the machines
                 | Array Field
                 deriving(Show)
+
+type Low = Int
+type Hi  = Int
 
 type MachineType = String
 

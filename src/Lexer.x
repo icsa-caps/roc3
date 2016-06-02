@@ -34,6 +34,7 @@ tokens :-
     \!              { \s -> TokenExclMark }
     \*              { \s -> TokenStar }
     \:              { \s -> TokenColon }
+    \.              { \s -> TokenFullStop }
 
     machine         { \s -> TokenMachine }
     boolean         { \s -> TokenBoolean }
@@ -69,6 +70,7 @@ data Token = TokenBegin
            | TokenExclMark
            | TokenStar
            | TokenColon
+           | TokenFullStop
            | TokenMachine
            | TokenBoolean
            | TokenInt
