@@ -9,9 +9,9 @@ machine Cache:[4] {
     	Dir[0]!GetM;
   }
 
-  (M, *Read_Write) {
-    	hit;
-  }
+  (M, *Read_Write) {    // ignore the responses that have only
+    	hit;		 // strings in their body. Not contributing
+  }			 // to the model
 
   (IM, *Read_Write) {
     	stall;
