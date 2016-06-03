@@ -1,3 +1,16 @@
+// here are the model's channels
+channels: c1,c2,c3; 
+
+
+// and here are the model's networks
+networks: ordered n1{c1}, unordered n2{c1,c2};
+
+// in the curly brackets there are the channels belonging
+// to the network
+// networks can either be ordered (FIFO queue) or unordered
+// (multisets of messages)
+
+
 
 machine Cache:[4] {
 

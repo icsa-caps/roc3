@@ -1,8 +1,8 @@
 {
 module Parser where
-
 import Lexer
 import Ast
+import Data.List
 }
 
 %name ast
@@ -28,7 +28,10 @@ import Ast
     ':'           { TokenColon }
     '.'           { TokenFullStop }
 
-
+    channels    { TokenChannels }
+    networks    { TokenNetworks }
+    ordered     { TokenOrdered }
+    unordered   { TokenUnordered }
     machine     { TokenMachine }
     boolean     { TokenBoolean }
     int         { TokenInt }
@@ -47,7 +50,28 @@ import Ast
 
 %%
 
-Model           : Machines                                          { Model $1 }
+Model           : Channels Networks Machines                         { Model $1 $2 $3 }
+
+Channels        : {-- empty --}                                      { [] }
+                | channels ':' Channels1 ';'                         { $3 }
+
+Channels1       : iden                                               { [Channel $1] }
+                | Channels1 ',' iden                                 { (Channel $3) : $1 }
+
+Networks        : {-- empty --}                                     { [] }
+                | networks ':' Networks1 ';'                        { $3 }
+
+
+
+
+
+Networks1       : Network                                           { [$1] }
+                | Networks1 ',' Network                             { $3 : $1 }
+
+
+
+Network         : ordered iden '{' IdenList '}'                     { Network Ord $2 (map (Channel) $4) }
+                | unordered iden '{' IdenList '}'                   { Network Uno $2 (map (Channel) $4) }
 
 
 Machines        : Machine                                           { [$1] }
@@ -136,9 +160,10 @@ Assignment      : iden '=' iden                                     { Var $1 $3 
 {
 
 parseError :: [Token] -> a
-parseError _ = error "Parse error"
+parseError _ = error "Parse error "
 
 parseAst :: String -> Ast
+
 parseAst = ast . scanTokens
 
 }

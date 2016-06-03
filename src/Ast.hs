@@ -1,8 +1,23 @@
 
 module Ast where
 
-data Ast        = Model [ Machine ]
+data Ast        = Model {
+                          channels :: [ Channel ],
+                          networks :: [ Network ],
+                          machines :: [ Machine ]
+                        }
                   deriving(Show)
+
+
+data Channel = Channel String
+               deriving(Show)
+
+data Network = Network Order String [Channel]
+               deriving(Show)
+
+data Order = Ord | Uno
+            deriving(Show,Enum)
+
 
 
 data Machine    = Machine {

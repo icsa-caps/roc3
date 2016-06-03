@@ -3,6 +3,12 @@
 module Lexer where
 }
 
+
+
+
+
+
+
 %wrapper "basic"
 
 $digit = 0-9
@@ -36,6 +42,10 @@ tokens :-
     \:              { \s -> TokenColon }
     \.              { \s -> TokenFullStop }
 
+    channels        { \s -> TokenChannels }
+    networks        { \s -> TokenNetworks }
+    ordered         { \s -> TokenOrdered }
+    unordered       { \s -> TokenUnordered }
     machine         { \s -> TokenMachine }
     boolean         { \s -> TokenBoolean }
     int             { \s -> TokenInt }
@@ -71,6 +81,10 @@ data Token = TokenBegin
            | TokenStar
            | TokenColon
            | TokenFullStop
+           | TokenChannels
+           | TokenNetworks
+           | TokenOrdered
+           | TokenUnordered
            | TokenMachine
            | TokenBoolean
            | TokenInt
