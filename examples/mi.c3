@@ -3,7 +3,7 @@ channels: c1,c2,c3;
 
 
 // and here are the model's networks
-networks: ordered n1{c1}, unordered n2{c1,c2};
+networks: ordered net1{c1}, unordered net2{c1,c2};
 
 // in the curly brackets there are the channels belonging
 // to the network
@@ -27,15 +27,15 @@ machine Cache:[4] {
   }			 // to the model
 
   (IM, *Read_Write) {
-    	stall;
-  }
+    	stall;		// should stall be a special word so that murphi returns
+  }			// false i.e. the msg is not processed?
 
   (IM, src?Data, M) {
 	Dir[0]!Ack;
   }
 
-  (M, Dir[0]?Fwd_GetM<cache src1, dir dir>,I) {
-   	 src1!Data;
+  (M, Dir[0]?Fwd_GetM<cache src1, dir dir>, I) {
+   	 src1!{ch1}Data;  // in {} is the channel thorough which we send the msg
   }
 
 }
@@ -43,9 +43,9 @@ machine Cache:[4] {
 machine Dir:[1] {
  []int[1..10] nums,  // integers must have ranges
  boolean working, ack {sent,received,waiting}, 
- []boolean staff, [][]Cache caches;
-  (I, src?GetM,IM) {
-    	owner = src;
+ []boolean stuff, [][]Cache caches;
+  (I, src?GetM,IM) {   
+    	owner = src;	     
 	src!Data;
   }
 

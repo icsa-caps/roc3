@@ -71,7 +71,7 @@ Networks1       : Network                                           { [$1] }
 
 
 Network         : ordered iden '{' IdenList '}'                     { Network Ord $2 (map (Channel) $4) }
-                | unordered iden '{' IdenList '}'                   { Network Uno $2 (map (Channel) $4) }
+                | unordered iden '{' IdenList '}'                   { Network Unord $2 (map (Channel) $4) }
 
 
 Machines        : Machine                                           { [$1] }

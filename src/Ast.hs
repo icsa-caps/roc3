@@ -15,7 +15,7 @@ data Channel = Channel String
 data Network = Network Order String [Channel]
                deriving(Show)
 
-data Order = Ord | Uno
+data Order = Ord | Unord
             deriving(Show,Enum)
 
 
