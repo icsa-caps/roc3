@@ -35,7 +35,7 @@ machine Cache:[4] {
   }
 
   (M, Dir[0]?Fwd_GetM<cache src1, dir dir>, I) {
-   	 src1!{ch1}Data;  // in {} is the channel thorough which we send the msg
+   	 src1!Data;  
   }
 
 }
