@@ -43,8 +43,8 @@ type Lo = Int
 type Hi  = Int
 
 
-data State       = State String
-                  deriving(Show)
+data State  = State String
+              deriving(Show)
 
 
 -- problem with guard: the constructor allows an arbitrary
