@@ -31,17 +31,21 @@ data Machine    = Machine {
 
 type Fields     = [Field]
 
-data Field      = Boolean VarName
+type Field      = TypeDecl
+
+
+data TypeDecl   = Boolean VarName
                 | Integer VarName Lo Hi
                 | Enum VarName [String]
                 | Node MachineType VarName -- TODO: check MachineType is one of the machines
-                | Array Field
+                | Array Size TypeDecl
+                | Map MachineType TypeDecl
                 deriving(Show)
 
 type MachineType = String
 type Lo = Int
 type Hi  = Int
-
+type Size = Int
 
 data State  = State String
               deriving(Show)
@@ -73,7 +77,7 @@ data Msg     = Msg String MsgArgs
 
 type MsgArgs = [MsgArg]
 
-type MsgArg  = Field
+type MsgArg  = TypeDecl
 
 
 

@@ -88,12 +88,17 @@ Fields          : {-- empty --}                                     { [] }
 Fields1         : Field                                             { [$1] }
                 | Fields1 ',' Field                                 { $3 : $1 }
 
+Field           : TypeDecl                                          { $1 }
 
-Field           : boolean iden                                      { Boolean $2 }
+-- may change to <iden> : <type> if hard to convert to target ast
+-- where iden is first arg (arrays are the problem)
+
+TypeDecl        : boolean iden                                      { Boolean $2 }
                 | int '[' num '.' '.' num ']' iden                  { Integer $8 $3 $6 }
                 | iden '{' IdenList '}'                             { Enum $1 $3 }
                 | iden iden                                         { Node $1 $2 }
-                | '[' ']' Field                                     { Array $3 }
+                | '[' num ']' TypeDecl                              { Array $2 $4 }
+                | '[' iden ']' TypeDecl                             { Map   $2 $4 }
 
 
 IdenList        : iden                                              { [$1] }
@@ -131,7 +136,7 @@ MsgArgs         : MsgArg                                           { [$1] }
                 | MsgArgs ',' MsgArg                               { $3 : $1 }
 
 
-MsgArg          : Field                                            { $1 }
+MsgArg          : TypeDecl                                         { $1 }
 
 
 Responses       : {-- empty --}                                    { [] }

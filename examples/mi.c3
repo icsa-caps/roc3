@@ -11,7 +11,6 @@ networks: ordered net1{c1}, unordered net2{c1,c2};
 // (multisets of messages)
 
 
-
 machine Cache:[4] {
 
   // self-issued msgs are "Rules"
@@ -41,9 +40,10 @@ machine Cache:[4] {
 }
 
 machine Dir:[1] {
- []int[1..10] nums,  // integers must have ranges
- boolean working, ack {sent,received,waiting}, 
- []boolean stuff, [][]Cache caches;
+ int[1..10] nums,      // integers must have ranges
+ [5]boolean working,   // arrays are indexed by nums
+ ack {sent,received,waiting};
+ //[Cache] int[1..4] acks;     // or by a machine, in which case they are maps
   (I, src?GetM,IM) {   
     	owner = src;	     
 	src!Data;
