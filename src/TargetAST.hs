@@ -1,7 +1,7 @@
 
-module TargetAst where
+module TargetAST where
 
-import Ast -- frontend AST
+import qualified Ast as Front-- frontend AST
 
 -- this AST captures the subset of the murphi language
 -- as it is used in the MSI protocol implementations
@@ -15,19 +15,46 @@ import Ast -- frontend AST
 
 
 -- simple type synonyms
-type MachineT     = String
 type Size         = Int
-type Type         = String
+type TypeName     = String
 type Val          = String
 type Var          = String
-type ChannelName  = String
+type VCName       = String
+type NetName      = String
 type MsgNet       = Either OrderedNet UnorderedNet
 type Name         = String
+type State        = String
+type MachineType  = String
+type Rec          = String
+type MsgType      = String
 
 -- helper data structures
-type ChanelNets = [ (ChannelName, MsgNet) ]
+type VCNets = [ (VCName, MsgNet) ]
+
+-- for Send
+data Message = Message MsgType [ (TypeName, Maybe Val) ]
+             deriving(Show)
+
+-- in place of TypeDecl in Ast, to make printing easier
+data TypeDecl = Decl Name Type
+              deriving(Show)
+
+data Type = Boolean
+          | Integer Lo Hi
+          | Enum [Val]
+          | Array Index Type
+          deriving(Show)
+
+type Lo    = Int
+type Hi    = Int
+type Index = String
+
+-- at Murphi, printing function
+-- at Transform, function from Front.TypeDecl to Back.TypeDecl
 
 
+
+-----------------------------------------------------------------
 data Program = Program Constants
                        Types
                        Variables
@@ -36,15 +63,15 @@ data Program = Program Constants
                        Rules
                        Startstate
                        Invariants
-                       deriving(Show)
+                deriving(Show)
 
 -----------------------------------------------------------------
 -- Constants
 
 
 data Constants = Constants {
-                             machineSizes :: [Int],
-                             netSizes     :: [Int]
+                             machineSizesC :: [(MachineType,Size)],
+                             vcs          :: [VCName]
                            }
                 deriving(Show)
 
@@ -52,17 +79,19 @@ data Constants = Constants {
 -- Types
 data Types  = Types
              {
-                machinesInd    :: [(MachineType,Size)],   -- the scalarsets for indexing
+                machineSizesT    :: [(MachineType,Size)],   -- the scalarsets for indexing
 
-                nodes          :: [MachineType],         -- union of the machines
+                nodes           :: [MachineType],         -- union of the machines
 
-                msgType        :: [String],
+                vcType          :: Size,
 
-                message        :: MsgArgs, -- only info we need to print msg
+                msgType         :: [String],
 
-                machineStates  :: [ (MachineType,
+                msgArgs         :: [Front.MsgArg], -- only info we need to print msg
+
+                machineStates   :: [ (MachineType,
                                     [State],
-                                    [Field]) ]
+                                    [TypeDecl]) ]
              }
              deriving(Show)
 
@@ -72,7 +101,7 @@ data Types  = Types
 -- it encaptures the same information, only that we know what kind of arguments
 -- messages don't have
 -- not needed for the time being
---data Message = Message MsgType [ (Type, Maybe Val) ]
+
 
 -- the list is a list of arguments of the message (type of argument and value).
 -- if a message doesn't have an argument of some time the value is nothing
@@ -93,42 +122,44 @@ data UnorderedNet   = UnorderedNet Name Size
                       deriving(Show)
 
 -----------------------------------------------------------------
+
 -- Common Functions
 
 data CommonFunctions = FunctionParameters {
                         advanceQ    :: [OrderedNetsName],
-                        send        :: ( [(Param,Type)], [ChannelName] )
+                        send        :: ( [(Param,TypeName)], [VCName] )
                        } deriving(Show)
 
 type OrderedNetsName = String
 type Param           = String
 
 -----------------------------------------------------------------
+
 -- Receive Functions
 
 type MachineFunctions = [ ( MachineType, ReceiveFunction ) ]
 
-type ReceiveFunction = [ ( State, GuardT, [Respond] ) ]
+type ReceiveFunction = [ ( State, Guard, [Respond] ) ]
 
-data GuardT = ReceiveT MType   -- the src may be important
+data Guard = Receive MType   -- the src may be important
             | AtState State
             deriving(Show)
 
 type MType = String --mtype in murphi
 
 data Respond = ToState State
-             | Send MsgStr [(ArgType,Arg)] Rec
+             | Send Message Dst
              | Assign Var Val
              deriving(Show)
 
-type MsgStr  = String
-type ArgType = String
-type Arg     = String
+type Dst = String
 -----------------------------------------------------------------
+
 -- Rules
+
 -- problem: at murphi, one of the responses in rules can be
 -- "clear <field>" (in MSI it's acks).
--- I don't know how we can find which fields we need to clear
+-- just an optimization, no need to do it
 
 
 data Rules = Rules { selfIssueRules   :: [SelfIssueRule],
@@ -137,22 +168,22 @@ data Rules = Rules { selfIssueRules   :: [SelfIssueRule],
                      deriving(Show)
 
 
-data SelfIssueRule = SelfIssueRule GuardT [Respond] -- GuardT is a function of
+data SelfIssueRule = SelfIssueRule Guard [Respond] -- Guard is a function of
                     deriving(Show)                  -- the guard in the relevant
                                                     -- part of the front-end
 
-data ReceiveOrdNet    = ReceiveOrdNet NetName [ChannelName] [MachineT]
+data ReceiveOrdNet    = ReceiveOrdNet NetName [VCName] [MachineType]
                         deriving(Show)
 
-data ReceiveUnordNet  = ReceiveUnordNet NetName [ChannelName] [MachineT]
+data ReceiveUnordNet  = ReceiveUnordNet NetName [VCName] [MachineType]
                         deriving(Show)
 
 
-type NetName = String
 -- we need the machines for isMember
 -- maybe we could have them in a global variable
 
 -----------------------------------------------------------------
+
 -- Startstate
 -- TODO
 type Startstate = String
@@ -162,6 +193,7 @@ type Startstate = String
 
 
 -----------------------------------------------------------------
+
 -- Invariants
 -- TODO
 type Invariants = String
