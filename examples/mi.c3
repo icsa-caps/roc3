@@ -42,8 +42,8 @@ machine Cache:[4] {
 machine Dir:[1] {
  int[1..10] nums,      // integers must have ranges
  [5]boolean working,   // arrays are indexed by nums
- ack {sent,received,waiting};
- //[Cache] int[1..4] acks;     // or by a machine, in which case they are maps
+ ack {sent,received,waiting},
+ [Cache] boolean acks;     // or by a machine, in which case they are maps
   (I, src?GetM,IM) {   
     	owner = src;	     
 	src!Data;
