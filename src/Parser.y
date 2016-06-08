@@ -131,7 +131,7 @@ MsgArgs         : MsgArg                                           { [$1] }
                 | MsgArgs ',' MsgArg                               { $3 : $1 }
 
 
-MsgArg          : iden iden                                        { MsgArg $1 $2 }
+MsgArg          : Field                                            { $1 }
 
 
 Responses       : {-- empty --}                                    { [] }

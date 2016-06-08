@@ -73,8 +73,7 @@ data Msg     = Msg String MsgArgs
 
 type MsgArgs = [MsgArg]
 
-data MsgArg  = MsgArg {argtype :: String, name :: String}
-               deriving(Show)
+type MsgArg  = Field
 
 
 
