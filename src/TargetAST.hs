@@ -21,15 +21,17 @@ type Val          = String
 type Var          = String
 type VCName       = String
 type NetName      = String
-type MsgNet       = Either OrderedNet UnorderedNet
+type Network      = Either OrderedNet UnorderedNet
 type Name         = String
 type State        = String
 type MachineType  = String
 type Rec          = String
 type MsgType      = String
+type StateName    = String
+type MsgArg       = TypeDecl
 
 -- helper data structures
-type VCNets = [ (VCName, MsgNet) ]
+type VCNets = [ (VCName, Network) ]
 
 -- for Send
 data Message = Message MsgType [ (TypeName, Maybe Val) ]
@@ -87,7 +89,7 @@ data Types  = Types
 
                 msgType         :: [String],
 
-                msgArgs         :: [Front.MsgArg], -- only info we need to print msg
+                msgArgs         :: [MsgArg], -- only info we need to print msg
 
                 machineStates   :: [ (MachineType,
                                     [State],
@@ -121,6 +123,12 @@ data OrderedNet     = OrderedNet Name Size
 data UnorderedNet   = UnorderedNet Name Size
                       deriving(Show)
 
+netName :: Network -> String
+netName (Left (OrderedNet name _))    = name
+netName (Right (UnorderedNet name _)) = name
+
+
+
 -----------------------------------------------------------------
 
 -- Common Functions
@@ -137,7 +145,8 @@ type Param           = String
 
 -- Receive Functions
 
-type MachineFunctions = [ ( MachineType, ReceiveFunction ) ]
+data MachineFunctions = MachineFunctions [ ( MachineType, ReceiveFunction ) ]
+                      deriving(Show)
 
 type ReceiveFunction = [ ( State, Guard, [Respond] ) ]
 
@@ -186,7 +195,8 @@ data ReceiveUnordNet  = ReceiveUnordNet NetName [VCName] [MachineType]
 
 -- Startstate
 -- TODO
-type Startstate = String
+data Startstate = Startstate String
+                deriving(Show)
 
 
 
@@ -196,7 +206,8 @@ type Startstate = String
 
 -- Invariants
 -- TODO
-type Invariants = String
+data Invariants = Invariants String
+                  deriving(Show)
 
 
 

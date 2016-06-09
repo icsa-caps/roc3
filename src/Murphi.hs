@@ -1,19 +1,25 @@
+
 -- This module has the functions that print the target AST to
 -- murphi source code
 
--- we are simply implementing tomurphi for each datatype
 
+-- allow type synonyms to implement typeclasses
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 
 
 module Murphi where
 
-import qualified TargetAST as Back
-import qualified Ast       as Front
+import  TargetAST
+--import qualified Ast       as Front
 import MurphiPrint
+import Data.Char
 
 -----------------------------------------------------------------
 
+
+-----------------------------------------------------------------
 -- general helper functions
 
 
@@ -23,13 +29,13 @@ decl iden val  = iden ++ " : " ++ val ++ ";\n"
 declGen :: (Show a) => (String,a) -> String
 declGen (iden,val) = decl iden (show val)
 
-concatWith :: (Show a) => String -> [a] -> String
-concatWith split = foldr1 (++ split ++) $ map show
+concatWith :: String -> [String] -> String
+concatWith split = foldr1 (\x y -> x ++ split ++ y)
 
-concatln :: (Show a) => [a] -> String
-concatln arg = concatWith "\n" arg $ ++ "\n"
+concatln ::  [String] -> String
+concatln arg = (concatWith "\n" arg )++ "\n"
 
-concatcomma :: (Show a) => [a] -> String
+concatcomma :: [String] -> String
 concatcomma = concatWith ", "
 
 fstCap :: String -> String
@@ -55,13 +61,13 @@ instance MurphiPrint Type where
                                       ++ " }"
  tomurphi (Array index otherType)   = let formatInd = fstCap index
                                       in   " array [ " ++ formatInd ++ " ]"
-                                           ++ " of " ++ toMurphi otherType
+                                           ++ " of " ++ tomurphi otherType
 
 
 ------------------------------
 
 type MachineName = String
-type Name        = String
+
 
 -----------------------------------------------------------------
 
@@ -76,34 +82,33 @@ instance MurphiPrint Program where
               startstate
               invariants )
 
-    = "-- Constants\n"          ++ tomurphi constants         ++
-      "-- Types\n"              ++ tomurphi types             ++
-      "-- Variables\n"          ++ tomurphi variables         ++
-      "-- Common Functions\n"   ++ tomurphi commonFunctions   ++
-      "-- Machine Functions\n"  ++ tomurphi machineFunctions  ++
-      "-- Rules\n"              ++ tomurphi rules             ++
-      "-- Startstate\n"         ++ tomurphi startstate        ++
-      "-- Invariants"           ++ tomurphi invariants
+    = "-- Constants {{{\n"          ++ tomurphi constants         ++ "-- }}}" ++
+      "-- Types {{{\n"              ++ tomurphi types             ++ "-- }}}" ++
+      "-- Variables {{{\n"          ++ tomurphi variables         ++ "-- }}}" ++
+      "-- Common Functions {{{\n"   ++ tomurphi commonFunctions   ++ "-- }}}" ++
+      "-- Machine Functions {{{\n"  ++ tomurphi machineFunctions  ++ "-- }}}" ++
+      "-- Rules {{{\n"              ++ tomurphi rules             ++ "-- }}}" ++
+      "-- Startstate {{{\n"         ++ tomurphi startstate        ++ "-- }}}" ++
+      "-- Invariants {{{\n"         ++ tomurphi invariants        ++ "-- }}}"
 
 -----------------------------------------------------------------
 
 
 
 -- Constants
-
-
 instance MurphiPrint Constants where
 
- tomurphi (Constants machineSizes vcs) = "const\nMachine Sizes\n" ++ machineSizes
+ tomurphi (Constants machineSizes vcs) = "const\nMachine Sizes\n" ++ machinesSizes
                                         ++ "\n\n"
                                         ++ "Network parameters\n" ++ netParams
+                                        ++ "NET_MAX: " ++ show netMax
   where
 
-    onlyMachineNames = map fst machineSizes
+    onlyMachines     = map fst machineSizes
     onlySizes        = map snd machineSizes
     machineSize      = map (++"Size") onlyMachines
-    machineSizes     =  let indiv = map declGen (zip machineSize onlySizes)
-                        in concatln indiv
+    machinesSizes    = let indiv = map declGen (zip machineSize onlySizes)
+                       in  concatln indiv
 
     ---- <machineName>Size : <num>;
     --------------------------------
@@ -111,12 +116,15 @@ instance MurphiPrint Constants where
     vcVal     = zip (map ("VC_" ++) vcs) [0,1..]
 
     vcDecl    = let indiv = map declGen vcVal
-                in concatln indiv
+                in  concatln indiv
 
     numChs    = length vcs
 
     netParams = vcDecl ++ "\n" ++
-                "NUM_VCs : " show numChs ++ ";\n"
+                "NUM_VCs : " ++ show numChs ++ ";\n"
+
+
+    netMax = length machineSizes -- just #machines
 
    ---- VC_<VCName> : <num>;
    ---- NUM_VCs : <num>;
@@ -125,87 +133,129 @@ instance MurphiPrint Constants where
 
 
 -- Types
+instance MurphiPrint Types where
 
-tomurphi types = "-- type\n" ++
-                 "-- for indexing\n"   ++ finalScalarsets ++ "\n"
-                                       ++ finalNodes      ++ "\n" ++
-                 vcType ++ "\n"
-                 "-- Message Type\n"   ++ finalMsgType    ++ "\n" ++
-                 "-- Message\n"        ++ message         ++ "\n" ++
-                 "-- Machine States\n" ++ finalMstates    ++ "\n"
-  where
-   machinesSizes   = machineSizesT types
+ tomurphi types = "type\n" ++
+                  "-- for indexing\n"   ++ finalScalarsets ++ "\n"
+                                        ++ finalNodes      ++ "\n" ++
+                  vcType ++ "\n" ++
+                  "-- Message Type\n"   ++ finalMsgType    ++ "\n" ++
+                  "-- Message\n"        ++ message         ++ "\n" ++
+                  "-- Machine States\n" ++ finalMstates    ++ "\n" ++
+                  " --"
 
-   sclarasets      = let sizes = map snd machineSizes
-                      in map ( \size -> "scalarset(" ++ show size ++ ")" ) sizes
+   where
+    machinesSizes   = machineSizesT types
 
-   finalScalarsets = let machines       = map fst machinesSizes
-                       formatMachines = map fstCap machines
-                       finalPairs     = zip formatMachines scalarsets
-                       strs           = map declGen finalPairs
-                   in concatln strs
+    scalarsets      = let sizes = map snd machinesSizes
+                      in  map ( \size -> "scalarset(" ++ show size ++ ")" ) sizes
 
-   ---- Machine1 : scalarset(<size>); (fst letter cap)
+    finalScalarsets = let machines     = map fst machinesSizes
+                          formatMachines = map (++ "Ind") machines
+                          finalPairs     = zip formatMachines scalarsets
+                          strs           = map declGen finalPairs
+                      in  concatln strs
 
-
-   -----------------------------
-   nodes        = nodes types
-   finalNodes   = "Node: union { " ++ concatcomma nodes ++ " };\n"
-
-   -----------------------------
-   vcType       = "VC_Type : 0..NUM_VCs -1;\n"
-   ----
-   msgType      = msgType types -- just strings of all the possible mtypes
-   finalMsgType = printEnum "MessageType" msgType
+    ---- <machine1>Ind : scalarset(<size>); (fst letter cap)
 
 
-   -----------------------------
-   msgArgs      = msgArgs types
-   finalMsgArgs = let invid = map declGen msgArgs
-                  in concatln indiv
-   message      = "Message:\n Record\n  mtype : MessageType;\n  src : Node\n"
-                  ++ finalMsgArgs ++ "end;\n"
+    -----------------------------
+    allMachines  = nodes types
+    finalNodes   = "Node: union { " ++ concatcomma allMachines ++ " };\n"
 
-   -----------------------------
-   mstates      = machineStates types
+    -----------------------------
+    vcType       = "VC_Type : 0..NUM_VCs -1;\n"
 
-   printMstate :: (MachineName,[StateName],[typeDecl]) -> String
-   printMstate (machine, states, types)
-                = machine ++ "State:\n record\n" ++
-                  printEnum "state" states ++
-                  concatWith ",\n" (map toMurphi types)
-                  ++ "end;\n"
-   finalMstates = concatWith "\n" $ map printMstate mstates
+    ----------------------------
+    -- kinds of msgs (e.g. Ack, Fwd etc.)
+    msgTypes     = msgType types -- just strings of all the possible mtypes
+    finalMsgType = printEnum "MessageType" msgTypes
 
+
+    -----------------------------
+    -- fields/arguments of msgs (e.g. src)
+    msgFields    = msgArgs types -- :: TypeDecl from TargetAST
+    finalMsgArgs = let indiv = map tomurphi msgFields -- so we use tomurphi
+                   in  concatln indiv
+    message      = "Message:\n Record\n  mtype : MessageType;\n  src : Node\n"
+                   ++ finalMsgArgs ++ "end;\n"
+
+    -----------------------------
+    mstates      = machineStates types
+
+    printMstate :: (MachineName,[StateName],[TypeDecl]) -> String
+    printMstate (machine, states, types)
+                 = machine ++ "State:\n record\n" ++
+                   printEnum "state" states ++
+                   concatWith ",\n" (map tomurphi types)
+                   ++ "end;\n"
+    finalMstates = concatWith "\n" $ map printMstate mstates
 
 -----------------------------------------------------------------
 
-Instance MurphiPrint Variables where
- tomurphi = undefined
+instance MurphiPrint Variables where
+ tomurphi variables = "var\n" ++
+                      "-- machines\n"     ++ finalMachines ++ "\n" ++
+                      "--ordered Nets"    ++ finalOrd      ++ "\n" ++
+                      "-- unordered Nets" ++ finalUnord    ++ "\n"
+  where
+   machineNames = machines variables
+   formatMachine :: MachineName -> String
+   formatMachine machine = machine ++ "s" ++ " array [" ++ machine ++ "Ind" ++ "]"
+                           ++ " of " ++ machine ++ "State;"
+   finalMachines = let indiv = map formatMachine machineNames
+                   in  concatln indiv
+
+   -----------------------------
+
+   ordNets = orderedNets variables
+   formatOrd :: String -> String
+   formatOrd net = net ++ ": array[Node] of  array[0..NET_MAX-1] of Message;"
+
+   counts :: String -> String
+   counts net = net ++ "count: array[Node] of 0..NET_MAX;"
+
+   combine :: String -> String
+   combine net = formatOrd net ++ "\n" ++ counts net
+
+   finalOrd = let  ordNetNames = map netName $ map (Left) ordNets
+                   indiv = map combine ordNetNames
+              in  concatln indiv
+   -----------------------------
+
+   unordNets = unorderedNets variables
+   formatUnord :: String -> String
+   formatUnord net = net ++ ": array[Node] of multiset [NET_MAX] of Message;"
+
+   finalUnord = let unordNetNames = map netName $ map (Right) unordNets
+                    indiv = map formatUnord unordNetNames
+                in  concatln indiv
 
  ----------------------------------------------------------------
 
- Instance MurphiPrint CommonFunctions where
-  tomurphi = undefined
+-----------------------------------------------------------------
 
-----------------------------------------------------------------
-
-Instance MurphiPrint MachineFunctions where
+instance MurphiPrint CommonFunctions where
  tomurphi = undefined
 
 ----------------------------------------------------------------
 
-Instance MurphiPrint Rules where
+instance MurphiPrint MachineFunctions where
  tomurphi = undefined
 
 ----------------------------------------------------------------
 
-Instance MurphiPrint Startstate where
+instance MurphiPrint Rules where
  tomurphi = undefined
 
 ----------------------------------------------------------------
 
-Instance MurphiPrint Invariants where
+instance MurphiPrint Startstate where
+ tomurphi = undefined
+
+----------------------------------------------------------------
+
+instance MurphiPrint Invariants where
  tomurphi = undefined
 
 ----------------------------------------------------------------
