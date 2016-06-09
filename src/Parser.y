@@ -44,7 +44,7 @@ import Data.List
     Stall       { TokenStall }
     Trans       { TokenTrans }
     add         { TokenAdd }
-    rid         { TokenRid }
+    del         { TokenDel }
 
 
     num         { TokenNum $$ }
@@ -155,9 +155,9 @@ Response        : Mail                                              { Response $
                 | Assignment                                        { Update $1 }
                 | iden                                              { SelfIssue $1 }
                 | iden '.' add '(' iden ')'                         { Add $1 $5 }
-                | iden '.' rid '(' iden ')'                         { Rid $1 $5 }
+                | iden '.' del '(' iden ')'                         { Del $1 $5 }
                 | iden '.' add '(' num ')'                          { Add $1 (show $5) }
-                | iden '.' rid '(' num ')'                          { Rid $1 (show $5) }
+                | iden '.' del '(' num ')'                          { Del $1 (show $5) }
 
 
 Assignment      : iden '=' iden                                     { Var $1 $3 }

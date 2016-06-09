@@ -42,7 +42,7 @@ data TypeDecl   = Boolean VarName
                 | Array Size TypeDecl
                 | Map MachineType TypeDecl
                 | SetNum Size TypeDecl
-                | SetName MachineType TypeDecl 
+                | SetName MachineType TypeDecl
                 deriving(Show)
 
 type MachineType = String
@@ -99,7 +99,7 @@ data Response   = Response Mail
                 | Update Assignment
                 | SelfIssue String -- will be ignored in the Target AST see mi.c3
                 | Add SetName String
-                | Rid SetName String
+                | Del SetName String
                   deriving(Show)
 
 type SetName = String

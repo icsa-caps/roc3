@@ -61,10 +61,11 @@ machine Dir:[1] {
   (M, src?GetM,IM) {
     owner!Fwd_GetM<cache src, dir dir>; // in murphi: Send(Fwd_GetM, owner, src)
     owner = src;	   // the argument of the message becomes the sender
-    modifiers.rid(src);
+    modifiers.del(src);
   }
 
   (IM, src?GetM ) {
+    modifiers.add(src);
     stall;
   }
 

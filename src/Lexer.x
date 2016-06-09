@@ -52,7 +52,7 @@ tokens :-
     Stall           { \s -> TokenStall }
     Trans           { \s -> TokenTrans }
     add             { \s -> TokenAdd }
-    rid             { \s -> TokenRid }
+    del             { \s -> TokenDel }
 
     @digits         { \s -> TokenNum (read s) }
     @iden           { \s -> TokenIdentifier s }
@@ -94,7 +94,7 @@ data Token = TokenBegin
            | TokenStall
            | TokenTrans
            | TokenAdd
-           | TokenRid
+           | TokenDel
            | TokenIdentifier String
            | TokenIdentifierNoBr String
            | TokenNum Int
