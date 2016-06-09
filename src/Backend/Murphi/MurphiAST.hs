@@ -1,7 +1,5 @@
 
-module TargetAST where
-
-import qualified Ast as Front-- frontend AST
+module MurphiAST where
 
 -- this AST captures the subset of the murphi language
 -- as it is used in the MSI protocol implementations
@@ -28,6 +26,7 @@ type MachineType  = String
 type Rec          = String
 type MsgType      = String
 type StateName    = String
+type SetName      = String
 type MsgArg       = TypeDecl
 
 -- helper data structures
@@ -45,16 +44,12 @@ data Type = Boolean
           | Integer Lo Hi
           | Enum [Val]
           | Array Index Type
+          | Set (Either MachineType Size) Type
           deriving(Show)
 
 type Lo    = Int
 type Hi    = Int
 type Index = String
-
--- at Murphi, printing function
--- at Transform, function from Front.TypeDecl to Back.TypeDecl
-
-
 
 -----------------------------------------------------------------
 data Program = Program Constants
@@ -98,16 +93,6 @@ data Types  = Types
              deriving(Show)
 
 
-
--- reason for introducing Message (in place of Msg from frontend) :
--- it encaptures the same information, only that we know what kind of arguments
--- messages don't have
--- not needed for the time being
-
-
--- the list is a list of arguments of the message (type of argument and value).
--- if a message doesn't have an argument of some time the value is nothing
-
 -----------------------------------------------------------------
 -- Variables
 
@@ -133,7 +118,8 @@ netName (Right (UnorderedNet name _)) = name
 
 -- Common Functions
 
-data CommonFunctions = FunctionParameters {
+data CommonFunctions = Functions {
+                        -- need one advanceQ for each ordered net!
                         advanceQ    :: [OrderedNetsName],
                         send        :: ( [(Param,TypeName)], [VCName] )
                        } deriving(Show)
@@ -143,24 +129,32 @@ type Param           = String
 
 -----------------------------------------------------------------
 
--- Receive Functions
+-- Machine Functions
 
-data MachineFunctions = MachineFunctions [ ( MachineType, ReceiveFunction ) ]
-                      deriving(Show)
+data MachineFunctions = MachineFunctions [ (Sets, MachineType, ReceiveFunction ) ]
+                        deriving(Show)
+
+-- we need a pair of add and remove functions for each set (for each machine)
+type Sets            = [SetName]
 
 type ReceiveFunction = [ ( State, Guard, [Respond] ) ]
 
-data Guard = Receive MType   -- the src may be important
-            | AtState State
-            deriving(Show)
 
-type MType = String --mtype in murphi
+data Guard           = Receive MType   -- the src may be important
+                     | AtState State
+                      deriving(Show)
 
-data Respond = ToState State
-             | Send Message Dst
-             | Assign Var Val
-             deriving(Show)
+type MType           = String --mtype in murphi
 
+
+data Respond         = ToState State
+                     | Send Message Dst
+                     | Assign Var Val
+                     | Add SetName Elem
+                     | Del SetName Elem
+                       deriving(Show)
+
+type Elem = String
 type Dst = String
 -----------------------------------------------------------------
 

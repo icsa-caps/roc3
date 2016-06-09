@@ -1,6 +1,5 @@
 
--- This module has the functions that print the target AST to
--- murphi source code
+-- functions that print the target AST to murphi source code
 
 
 -- allow type synonyms to implement typeclasses
@@ -11,9 +10,8 @@
 
 module Murphi where
 
-import  TargetAST
---import qualified Ast       as Front
-import MurphiPrint
+import  MurphiAST
+import qualified MurphiClass as Cl
 import Data.Char
 
 -----------------------------------------------------------------
@@ -43,25 +41,34 @@ fstCap (ch:str) = (toUpper ch) : str
 
 printEnum :: Name -> [Val] -> String
 printEnum name values =  name ++ ": enum {\n" ++ (concatWith ",\n" values) ++ "};\n"
+
 -----------------------------------------------------------------
 
 -- type declarations (used throughout the syntax tree)
 
-instance MurphiPrint TypeDecl where
+instance Cl.MurphiClass TypeDecl where
  tomurphi (Decl var varType) = show var ++ ": " ++ tomurphi varType ++ ";\n"
 
 
 
-
-instance MurphiPrint Type where
+-- !!!!!!!add sets!!!!!!!
+instance Cl.MurphiClass Type where
  tomurphi Boolean                   = "boolean"
+
  tomurphi (Integer lo hi)           = show lo ++ ".." ++ show hi
+
  tomurphi (Enum values)             = "enum { " ++
                                       ( concatWith ",\n" values )
                                       ++ " }"
+
  tomurphi (Array index otherType)   = let formatInd = fstCap index
                                       in   " array [ " ++ formatInd ++ " ]"
                                            ++ " of " ++ tomurphi otherType
+
+tomurphi (Set (Left machine) otherType) = "multiset[" ++ machine ++ "Size"
+                                          ++ "] of " ++ tomurphi otherType
+tomurphi (Set (Right size) otherType)   = "multiset[" ++ show size
+                                          ++ "] of " ++ tomurphi otherType
 
 
 ------------------------------
@@ -71,7 +78,7 @@ type MachineName = String
 
 -----------------------------------------------------------------
 
-instance MurphiPrint Program where
+instance Cl.MurphiClass Program where
 
  tomurphi (Program constants
               types
@@ -96,7 +103,7 @@ instance MurphiPrint Program where
 
 
 -- Constants
-instance MurphiPrint Constants where
+instance Cl.MurphiClass Constants where
 
  tomurphi (Constants machineSizes vcs) = "const\nMachine Sizes\n" ++ machinesSizes
                                         ++ "\n\n"
@@ -133,7 +140,7 @@ instance MurphiPrint Constants where
 
 
 -- Types
-instance MurphiPrint Types where
+instance Cl.MurphiClass Types where
 
  tomurphi types = "type\n" ++
                   "-- for indexing\n"   ++ finalScalarsets ++ "\n"
@@ -174,7 +181,7 @@ instance MurphiPrint Types where
 
     -----------------------------
     -- fields/arguments of msgs (e.g. src)
-    msgFields    = msgArgs types -- :: TypeDecl from TargetAST
+    msgFields    = msgArgs types                      -- :: TypeDecl from MurphiAST
     finalMsgArgs = let indiv = map tomurphi msgFields -- so we use tomurphi
                    in  concatln indiv
     message      = "Message:\n Record\n  mtype : MessageType;\n  src : Node\n"
@@ -193,7 +200,7 @@ instance MurphiPrint Types where
 
 -----------------------------------------------------------------
 
-instance MurphiPrint Variables where
+instance Cl.MurphiClass Variables where
  tomurphi variables = "var\n" ++
                       "-- machines\n"     ++ finalMachines ++ "\n" ++
                       "--ordered Nets"    ++ finalOrd      ++ "\n" ++
@@ -235,27 +242,27 @@ instance MurphiPrint Variables where
 
 -----------------------------------------------------------------
 
-instance MurphiPrint CommonFunctions where
+instance Cl.MurphiClass CommonFunctions where
  tomurphi = undefined
 
 ----------------------------------------------------------------
 
-instance MurphiPrint MachineFunctions where
+instance Cl.MurphiClass MachineFunctions where
  tomurphi = undefined
 
 ----------------------------------------------------------------
 
-instance MurphiPrint Rules where
+instance Cl.MurphiClass Rules where
  tomurphi = undefined
 
 ----------------------------------------------------------------
 
-instance MurphiPrint Startstate where
+instance Cl.MurphiClass Startstate where
  tomurphi = undefined
 
 ----------------------------------------------------------------
 
-instance MurphiPrint Invariants where
+instance Cl.MurphiClass Invariants where
  tomurphi = undefined
 
 ----------------------------------------------------------------

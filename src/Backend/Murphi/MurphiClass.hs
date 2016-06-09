@@ -1,5 +1,5 @@
 -- Typeclass for datatypes printing murphi source code
-module MurphiPrint where
+module MurphiClass where
 
-class MurphiPrint a where
+class MurphiClass a where
     tomurphi :: a -> String
