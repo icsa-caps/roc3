@@ -1,12 +1,8 @@
+
 {
 {-# OPTIONS_GHC -w #-}
 module Lexer where
 }
-
-
-
-
-
 
 
 %wrapper "basic"
@@ -49,11 +45,14 @@ tokens :-
     machine         { \s -> TokenMachine }
     boolean         { \s -> TokenBoolean }
     int             { \s -> TokenInt }
+    set             { \s -> TokenSet }
     Issue           { \s -> TokenIssue }
     Receive         { \s -> TokenReceive }
     Send            { \s -> TokenSend }
     Stall           { \s -> TokenStall }
     Trans           { \s -> TokenTrans }
+    add             { \s -> TokenAdd }
+    rid             { \s -> TokenRid }
 
     @digits         { \s -> TokenNum (read s) }
     @iden           { \s -> TokenIdentifier s }
@@ -88,11 +87,14 @@ data Token = TokenBegin
            | TokenMachine
            | TokenBoolean
            | TokenInt
+           | TokenSet
            | TokenIssue
            | TokenReceive
            | TokenSend
            | TokenStall
            | TokenTrans
+           | TokenAdd
+           | TokenRid
            | TokenIdentifier String
            | TokenIdentifierNoBr String
            | TokenNum Int

@@ -33,6 +33,7 @@ type Fields     = [Field]
 
 type Field      = TypeDecl
 
+-- Field and MsgArg are both TypeDecl
 
 data TypeDecl   = Boolean VarName
                 | Integer VarName Lo Hi
@@ -40,6 +41,7 @@ data TypeDecl   = Boolean VarName
                 | Node MachineType VarName -- TODO: check MachineType is one of the machines
                 | Array Size TypeDecl
                 | Map MachineType TypeDecl
+                | Set TypeDecl
                 deriving(Show)
 
 type MachineType = String
@@ -95,8 +97,11 @@ type MsgArg  = TypeDecl
 data Response   = Response Mail
                 | Update Assignment
                 | SelfIssue String -- will be ignored in the Target AST see mi.c3
+                | Add SetName (Either String Int)
+                | Rid SetName (Either String Int)
                   deriving(Show)
 
+type SetName = String
 
 data Assignment = Var VarName String
                 | VarNum VarName Int

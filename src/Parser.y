@@ -35,6 +35,7 @@ import Data.List
     machine     { TokenMachine }
     boolean     { TokenBoolean }
     int         { TokenInt }
+    set         { TokenSet }
 
 
     Issue       { TokenIssue }
@@ -42,6 +43,8 @@ import Data.List
     Send        { TokenSend }
     Stall       { TokenStall }
     Trans       { TokenTrans }
+    add         { TokenAdd }
+    rid         { TokenRid }
 
 
     num         { TokenNum $$ }
@@ -99,6 +102,7 @@ TypeDecl        : boolean iden                                      { Boolean $2
                 | iden iden                                         { Node $1 $2 }
                 | '[' num ']' TypeDecl                              { Array $2 $4 }
                 | '[' iden ']' TypeDecl                             { Map   $2 $4 }
+                | set TypeDecl                                      { Set $2 }
 
 
 IdenList        : iden                                              { [$1] }
@@ -149,6 +153,10 @@ Response1       : Response ';'                                     { $1 }
 Response        : Mail                                              { Response $1 }
                 | Assignment                                        { Update $1 }
                 | iden                                              { SelfIssue $1 }
+                | iden '.' add '(' iden ')'                         { Add $1 (Left $5) }
+                | iden '.' rid '(' iden ')'                         { Rid $1 (Left $5) }
+                | iden '.' add '(' num ')'                          { Add $1 (Right $5) }
+                | iden '.' rid '(' num ')'                          { Rid $1 (Right $5) }
 
 
 Assignment      : iden '=' iden                                     { Var $1 $3 }

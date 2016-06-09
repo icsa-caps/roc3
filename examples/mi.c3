@@ -12,7 +12,6 @@ networks: ordered net1{c1}, unordered net2{c1,c2};
 
 
 machine Cache:[4] {
-
   // self-issued msgs are "Rules"
   // not in the "Cache functions" part
   // i.e. the receive function
@@ -43,15 +42,18 @@ machine Dir:[1] {
  int[1..10] nums,      // integers must have ranges
  [5]boolean working,   // arrays are indexed by nums
  ack {sent,received,waiting},
- [Cache] boolean acks;     // or by a machine, in which case they are maps
+ [Cache] boolean acks,    // or by a machine, in which case they are maps
+ set Cache modifiers;
   (I, src?GetM,IM) {   
-    	owner = src;	     
+    	owner = src;
+	modifiers.add(src);	     
 	src!Data;
   }
 
   (M, src?GetM,IM) {
     owner!Fwd_GetM<cache src, dir dir>; // in murphi: Send(Fwd_GetM, owner, src)
     owner = src;	   // the argument of the message becomes the sender
+    modifiers.rid(src);
   }
 
   (IM, src?GetM ) {
