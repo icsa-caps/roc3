@@ -39,11 +39,19 @@ machine Cache:[4] {
 }
 
 machine Dir:[1] {
- int[1..10] nums,      // integers must have ranges
- [5]boolean working,   // arrays are indexed by nums
+ int[1..10] nums,      		// integers must have ranges
+
+ [5]boolean working,   		// arrays are indexed by nums
+
  ack {sent,received,waiting},
- [Cache] boolean acks,    // or by a machine, in which case they are maps
- set Cache modifiers;
+
+ [Cache] boolean acks,    		// or by a machine, 
+					// in which case they are maps
+
+ set:Cache Cache modifiers, 	// the size of the set is #caches
+
+ set:5 boolean other; 	      // the set can store up to 5 elements
+
   (I, src?GetM,IM) {   
     	owner = src;
 	modifiers.add(src);	     

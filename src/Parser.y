@@ -98,11 +98,12 @@ Field           : TypeDecl                                          { $1 }
 
 TypeDecl        : boolean iden                                      { Boolean $2 }
                 | int '[' num '.' '.' num ']' iden                  { Integer $8 $3 $6 }
-                | iden '{' IdenList '}'                             { Enum $1 $3 }
-                | iden iden                                         { Node $1 $2 }
-                | '[' num ']' TypeDecl                              { Array $2 $4 }
-                | '[' iden ']' TypeDecl                             { Map   $2 $4 }
-                | set TypeDecl                                      { Set $2 }
+                | iden '{' IdenList '}'                             { Enum    $1 $3 }
+                | iden iden                                         { Node    $1 $2 }
+                | '[' num ']' TypeDecl                              { Array   $2 $4 }
+                | '[' iden ']' TypeDecl                             { Map     $2 $4 }
+                | set ':' num  TypeDecl                             { SetNum  $3 $4}
+                | set ':' iden  TypeDecl                            { SetName $3 $4 }
 
 
 IdenList        : iden                                              { [$1] }
@@ -153,19 +154,14 @@ Response1       : Response ';'                                     { $1 }
 Response        : Mail                                              { Response $1 }
                 | Assignment                                        { Update $1 }
                 | iden                                              { SelfIssue $1 }
-                | iden '.' add '(' iden ')'                         { Add $1 (Left $5) }
-                | iden '.' rid '(' iden ')'                         { Rid $1 (Left $5) }
-                | iden '.' add '(' num ')'                          { Add $1 (Right $5) }
-                | iden '.' rid '(' num ')'                          { Rid $1 (Right $5) }
+                | iden '.' add '(' iden ')'                         { Add $1 $5 }
+                | iden '.' rid '(' iden ')'                         { Rid $1 $5 }
+                | iden '.' add '(' num ')'                          { Add $1 (show $5) }
+                | iden '.' rid '(' num ')'                          { Rid $1 (show $5) }
 
 
 Assignment      : iden '=' iden                                     { Var $1 $3 }
                 | iden '=' num                                      { VarNum $1 $3 }
-
-
-
-
-
 
 
 

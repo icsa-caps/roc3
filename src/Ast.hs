@@ -41,7 +41,8 @@ data TypeDecl   = Boolean VarName
                 | Node MachineType VarName -- TODO: check MachineType is one of the machines
                 | Array Size TypeDecl
                 | Map MachineType TypeDecl
-                | Set TypeDecl
+                | SetNum Size TypeDecl
+                | SetName MachineType TypeDecl 
                 deriving(Show)
 
 type MachineType = String
@@ -97,8 +98,8 @@ type MsgArg  = TypeDecl
 data Response   = Response Mail
                 | Update Assignment
                 | SelfIssue String -- will be ignored in the Target AST see mi.c3
-                | Add SetName (Either String Int)
-                | Rid SetName (Either String Int)
+                | Add SetName String
+                | Rid SetName String
                   deriving(Show)
 
 type SetName = String
