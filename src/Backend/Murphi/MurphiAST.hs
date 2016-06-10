@@ -7,11 +7,6 @@ module MurphiAST where
 -- It is strongly based on the outline used in the above implementations
 
 
--- capital T at the end of datatypes is used to differentiate from
--- those with the same name in Ast.hs and stands for Target
--- Alas, we use some of the types from Ast.hs
-
-
 -- simple type synonyms
 type Size         = Int
 type TypeName     = String
@@ -44,7 +39,7 @@ data Type = Boolean
           | Integer Lo Hi
           | Enum [Val]
           | Array Index Type
-          | Set (Either MachineType Size) Type
+          | Set (Either MachineType Size) Type --
           deriving(Show)
 
 type Lo    = Int

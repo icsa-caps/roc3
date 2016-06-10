@@ -5,6 +5,7 @@
 -- allow type synonyms to implement typeclasses
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE InstanceSigs #-}
 
 
 
@@ -43,16 +44,16 @@ printEnum :: Name -> [Val] -> String
 printEnum name values =  name ++ ": enum {\n" ++ (concatWith ",\n" values) ++ "};\n"
 
 -----------------------------------------------------------------
-
 -- type declarations (used throughout the syntax tree)
 
 instance Cl.MurphiClass TypeDecl where
- tomurphi (Decl var varType) = show var ++ ": " ++ tomurphi varType ++ ";\n"
+ --tomurphi :: TypeDecl -> String
+ tomurphi (Decl var varType) = show var ++ ": " ++ Cl.tomurphi varType ++ ";\n"
 
 
-
--- !!!!!!!add sets!!!!!!!
 instance Cl.MurphiClass Type where
+
+ --tomurphi :: Type -> String
  tomurphi Boolean                   = "boolean"
 
  tomurphi (Integer lo hi)           = show lo ++ ".." ++ show hi
@@ -63,23 +64,23 @@ instance Cl.MurphiClass Type where
 
  tomurphi (Array index otherType)   = let formatInd = fstCap index
                                       in   " array [ " ++ formatInd ++ " ]"
-                                           ++ " of " ++ tomurphi otherType
+                                           ++ " of " ++ Cl.tomurphi otherType
 
-tomurphi (Set (Left machine) otherType) = "multiset[" ++ machine ++ "Size"
-                                          ++ "] of " ++ tomurphi otherType
-tomurphi (Set (Right size) otherType)   = "multiset[" ++ show size
-                                          ++ "] of " ++ tomurphi otherType
+ tomurphi (Set (Left machine) otherType) = "multiset[" ++ machine ++ "Size"
+                                          ++ "] of " ++ Cl.tomurphi otherType
+ tomurphi (Set (Right size) otherType)   = "multiset[" ++ show size
+                                          ++ "] of " ++ Cl.tomurphi otherType
 
 
 ------------------------------
 
 type MachineName = String
 
-
 -----------------------------------------------------------------
 
 instance Cl.MurphiClass Program where
 
+ --tomurphi :: Program -> String
  tomurphi (Program constants
               types
               variables
@@ -89,22 +90,22 @@ instance Cl.MurphiClass Program where
               startstate
               invariants )
 
-    = "-- Constants {{{\n"          ++ tomurphi constants         ++ "-- }}}" ++
-      "-- Types {{{\n"              ++ tomurphi types             ++ "-- }}}" ++
-      "-- Variables {{{\n"          ++ tomurphi variables         ++ "-- }}}" ++
-      "-- Common Functions {{{\n"   ++ tomurphi commonFunctions   ++ "-- }}}" ++
-      "-- Machine Functions {{{\n"  ++ tomurphi machineFunctions  ++ "-- }}}" ++
-      "-- Rules {{{\n"              ++ tomurphi rules             ++ "-- }}}" ++
-      "-- Startstate {{{\n"         ++ tomurphi startstate        ++ "-- }}}" ++
-      "-- Invariants {{{\n"         ++ tomurphi invariants        ++ "-- }}}"
+    = "-- Constants {{{\n"          ++ Cl.tomurphi constants         ++ "-- }}}" ++
+      "-- Types {{{\n"              ++ Cl.tomurphi types             ++ "-- }}}" ++
+      "-- Variables {{{\n"          ++ Cl.tomurphi variables         ++ "-- }}}" ++
+      "-- Common Functions {{{\n"   ++ Cl.tomurphi commonFunctions   ++ "-- }}}" ++
+      "-- Machine Functions {{{\n"  ++ Cl.tomurphi machineFunctions  ++ "-- }}}" ++
+      "-- Rules {{{\n"              ++ Cl.tomurphi rules             ++ "-- }}}" ++
+      "-- Startstate {{{\n"         ++ Cl.tomurphi startstate        ++ "-- }}}" ++
+      "-- Invariants {{{\n"         ++ Cl.tomurphi invariants        ++ "-- }}}"
 
 -----------------------------------------------------------------
 
 
 
--- Constants
 instance Cl.MurphiClass Constants where
 
+ --tomurphi :: Constants -> String
  tomurphi (Constants machineSizes vcs) = "const\nMachine Sizes\n" ++ machinesSizes
                                         ++ "\n\n"
                                         ++ "Network parameters\n" ++ netParams
@@ -139,9 +140,10 @@ instance Cl.MurphiClass Constants where
 -----------------------------------------------------------------
 
 
--- Types
+
 instance Cl.MurphiClass Types where
 
+ --tomurphi :: Types -> String
  tomurphi types = "type\n" ++
                   "-- for indexing\n"   ++ finalScalarsets ++ "\n"
                                         ++ finalNodes      ++ "\n" ++
@@ -182,7 +184,7 @@ instance Cl.MurphiClass Types where
     -----------------------------
     -- fields/arguments of msgs (e.g. src)
     msgFields    = msgArgs types                      -- :: TypeDecl from MurphiAST
-    finalMsgArgs = let indiv = map tomurphi msgFields -- so we use tomurphi
+    finalMsgArgs = let indiv = map Cl.tomurphi msgFields -- so we use tomurphi
                    in  concatln indiv
     message      = "Message:\n Record\n  mtype : MessageType;\n  src : Node\n"
                    ++ finalMsgArgs ++ "end;\n"
@@ -194,13 +196,17 @@ instance Cl.MurphiClass Types where
     printMstate (machine, states, types)
                  = machine ++ "State:\n record\n" ++
                    printEnum "state" states ++
-                   concatWith ",\n" (map tomurphi types)
+                   concatWith ",\n" (map show types)
                    ++ "end;\n"
     finalMstates = concatWith "\n" $ map printMstate mstates
 
 -----------------------------------------------------------------
 
+
+
 instance Cl.MurphiClass Variables where
+
+ tomurphi :: Variables -> String
  tomurphi variables = "var\n" ++
                       "-- machines\n"     ++ finalMachines ++ "\n" ++
                       "--ordered Nets"    ++ finalOrd      ++ "\n" ++
@@ -242,27 +248,39 @@ instance Cl.MurphiClass Variables where
 
 -----------------------------------------------------------------
 
+
+
 instance Cl.MurphiClass CommonFunctions where
  tomurphi = undefined
 
 ----------------------------------------------------------------
+
+
 
 instance Cl.MurphiClass MachineFunctions where
  tomurphi = undefined
 
 ----------------------------------------------------------------
 
+
+
 instance Cl.MurphiClass Rules where
  tomurphi = undefined
 
 ----------------------------------------------------------------
+
+
 
 instance Cl.MurphiClass Startstate where
  tomurphi = undefined
 
 ----------------------------------------------------------------
 
+
+
 instance Cl.MurphiClass Invariants where
  tomurphi = undefined
 
 ----------------------------------------------------------------
+
+-----------------------------------------------------------------
