@@ -8,21 +8,23 @@ module MurphiAST where
 
 
 -- simple type synonyms
-type Size         = Int
-type TypeName     = String
-type Val          = String
-type Var          = String
-type VCName       = String
-type NetName      = String
-type Network      = Either OrderedNet UnorderedNet
-type Name         = String
-type State        = String
-type MachineType  = String
-type Rec          = String
-type MsgType      = String
-type StateName    = String
-type SetName      = String
-type MsgArg       = TypeDecl
+type Size             = Int
+type TypeName         = String
+type Val              = String
+type Var              = String
+type VCName           = String
+type NetName          = String
+type Network          = Either OrderedNet UnorderedNet
+type OrderedNetName   = String
+type UnorderedNetName = String
+type Name             = String
+type State            = String
+type MachineType      = String
+type Rec              = String
+type MsgType          = String
+type StateName        = String
+type SetName          = String
+type MsgArg           = TypeDecl
 
 -- helper data structures
 type VCNets = [ (VCName, Network) ]
@@ -112,14 +114,14 @@ netName (Right (UnorderedNet name _)) = name
 -----------------------------------------------------------------
 
 -- Common Functions
-
-data CommonFunctions = Functions {
+data CommonFunctions = FuncParams {
                         -- need one advanceQ for each ordered net!
-                        advanceQ    :: [OrderedNetsName],
-                        send        :: ( [(Param,TypeName)], [VCName] )
+                        advanceQ        :: [OrderedNetName],
+                        send            :: ( [MsgArg], [(NetName,[VCName])] )
+                        -- MSI has also a BCastInv procedure
+
                        } deriving(Show)
 
-type OrderedNetsName = String
 type Param           = String
 
 -----------------------------------------------------------------

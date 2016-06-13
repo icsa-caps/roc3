@@ -43,12 +43,24 @@ fstCap (ch:str) = (toUpper ch) : str
 printEnum :: Name -> [Val] -> String
 printEnum name values =  name ++ ": enum {\n" ++ (concatWith ",\n" values) ++ "};\n"
 
+mapconcatln :: (a -> String) -> [a] -> String
+mapconcatln f list = let indiv = map f list
+                     in  concatln indiv
+
+disjunction :: [String] -> String
+disjunction = concatWith " | "
+
 -----------------------------------------------------------------
 -- type declarations (used throughout the syntax tree)
 
 instance Cl.MurphiClass TypeDecl where
  --tomurphi :: TypeDecl -> String
  tomurphi (Decl var varType) = show var ++ ": " ++ Cl.tomurphi varType ++ ";\n"
+--------------------------------
+
+-- for assignment statements
+assign :: TypeDecl -> String
+assign (Decl var varType) = show var ++ ":= " ++ Cl.tomurphi varType ++ ";\n"
 
 
 instance Cl.MurphiClass Type where
@@ -115,16 +127,14 @@ instance Cl.MurphiClass Constants where
     onlyMachines     = map fst machineSizes
     onlySizes        = map snd machineSizes
     machineSize      = map (++"Size") onlyMachines
-    machinesSizes    = let indiv = map declGen (zip machineSize onlySizes)
-                       in  concatln indiv
+    machinesSizes    = mapconcatln declGen (zip machineSize onlySizes)
 
     ---- <machineName>Size : <num>;
     --------------------------------
 
     vcVal     = zip (map ("VC_" ++) vcs) [0,1..]
 
-    vcDecl    = let indiv = map declGen vcVal
-                in  concatln indiv
+    vcDecl    = mapconcatln declGen vcVal
 
     numChs    = length vcs
 
@@ -184,8 +194,7 @@ instance Cl.MurphiClass Types where
     -----------------------------
     -- fields/arguments of msgs (e.g. src)
     msgFields    = msgArgs types                      -- :: TypeDecl from MurphiAST
-    finalMsgArgs = let indiv = map Cl.tomurphi msgFields -- so we use tomurphi
-                   in  concatln indiv
+    finalMsgArgs = mapconcatln Cl.tomurphi msgFields
     message      = "Message:\n Record\n  mtype : MessageType;\n  src : Node\n"
                    ++ finalMsgArgs ++ "end;\n"
 
@@ -216,8 +225,7 @@ instance Cl.MurphiClass Variables where
    formatMachine :: MachineName -> String
    formatMachine machine = machine ++ "s" ++ " array [" ++ machine ++ "Ind" ++ "]"
                            ++ " of " ++ machine ++ "State;"
-   finalMachines = let indiv = map formatMachine machineNames
-                   in  concatln indiv
+   finalMachines = mapconcatln formatMachine machineNames
 
    -----------------------------
 
@@ -228,12 +236,12 @@ instance Cl.MurphiClass Variables where
    counts :: String -> String
    counts net = net ++ "count: array[Node] of 0..NET_MAX;"
 
-   combine :: String -> String
-   combine net = formatOrd net ++ "\n" ++ counts net
+   combineArrayCount :: String -> String
+   combineArrayCount net = formatOrd net ++ "\n" ++ counts net
 
    finalOrd = let  ordNetNames = map netName $ map (Left) ordNets
-                   indiv = map combine ordNetNames
-              in  concatln indiv
+              in   mapconcatln combineArrayCount ordNetNames
+
    -----------------------------
 
    unordNets = unorderedNets variables
@@ -241,8 +249,8 @@ instance Cl.MurphiClass Variables where
    formatUnord net = net ++ ": array[Node] of multiset [NET_MAX] of Message;"
 
    finalUnord = let unordNetNames = map netName $ map (Right) unordNets
-                    indiv = map formatUnord unordNetNames
-                in  concatln indiv
+                in  mapconcatln formatUnord unordNetNames
+
 
  ----------------------------------------------------------------
 
@@ -251,7 +259,115 @@ instance Cl.MurphiClass Variables where
 
 
 instance Cl.MurphiClass CommonFunctions where
- tomurphi = undefined
+ tomurphi (FuncParams orderedNetNames sendArgs  ) =
+    finalSend      ++ "\n" ++
+    finalAdvanceQ  ++ "\n" ++
+    errorFunctions ++ "\n"
+
+  where
+   countName :: NetName -> String
+   countName netName = netName ++ "count"
+
+   -- advance ordered network queue
+   advanceQ netName = let count = countName netName
+                      in "procedure Advance" ++ netName ++ "(n:Node);\n" ++
+                          "begin\n" ++
+                          "Assert (" ++  count ++ "[n] > 0) \"Trying to advance empty Q\";\n" ++
+                          "for i := 0 to " ++ count ++ "[n]-1 do\n" ++
+                            "if i < " ++ count ++ "[n]-1 then\n" ++
+                              netName ++ "[n][i] := " ++ netName ++ "[n][i+1];\n" ++
+                            "else\n" ++
+                              "undefine " ++ netName ++ "[n][i];\n" ++
+                            "endif;\n" ++
+                          "endfor;\n  " ++
+                           count ++ "[n] := " ++ count ++ "[n] - 1;\n" ++
+                          "end;\n"
+
+   finalAdvanceQ = mapconcatln advanceQ orderedNetNames
+
+   -----------------------------
+
+   -- Send
+   msgArgs = fst sendArgs
+   netVCs  = snd sendArgs
+
+
+
+   sendTop = "Procedure Send( mtype: MessageType;\n" ++
+                             concat (map Cl.tomurphi msgArgs) ++
+                             "dst: Node" ++ ");"
+
+   sendNext = "var\n  msg: Message;\nbegin"
+
+   sendEnd = "end;\n"
+
+   msgFieldAssign :: MsgArg -> String
+   msgFieldAssign msgArg = "msg." ++ assign msgArg
+
+   assignments = mapconcatln msgFieldAssign msgArgs
+
+   finalSend = sendTop     ++ "\n" ++
+               sendNext    ++ "\n" ++
+               assignments ++ "\n" ++
+               printedNets ++ "\n" ++
+               sendEnd
+
+   -----------------------------
+   nets = map fst netVCs
+   vcs  = map snd netVCs
+
+   -- all the if-then clauses for checking for each network if the msg is in
+   -- the one of the VCs of the network
+   printedNets = printAddNet nets vcConds
+
+   -- adding msg to Network
+   printAddNet (net:nets) (cond:conds) =
+    " if " ++ cond ++ " then\n  " ++ addToNet net ++ "\n" ++ printAddNetRest nets conds
+
+   printAddNetRest [net] [cond] = " else\n  " ++ addToNet net ++ "\nendif;"
+   printAddNetRest (net : nets) (cond : conds)
+     = " elsif " ++ cond ++ " then\n  " ++ addToNet net ++"\n" ++ printAddNetRest nets conds
+
+   -- list of conditions for adding to a msg to a net
+   -- each element of list is the disjunction that is the condition for this net
+   vcConds = let temp = map (map ("vc = " ++)) vcs
+            in  map disjunction temp
+
+   -- adding a msg to an arbitrary net
+   addToNet :: NetName -> String
+   addToNet net | isOrdered net  = addOrd net
+                | otherwise      = addUnord net
+
+   -- adding a msg to an ordered net
+   addOrd net = let count = countName net
+               in   "  Assert("++ count ++ "[dst] < NET_MAX)" ++
+                    "\"Too many msgs on " ++ net ++ "Q\";\n" ++
+                    "  " ++ net ++ "[dst][" ++ count ++ "[dst]] := msg;\n" ++
+                    "  " ++ count ++ "[dst] := " ++ count ++ "[dst] + 1;\n"
+
+   -- adding a msg to an unordered net
+   addUnord net =
+    "  Assert (MultiSetCount(i:" ++ net ++ "[dst], true) < NET_MAX)" ++
+    "\"Too many messages\";\n" ++
+    "  MultiSetAdd(msg, " ++ net ++ "[dst]);\n"
+
+   -----------------------------
+   -- helper function
+   isOrdered :: NetName -> Bool
+   isOrdered net = net `elem` orderedNetNames
+
+   -----------------------------
+   -- error functions
+   errorFunctions = "procedure ErrorUnhandledMsg();\n" ++
+                    "begin\n" ++
+                    "  error \"Unhandled message type!\";\n" ++
+                    "end;\n\n"++
+
+                    "procedure ErrorUnhandledState();\n" ++
+                    "begin\n" ++
+                    "  error \"Unhandled state!\";\n"++
+                    "end;"
+
 
 ----------------------------------------------------------------
 
