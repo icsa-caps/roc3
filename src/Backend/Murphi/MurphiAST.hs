@@ -40,6 +40,7 @@ data TypeDecl = Decl Name Type
 data Type = Boolean
           | Integer Lo Hi
           | Enum [Val]
+          | Node MachineType -- TODO: add tomurphi implementation
           | Array Index Type
           | Set (Either MachineType Size) Type --
           deriving(Show)

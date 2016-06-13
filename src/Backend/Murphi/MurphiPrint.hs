@@ -74,6 +74,8 @@ instance Cl.MurphiClass Type where
                                       ( concatWith ",\n" values )
                                       ++ " }"
 
+ tomurphi (Node machine)            = machine 
+
  tomurphi (Array index otherType)   = let formatInd = fstCap index
                                       in   " array [ " ++ formatInd ++ " ]"
                                            ++ " of " ++ Cl.tomurphi otherType
