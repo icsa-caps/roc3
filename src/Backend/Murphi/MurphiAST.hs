@@ -78,15 +78,15 @@ data Types  = Types
 
                 nodes           :: [MachineType],         -- union of the machines
 
-                vcType          :: Size,
+                --vcType          :: Size,
 
-                msgType         :: [String],
+                msgType         :: [String], -- kinds of msgs (Ack, Fwd etc.)
 
                 msgArgs         :: [MsgArg], -- only info we need to print msg
 
                 machineStates   :: [ (MachineType,
-                                    [State],
-                                    [TypeDecl]) ]
+                                    [State],       -- states of each machine
+                                    [TypeDecl]) ]  -- fields of the machine
              }
              deriving(Show)
 

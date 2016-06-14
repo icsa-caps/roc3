@@ -9,11 +9,13 @@
 
 
 
-module Murphi where
+module MurphiPrint where
 
 import  MurphiAST
 import qualified MurphiClass as Cl
 import Data.Char
+import Data.List.Split -- for tokenizing strings
+                       -- splitOn is used in pushBy
 
 -----------------------------------------------------------------
 
@@ -25,14 +27,14 @@ import Data.Char
 decl :: String -> String -> String
 decl iden val  = iden ++ " : " ++ val ++ ";\n"
 
-declGen :: (Show a) => (String,a) -> String
+declGen :: (Show a) => (String, a) -> String
 declGen (iden,val) = decl iden (show val)
 
 concatWith :: String -> [String] -> String
 concatWith split = foldr1 (\x y -> x ++ split ++ y)
 
 concatln ::  [String] -> String
-concatln arg = (concatWith "\n" arg )++ "\n"
+concatln arg = (concatWith "\n" arg ) ++ "\n"
 
 concatcomma :: [String] -> String
 concatcomma = concatWith ", "
@@ -41,7 +43,14 @@ fstCap :: String -> String
 fstCap (ch:str) = (toUpper ch) : str
 
 printEnum :: Name -> [Val] -> String
-printEnum name values =  name ++ ": enum {\n" ++ (concatWith ",\n" values) ++ "};\n"
+printEnum name values = name ++ ": enum { " ++
+                        (concatWith (",\n" ++ alignSpace) values) ++
+                        " };\n"
+ where
+  numSpaces  = length (name ++ ": enum { ")
+  alignSpace = replicate numSpaces ' '
+
+
 
 mapconcatln :: (a -> String) -> [a] -> String
 mapconcatln f list = let indiv = map f list
@@ -50,17 +59,23 @@ mapconcatln f list = let indiv = map f list
 disjunction :: [String] -> String
 disjunction = concatWith " | "
 
+-- moves each line by the specified number of spaces
+pushBy :: Int -> String -> String
+pushBy num = let spaces = replicate num ' '
+             in  concatln . map (spaces ++ ) . takeWhile (/= "") . splitOn "\n"
+             -- takeWhile is for dismissing the empty new lines
+
 -----------------------------------------------------------------
 -- type declarations (used throughout the syntax tree)
 
 instance Cl.MurphiClass TypeDecl where
  --tomurphi :: TypeDecl -> String
- tomurphi (Decl var varType) = show var ++ ": " ++ Cl.tomurphi varType ++ ";\n"
+ tomurphi (Decl var varType) = var ++ ": " ++ Cl.tomurphi varType ++ ";"
 --------------------------------
 
 -- for assignment statements
 assign :: TypeDecl -> String
-assign (Decl var varType) = show var ++ ":= " ++ Cl.tomurphi varType ++ ";\n"
+assign (Decl var varType) = show var ++ ":= " ++ Cl.tomurphi varType ++ ";"
 
 
 instance Cl.MurphiClass Type where
@@ -74,7 +89,7 @@ instance Cl.MurphiClass Type where
                                       ( concatWith ",\n" values )
                                       ++ " }"
 
- tomurphi (Node machine)            = machine 
+ tomurphi (Node machine)            = machine
 
  tomurphi (Array index otherType)   = let formatInd = fstCap index
                                       in   " array [ " ++ formatInd ++ " ]"
@@ -162,8 +177,7 @@ instance Cl.MurphiClass Types where
                   vcType ++ "\n" ++
                   "-- Message Type\n"   ++ finalMsgType    ++ "\n" ++
                   "-- Message\n"        ++ message         ++ "\n" ++
-                  "-- Machine States\n" ++ finalMstates    ++ "\n" ++
-                  " --"
+                  "-- Machine States\n" ++ finalMstates    ++ "\n"
 
    where
     machinesSizes   = machineSizesT types
@@ -171,10 +185,13 @@ instance Cl.MurphiClass Types where
     scalarsets      = let sizes = map snd machinesSizes
                       in  map ( \size -> "scalarset(" ++ show size ++ ")" ) sizes
 
-    finalScalarsets = let machines     = map fst machinesSizes
+    finalScalarsets = let machines       = map fst machinesSizes
                           formatMachines = map (++ "Ind") machines
                           finalPairs     = zip formatMachines scalarsets
-                          strs           = map declGen finalPairs
+                          -- use uncurry decl instead of declGen (that takes pairs)
+                          -- because the latter has show to the second argument
+                          -- and strings are printed with ""
+                          strs           = map (uncurry decl) finalPairs
                       in  concatln strs
 
     ---- <machine1>Ind : scalarset(<size>); (fst letter cap)
@@ -185,8 +202,9 @@ instance Cl.MurphiClass Types where
     finalNodes   = "Node: union { " ++ concatcomma allMachines ++ " };\n"
 
     -----------------------------
-    vcType       = "VC_Type : 0..NUM_VCs -1;\n"
-
+    vcType       = "VC_Type : 0..NUM_VCs -1;\n" -- no error generated
+                                                -- even though vcType is
+                                                -- function in MurphiAST
     ----------------------------
     -- kinds of msgs (e.g. Ack, Fwd etc.)
     msgTypes     = msgType types -- just strings of all the possible mtypes
@@ -195,21 +213,23 @@ instance Cl.MurphiClass Types where
 
     -----------------------------
     -- fields/arguments of msgs (e.g. src)
-    msgFields    = msgArgs types                      -- :: TypeDecl from MurphiAST
+    msgFields    = msgArgs types
     finalMsgArgs = mapconcatln Cl.tomurphi msgFields
     message      = "Message:\n Record\n  mtype : MessageType;\n  src : Node\n"
-                   ++ finalMsgArgs ++ "end;\n"
+                   ++ (pushBy 2 finalMsgArgs) ++ " end;\n"
 
     -----------------------------
     mstates      = machineStates types
 
     printMstate :: (MachineName,[StateName],[TypeDecl]) -> String
-    printMstate (machine, states, types)
+
+
+    printMstate (machine, states, fields)
                  = machine ++ "State:\n record\n" ++
-                   printEnum "state" states ++
-                   concatWith ",\n" (map show types)
-                   ++ "end;\n"
-    finalMstates = concatWith "\n" $ map printMstate mstates
+                   pushBy 2 ( printEnum "state" states ++
+                              concatWith ",\n" (map Cl.tomurphi fields))
+                   ++ " end;\n"
+    finalMstates = concatln $ map printMstate mstates
 
 -----------------------------------------------------------------
 
@@ -219,13 +239,13 @@ instance Cl.MurphiClass Variables where
 
  tomurphi :: Variables -> String
  tomurphi variables = "var\n" ++
-                      "-- machines\n"     ++ finalMachines ++ "\n" ++
-                      "--ordered Nets"    ++ finalOrd      ++ "\n" ++
-                      "-- unordered Nets" ++ finalUnord    ++ "\n"
+                      "-- machines\n"       ++ finalMachines ++ "\n" ++
+                      "--ordered Nets\n"    ++ finalOrd      ++ "\n" ++
+                      "-- unordered Nets\n" ++ finalUnord    ++ "\n"
   where
    machineNames = machines variables
    formatMachine :: MachineName -> String
-   formatMachine machine = machine ++ "s" ++ " array [" ++ machine ++ "Ind" ++ "]"
+   formatMachine machine = machine ++ "s: " ++ " array [" ++ machine ++ "Ind" ++ "]"
                            ++ " of " ++ machine ++ "State;"
    finalMachines = mapconcatln formatMachine machineNames
 
@@ -233,10 +253,10 @@ instance Cl.MurphiClass Variables where
 
    ordNets = orderedNets variables
    formatOrd :: String -> String
-   formatOrd net = net ++ ": array[Node] of  array[0..NET_MAX-1] of Message;"
+   formatOrd net = net ++ ": array [Node] of array [0..NET_MAX-1] of Message;"
 
    counts :: String -> String
-   counts net = net ++ "count: array[Node] of 0..NET_MAX;"
+   counts net = net ++ "count: array [Node] of 0..NET_MAX;"
 
    combineArrayCount :: String -> String
    combineArrayCount net = formatOrd net ++ "\n" ++ counts net
@@ -248,7 +268,7 @@ instance Cl.MurphiClass Variables where
 
    unordNets = unorderedNets variables
    formatUnord :: String -> String
-   formatUnord net = net ++ ": array[Node] of multiset [NET_MAX] of Message;"
+   formatUnord net = net ++ ": array [Node] of multiset [NET_MAX] of Message;"
 
    finalUnord = let unordNetNames = map netName $ map (Right) unordNets
                 in  mapconcatln formatUnord unordNetNames
@@ -261,7 +281,7 @@ instance Cl.MurphiClass Variables where
 
 
 instance Cl.MurphiClass CommonFunctions where
- tomurphi (FuncParams orderedNetNames sendArgs  ) =
+ tomurphi (FuncParams orderedNetNames sendInfo  ) =
     finalSend      ++ "\n" ++
     finalAdvanceQ  ++ "\n" ++
     errorFunctions ++ "\n"
@@ -274,15 +294,15 @@ instance Cl.MurphiClass CommonFunctions where
    advanceQ netName = let count = countName netName
                       in "procedure Advance" ++ netName ++ "(n:Node);\n" ++
                           "begin\n" ++
-                          "Assert (" ++  count ++ "[n] > 0) \"Trying to advance empty Q\";\n" ++
-                          "for i := 0 to " ++ count ++ "[n]-1 do\n" ++
-                            "if i < " ++ count ++ "[n]-1 then\n" ++
+                          " Assert (" ++  count ++ "[n] > 0) \"Trying to advance empty Q\";\n" ++
+                          " for i := 0 to " ++ count ++ "[n]-1 do\n" ++
+                            "  if i < " ++ count ++ "[n]-1 then\n   " ++
                               netName ++ "[n][i] := " ++ netName ++ "[n][i+1];\n" ++
-                            "else\n" ++
-                              "undefine " ++ netName ++ "[n][i];\n" ++
-                            "endif;\n" ++
-                          "endfor;\n  " ++
-                           count ++ "[n] := " ++ count ++ "[n] - 1;\n" ++
+                            "  else\n" ++
+                              "   undefine " ++ netName ++ "[n][i];\n" ++
+                            "  endif;\n" ++
+                          " endfor;\n" ++
+                          " " ++ count ++ "[n] := " ++ count ++ "[n] - 1;\n" ++
                           "end;\n"
 
    finalAdvanceQ = mapconcatln advanceQ orderedNetNames
@@ -290,16 +310,16 @@ instance Cl.MurphiClass CommonFunctions where
    -----------------------------
 
    -- Send
-   msgArgs = fst sendArgs
-   netVCs  = snd sendArgs
+   msgArgs = fst sendInfo
+   netVCs  = snd sendInfo
 
 
 
-   sendTop = "Procedure Send( mtype: MessageType;\n" ++
-                             concat (map Cl.tomurphi msgArgs) ++
-                             "dst: Node" ++ ");"
+   sendTop = "Procedure Send(mtype: MessageType;\n" ++
+             pushBy 15 (mapconcatln Cl.tomurphi msgArgs) ++
+             "               " ++ "dst: Node" ++ ");"
 
-   sendNext = "var\n  msg: Message;\nbegin"
+   sendNext = "var\n  msg: Message;\nbegin\n"
 
    sendEnd = "end;\n"
 
@@ -326,7 +346,7 @@ instance Cl.MurphiClass CommonFunctions where
    printAddNet (net:nets) (cond:conds) =
     " if " ++ cond ++ " then\n  " ++ addToNet net ++ "\n" ++ printAddNetRest nets conds
 
-   printAddNetRest [net] [cond] = " else\n  " ++ addToNet net ++ "\nendif;"
+   printAddNetRest [net] [cond] = " else\n  " ++ addToNet net ++ "\n endif;"
    printAddNetRest (net : nets) (cond : conds)
      = " elsif " ++ cond ++ " then\n  " ++ addToNet net ++"\n" ++ printAddNetRest nets conds
 
@@ -342,14 +362,14 @@ instance Cl.MurphiClass CommonFunctions where
 
    -- adding a msg to an ordered net
    addOrd net = let count = countName net
-               in   "  Assert("++ count ++ "[dst] < NET_MAX)" ++
-                    "\"Too many msgs on " ++ net ++ "Q\";\n" ++
+                in  "Assert("++ count ++ "[dst] < NET_MAX)" ++
+                    " \"Too many msgs on " ++ net ++ "Q\";\n" ++
                     "  " ++ net ++ "[dst][" ++ count ++ "[dst]] := msg;\n" ++
                     "  " ++ count ++ "[dst] := " ++ count ++ "[dst] + 1;\n"
 
    -- adding a msg to an unordered net
    addUnord net =
-    "  Assert (MultiSetCount(i:" ++ net ++ "[dst], true) < NET_MAX)" ++
+    "Assert (MultiSetCount(i:" ++ net ++ "[dst], true) < NET_MAX)" ++
     "\"Too many messages\";\n" ++
     "  MultiSetAdd(msg, " ++ net ++ "[dst]);\n"
 
