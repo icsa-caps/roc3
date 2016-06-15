@@ -2,6 +2,7 @@
 module Ast where
 
 data Ast        = Model {
+                          globals  :: [ TypeDecl], 
                           channels :: [ Channel ],
                           networks :: [ Network ],
                           machines :: [ Machine ]

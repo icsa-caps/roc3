@@ -38,6 +38,7 @@ tokens :-
     \:              { \s -> TokenColon }
     \.              { \s -> TokenFullStop }
 
+    global          { \s -> TokenGlobal }
     channels        { \s -> TokenChannels }
     networks        { \s -> TokenNetworks }
     ordered         { \s -> TokenOrdered }
@@ -80,6 +81,7 @@ data Token = TokenBegin
            | TokenStar
            | TokenColon
            | TokenFullStop
+           | TokenGlobal
            | TokenChannels
            | TokenNetworks
            | TokenOrdered

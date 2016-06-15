@@ -28,6 +28,7 @@ import Data.List
     ':'           { TokenColon }
     '.'           { TokenFullStop }
 
+    global      { TokenGlobal }
     channels    { TokenChannels }
     networks    { TokenNetworks }
     ordered     { TokenOrdered }
@@ -53,7 +54,13 @@ import Data.List
 
 %%
 
-Model           : Channels Networks Machines                         { Model $1 $2 $3 }
+Model           : Globals Channels Networks Machines                 { Model $1 $2 $3 $4 }
+
+Globals         : {-- empty --}                                      { [] }
+                | global ':' Globals1 ';'                            { $3 }
+
+Globals1        : TypeDecl                                           { [$1] }
+                | Globals1 ',' TypeDecl                              { $3 : $1 }
 
 Channels        : {-- empty --}                                      { [] }
                 | channels ':' Channels1 ';'                         { $3 }
@@ -151,13 +158,13 @@ Responses       : {-- empty --}                                    { [] }
 Response1       : Response ';'                                     { $1 }
 
 
-Response        : Mail                                              { Response $1 }
-                | Assignment                                        { Update $1 }
-                | iden                                              { SelfIssue $1 }
-                | iden '.' add '(' iden ')'                         { Add $1 $5 }
-                | iden '.' del '(' iden ')'                         { Del $1 $5 }
-                | iden '.' add '(' num ')'                          { Add $1 (show $5) }
-                | iden '.' del '(' num ')'                          { Del $1 (show $5) }
+Response        : Mail                                             { Response $1 }
+                | Assignment                                       { Update $1 }
+                | iden                                             { SelfIssue $1 }
+                | iden '.' add '(' iden ')'                        { Add $1 $5 }
+                | iden '.' del '(' iden ')'                        { Del $1 $5 }
+                | iden '.' add '(' num ')'                         { Add $1 (show $5) }
+                | iden '.' del '(' num ')'                         { Del $1 (show $5) }
 
 
 Assignment      : iden '=' iden                                     { Var $1 $3 }

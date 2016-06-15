@@ -1,6 +1,12 @@
+
+// global variables
+// each declaration is of type TypeDecl,
+// just like the arguments of messages or 
+// the field declarations of machines
+global: int[0..1000] msgsExchanged;
+
 // here are the model's channels
 channels: c1,c2,c3; 
-
 
 // and here are the model's networks
 networks: ordered net1{c1}, unordered net2{c1,c2};
@@ -9,6 +15,11 @@ networks: ordered net1{c1}, unordered net2{c1,c2};
 // to the network
 // networks can either be ordered (FIFO queue) or unordered
 // (multisets of messages)
+
+// we may have global variables see note in the end
+
+
+
 
 
 machine Cache:[4] {
@@ -32,8 +43,8 @@ machine Cache:[4] {
 	Dir[0]!Ack;
   }
 
-  (M, Dir[0]?Fwd_GetM<cache src1, dir dir>, I) {
-   	 src1!Data;  
+  (M, Dir[0]?Fwd_GetM<cache src1, dir dir>, I) { // we can infer which variables
+   	 src1!Data;  				   // are msg args see node in the end
   }
 
 }
@@ -72,3 +83,15 @@ machine Dir:[1] {
   (IM, src?Ack, M) {
    }
 }
+
+
+
+
+// when accessing a variable in murphi inside a receive function of a machine,
+// we need to know whether the variable is a filed of the machine (print node.<var>),
+// a field of the message being processed (print msg.<var>) or a global variable
+// (print <var>).
+// at the intermidiate stage we can do the following:
+// see if the variable is in the list of global variables. If it's not, see if it's 
+// one of the message arguments. If it's neither a message argument nor a global
+// variable, then it's a field of the machine
