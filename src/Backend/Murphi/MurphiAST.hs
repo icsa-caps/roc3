@@ -29,8 +29,8 @@ type MsgArg           = TypeDecl
 -- helper data structures
 type VCNets = [ (VCName, Network) ]
 
--- for Send
-data Message = Message MsgType [ (TypeName, Maybe Val) ]
+-- only for Send
+data Message = Message MsgType [ (TypeName, Maybe Val, Owner) ] -- for Owner see bellow
              deriving(Show)
 
 -- in place of TypeDecl in Ast, to make printing easier
@@ -42,12 +42,25 @@ data Type = Boolean
           | Enum [Val]
           | Node MachineType -- TODO: add tomurphi implementation
           | Array Index Type
-          | Set (Either MachineType Size) Type --
-          deriving(Show)
+          | Set (Either MachineType Size) Type -- Left machine means the size
+          deriving(Show)                       -- of the set = #machines
 
 type Lo    = Int
 type Hi    = Int
 type Index = String
+
+-- who owns a field? needed in Respond
+-- i.e. when we print variable assignments or send messages
+-- e.g. to print "dir.owner = cache[1]" we need to know that (in this context)
+-- owner is a field "owned" by dir and is not global
+-- (in which case we would print "owner = cache[1]")
+-- or if we want to print "Send(msg.src)" or "Send(cache[1].src)"
+-- we want to differentiate between the two srcs
+data Owner = Msg
+           | Global
+           | Machine MachineType
+           deriving(Show)
+
 
 -----------------------------------------------------------------
 data Program = Program Constants
@@ -132,8 +145,8 @@ type Param           = String
 data MachineFunctions = MachineFunctions [ (Sets, MachineType, ReceiveFunction ) ]
                         deriving(Show)
 
--- we need a pair of add and remove functions for each set (for each machine)
-type Sets            = [SetName]
+-- we need a pair of add and remove functions for each set field a machine has
+type Sets            = [TypeDecl] -- in MurphiPrint we check TypeDecl is a set
 
 type ReceiveFunction = [ ( State, Guard, [Respond] ) ]
 
@@ -147,9 +160,9 @@ type MType           = String --mtype in murphi
 
 data Respond         = ToState State
                      | Send Message Dst
-                     | Assign Var Val
-                     | Add SetName Elem
-                     | Del SetName Elem
+                     | Assign Var Val Owner
+                     | Add SetName Elem Owner
+                     | Del SetName Elem Owner
                        deriving(Show)
 
 type Elem = String
@@ -159,7 +172,7 @@ type Dst = String
 -- Rules
 
 -- problem: at murphi, one of the responses in rules can be
--- "clear <field>" (in MSI it's acks).
+-- "clear <field>" (in MSI it is acks).
 -- just an optimization, no need to do it
 
 
