@@ -102,6 +102,7 @@ data Response   = Response Mail
                 | SelfIssue String -- will be ignored in the Target AST see mi.c3
                 | Add SetName String
                 | Del SetName String
+                | Stall
                   deriving(Show)
 
 type SetName = String

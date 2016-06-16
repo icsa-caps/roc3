@@ -50,7 +50,7 @@ tokens :-
     Issue           { \s -> TokenIssue }
     Receive         { \s -> TokenReceive }
     Send            { \s -> TokenSend }
-    Stall           { \s -> TokenStall }
+    stall           { \s -> TokenStall }
     Trans           { \s -> TokenTrans }
     add             { \s -> TokenAdd }
     del             { \s -> TokenDel }

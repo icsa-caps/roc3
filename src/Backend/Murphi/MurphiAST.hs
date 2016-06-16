@@ -125,18 +125,19 @@ type Param           = String
 
 -- Machine Functions
 
-data MachineFunctions = MachineFunctions [ (Sets, MachineType, ReceiveFunction ) ]
+data MachineFunctions = MachineFunctions [ (MachineType, Sets, ReceiveFunction ) ]
                         deriving(Show)
 
 -- we need a pair of add and remove functions for each set field a machine has
 type Sets            = [TypeDecl] -- in MurphiPrint we check TypeDecl is a set
 
-type ReceiveFunction = [ ( State, Guard, [Respond] ) ]
+type ReceiveFunction = [ ( State, [ (Maybe Guard, [Respond]) ] ) ]
 
 
 data Guard           = Receive MType
-                     | AtState State
+                     | AtState Point State
                       deriving(Show)
+type Point = String -- a point in the network, a node (node is taken)
 
 type MType           = String --mtype in murphi
 
@@ -146,6 +147,7 @@ data Respond         = ToState State
                      | Assign Field (Either Field Val)    -- what if the value also has an owner?
                      | Add SetName (Either Field Val)  -- the owner of the set is the machine
                      | Del SetName (Either Field Val)  -- in question. Owner here is  for the elem
+                     | Stall
                        deriving(Show)
 
 type Elem = Field

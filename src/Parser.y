@@ -42,7 +42,7 @@ import Data.List
     Issue       { TokenIssue }
     Receive     { TokenReceive }
     Send        { TokenSend }
-    Stall       { TokenStall }
+    stall       { TokenStall }
     Trans       { TokenTrans }
     add         { TokenAdd }
     del         { TokenDel }
@@ -165,6 +165,7 @@ Response        : Mail                                             { Response $1
                 | iden '.' del '(' iden ')'                        { Del $1 $5 }
                 | iden '.' add '(' num ')'                         { Add $1 (show $5) }
                 | iden '.' del '(' num ')'                         { Del $1 (show $5) }
+                | stall                                            { Stall }
 
 
 Assignment      : iden '=' iden                                     { Var $1 $3 }
