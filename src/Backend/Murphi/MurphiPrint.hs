@@ -2,7 +2,7 @@
 -- functions that print the target AST to murphi source code
 
 
--- allow type synonyms to implement typeclasses
+-- allow type synonyms and composite types to implement typeclasses
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE InstanceSigs #-}
@@ -21,26 +21,34 @@ import Data.List.Split -- for tokenizing strings
 
 
 -----------------------------------------------------------------
--- general helper functions
+-- general helper functions and type synonyms
+
+type MachineName = String
 
 
 decl :: String -> String -> String
 decl iden val  = iden ++ " : " ++ val ++ ";\n"
 
+
 declGen :: (Show a) => (String, a) -> String
 declGen (iden,val) = decl iden (show val)
+
 
 concatWith :: String -> [String] -> String
 concatWith split = foldr1 (\x y -> x ++ split ++ y)
 
+
 concatln ::  [String] -> String
 concatln arg = (concatWith "\n" arg ) ++ "\n"
+
 
 concatcomma :: [String] -> String
 concatcomma = concatWith ", "
 
+
 fstCap :: String -> String
 fstCap (ch:str) = (toUpper ch) : str
+
 
 printEnum :: Name -> [Val] -> String
 printEnum name values = name ++ ": enum { " ++
@@ -56,8 +64,33 @@ mapconcatln :: (a -> String) -> [a] -> String
 mapconcatln f list = let indiv = map f list
                      in  concatln indiv
 
+mapconcatlnComma :: (a -> String) -> [a] -> String
+mapconcatlnComma f list = let indiv = map f list
+                          in  concatlnWith ",\n" indiv
+
+
 disjunction :: [String] -> String
 disjunction = concatWith " | "
+
+
+--------------------------------
+
+-- the variable that corresponds to an array of a type of machine
+-- e.g. in the original MSI murphi implementation "l1caches" for l1 cache
+-- here we just add an 's' in the end
+toVarM :: MachineType -> String
+toVarM machine = machine ++ "s"
+
+-- gives the name of the variable used for indexing this type of machine
+-- i.e. the name of the corresponding scalarset
+machineIndex :: MachineType -> String
+machineIndex machine = machine ++ "Index"
+
+-- gives the name of the record for this machine (the state of the machine)
+toMachineState :: MachineType -> String
+toMachineState machine = machine ++ "State"
+
+--------------------------------
 
 -- moves each line by the specified number of spaces
 pushBy :: Int -> String -> String
@@ -65,7 +98,29 @@ pushBy num = let spaces = replicate num ' '
              in  concatln . map (spaces ++ ) . takeWhile (/= "") . splitOn "\n"
              -- takeWhile is for dismissing the empty new lines
 
+--------------------------------
+
+-- extracting elements of triplets
+fst3 :: (a,b,c) -> a
+fst3 (a,b,c) = a
+
+snd3 :: (a,b,c) -> b
+snd3 (a,b,c) = b
+
+thrd3 :: (a,b,c) -> c
+thrd (a,b,c) = c
+
+-- extract info from a Message
+mtype :: Message -> String
+mtype Message mtype _ = mtype
+
+msgparameters :: Message -> [Maybe (Param, Owner)]
+msgparameters Message _ params = params
+
+--------------------------------
+
 -----------------------------------------------------------------
+
 -- type declarations (used throughout the syntax tree)
 
 instance Cl.MurphiClass TypeDecl where
@@ -80,7 +135,6 @@ assign (Decl var varType) = show var ++ ":= " ++ Cl.tomurphi varType ++ ";"
 
 instance Cl.MurphiClass Type where
 
- --tomurphi :: Type -> String
  tomurphi Boolean                   = "boolean"
 
  tomurphi (Integer lo hi)           = show lo ++ ".." ++ show hi
@@ -101,9 +155,44 @@ instance Cl.MurphiClass Type where
                                           ++ "] of " ++ Cl.tomurphi otherType
 
 
-------------------------------
 
-type MachineName = String
+-----------------------------------------------------------------
+
+-- responses (in receive functions)
+instance Cl.MurphiClass Respond where
+ -- state :: String
+ tomurphi (ToState state)      = "node.state := " ++ state ++ ";"
+ -- Message :: Message MsgType [Maybe Field]
+ -- src,dst :: Field
+ tomurphi (Send Message (mtype params) src dst)
+    = "Send(" ++ Cl.tomurphi src ++ ",\n" ++
+      "     " ++ Cl.tomurphi dst ++ ",\n" ++
+      pushBy 6 (mapconcatlnComma Cl.tomuphi params) ++ ");"
+
+ -- var,value :: Field
+ tomurphi (Assign var value)     = Cl.tomurphi var ++ " := " ++ Cl.tomurphi value ++ ";"
+
+ -- elem :: Either Field Val
+ tomurphi (Add setName elem)   = "AddTo" ++ setName ++ "List(" ++ Cl.tomurphi elem ++ ");"
+ tomurphi (Del setName elem)   = "RemoveFrom" ++ setName ++ "List(" ++ Cl.tomurphi elem ++ ");"
+
+--------------------------------
+
+instance Cl.MurphiClass Field where
+ tomurphi (Field var Global) = var
+ tomurphi (Field var Msg)    = "msg." ++ var
+ tomurphi (Field var (Machine machine)) = toMachineState machine ++ "." ++ var
+
+
+instance Cl.MurphiClass (Either Field Val) where
+ tomurphi (Left field) = Cl.tomurphi field
+ tomurphi (Right val)  = val
+
+instance Cl.MurphiClass Maybe Field where
+ tomurphi Nothing = "UNDEFINED"
+ tomuprhi (Just (field)) = Cl.tomurphi field
+
+
 
 -----------------------------------------------------------------
 
@@ -186,15 +275,13 @@ instance Cl.MurphiClass Types where
                       in  map ( \size -> "scalarset(" ++ show size ++ ")" ) sizes
 
     finalScalarsets = let machines       = map fst machinesSizes
-                          formatMachines = map (++ "Ind") machines
+                          formatMachines = map (machineIndex) machines
                           finalPairs     = zip formatMachines scalarsets
                           -- use uncurry decl instead of declGen (that takes pairs)
                           -- because the latter has show to the second argument
                           -- and strings are printed with ""
                           strs           = map (uncurry decl) finalPairs
                       in  concatln strs
-
-    ---- <machine1>Ind : scalarset(<size>); (fst letter cap)
 
 
     -----------------------------
@@ -215,7 +302,7 @@ instance Cl.MurphiClass Types where
     -- fields/arguments of msgs (e.g. src)
     msgFields    = msgArgs types
     finalMsgArgs = mapconcatln Cl.tomurphi msgFields
-    message      = "Message:\n Record\n  mtype : MessageType;\n  src : Node\n"
+    message      = "Message:\n record\n  mtype : MessageType;\n  src : Node\n"
                    ++ (pushBy 2 finalMsgArgs) ++ " end;\n"
 
     -----------------------------
@@ -225,7 +312,7 @@ instance Cl.MurphiClass Types where
 
 
     printMstate (machine, states, fields)
-                 = machine ++ "State:\n record\n" ++
+                 = toMachineState machine ++ ":\n record\n" ++
                    pushBy 2 ( printEnum "state" states ++
                               concatWith ",\n" (map Cl.tomurphi fields))
                    ++ " end;\n"
@@ -245,7 +332,7 @@ instance Cl.MurphiClass Variables where
   where
    machineNames = machines variables
    formatMachine :: MachineName -> String
-   formatMachine machine = machine ++ "s: " ++ " array [" ++ machine ++ "Ind" ++ "]"
+   formatMachine machine = toVarM machine ++ " array [" ++ machineIndex machine ++ "]"
                            ++ " of " ++ machine ++ "State;"
    finalMachines = mapconcatln formatMachine machineNames
 
@@ -316,8 +403,9 @@ instance Cl.MurphiClass CommonFunctions where
 
 
    sendTop = "Procedure Send(mtype: MessageType;\n" ++
-             pushBy 15 (mapconcatln Cl.tomurphi msgArgs) ++
-             "               " ++ "dst: Node" ++ ");"
+             "               " ++ "src: Node;\n" ++
+             "               " ++ "dst: Node;\n" ++
+             pushBy 15 (mapconcatln Cl.tomurphi msgArgs) ++ ");"
 
    sendNext = "var\n  msg: Message;\nbegin\n"
 
@@ -396,7 +484,63 @@ instance Cl.MurphiClass CommonFunctions where
 
 
 instance Cl.MurphiClass MachineFunctions where
- tomurphi = undefined
+ tomurphi (MachineFunction machineSetsTypeFunc) = undefined
+  where
+   sets     = map fst3 machineSetsTypeFunc
+   machines = map snd3 machineSetsTypeFunc
+   receive  = map thrd3 machineSetsTypeFunc
+
+   -----------------------------
+   -- print functions for adding and removing elements from a field that is
+   -- a set (e.g. list of sharers in MSI)
+   setFunctions :: MachineType -> TypeDecl -> String
+   setFunctionsunction machine set = addToSet set machine ++ "\n" ++
+                                     removeFromSet set machine
+   addToSet :: MachineType ->  TypeDecl -> String
+   addToSet (Decl set (Set _ type)) machine
+     = let thisSet = toVarM machine ++ "." ++ set
+       in  "procedure addTo" ++ name ++ "List" ++
+           "(x: " ++ Cl.tomurphi type ++ ");\nbegin\n" ++
+           " if MultiSetCount( i:" ++ thisSet ++ ", " ++
+           thisSet ++ "[i] = x ) != 0\n" ++
+           " then\n" ++ "  MultiSetAdd(x," ++ thisSet ++ " );\n" ++
+           " endif;\nend;\n"
+
+   addToSet _            = error "Used MurphiPrint.removeFromSet on a non-set"
+
+   removeFromSet :: MachineType -> TypeDecl -> String
+   removeFromSet machine (Decl set (Set _ type))
+    = let thisSet = toVarM machine ++ "." ++ set
+      in  "procedure RemoveFrom" ++ set ++ "List" ++
+          "( x: " ++ Cl.tomurphi type ++ " );\n" ++
+          "begin\n" ++
+          " MultiSetRemovePred(i:" ++ thisSet ++ "," ++  thisSet ++ "[i] = x);\n" ++
+          "end;\n"
+
+   removeFromSet _            = error "Used MurphiPrint.removeFromSet on a non-set"
+
+   finalSetFunctions :: MachineType -> [TypeDecl] -> String
+   finalSetFunctions machine sets = mapconcatln $ setFunctions machine sets
+
+   -----------------------------
+
+   machineReceive machine
+    = "function " ++ machine ++ "Receive(msg:Message; index: "
+      ++ machineIndex machine ++") : boolean;\n" ++
+      "begin\n" ++
+      " alias node: " ++ toVarM machine ++ "[index] do\n" ++
+      "  switch node.state\n" ++
+      "---------------------- other stuff -----------------------" ++
+      "   else\n" ++
+      "    ErrorUnhandledState();\n\n" ++
+      "  endswitch;\n" ++
+      " endalias;\n" ++
+      " -- Message processed\n" ++
+      " return true;\n" ++
+      "end;\n"
+
+
+
 
 ----------------------------------------------------------------
 

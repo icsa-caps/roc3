@@ -2,7 +2,7 @@
 module Ast where
 
 data Ast        = Model {
-                          globals  :: [ TypeDecl], 
+                          globals  :: [ TypeDecl],
                           channels :: [ Channel ],
                           networks :: [ Network ],
                           machines :: [ Machine ]
@@ -67,11 +67,12 @@ data Guard       = Guard Mail     -- extend with arbitrary guards
                   deriving(Show)
 
 data Mail        = Issue Msg
-                 | Send Msg Rec
+                 | Send Msg Dst
                  | ReceiveFrom Msg Src
                   deriving(Show)
 
-type Rec = String
+
+type Dst = String
 type Src = Maybe String
 
 

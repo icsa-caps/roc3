@@ -21,17 +21,12 @@ type Name             = String
 type State            = String
 type MachineType      = String
 type Rec              = String
-type MsgType          = String
 type StateName        = String
 type SetName          = String
 type MsgArg           = TypeDecl
 
 -- helper data structures
 type VCNets = [ (VCName, Network) ]
-
--- only for Send
-data Message = Message MsgType [ (TypeName, Maybe Val, Owner) ] -- for Owner see bellow
-             deriving(Show)
 
 -- in place of TypeDecl in Ast, to make printing easier
 data TypeDecl = Decl Name Type
@@ -48,18 +43,6 @@ data Type = Boolean
 type Lo    = Int
 type Hi    = Int
 type Index = String
-
--- who owns a field? needed in Respond
--- i.e. when we print variable assignments or send messages
--- e.g. to print "dir.owner = cache[1]" we need to know that (in this context)
--- owner is a field "owned" by dir and is not global
--- (in which case we would print "owner = cache[1]")
--- or if we want to print "Send(msg.src)" or "Send(cache[1].src)"
--- we want to differentiate between the two srcs
-data Owner = Msg
-           | Global
-           | Machine MachineType
-           deriving(Show)
 
 
 -----------------------------------------------------------------
@@ -151,7 +134,7 @@ type Sets            = [TypeDecl] -- in MurphiPrint we check TypeDecl is a set
 type ReceiveFunction = [ ( State, Guard, [Respond] ) ]
 
 
-data Guard           = Receive MType   -- the src may be important
+data Guard           = Receive MType
                      | AtState State
                       deriving(Show)
 
@@ -159,14 +142,40 @@ type MType           = String --mtype in murphi
 
 
 data Respond         = ToState State
-                     | Send Message Dst
-                     | Assign Var Val Owner
-                     | Add SetName Elem Owner
-                     | Del SetName Elem Owner
+                     | Send Message Src Dst    -- see note below for dst
+                     | Assign Field (Either Field Val)    -- what if the value also has an owner?
+                     | Add SetName (Either Field Val)  -- the owner of the set is the machine
+                     | Del SetName (Either Field Val)  -- in question. Owner here is  for the elem
                        deriving(Show)
 
-type Elem = String
-type Dst = String
+type Elem = Field
+
+-- only for Send
+data Message = Message MType [ Maybe Field ] -- for Owner see bellow
+             deriving(Show)
+
+-- who owns a field? needed in Respond
+-- i.e. when we print variable assignments or send messages
+-- e.g. to print "dir.owner = cache[1]" we need to know that (in this context)
+-- owner is a field "owned" by dir and is not global
+-- (in which case we would print "owner = cache[1]")
+-- or if we want to print "Send(msg.src)" or "Send(cache[1].src)"
+-- we want to differentiate between the two srcs
+data Owner = Msg
+           | Global
+           | Machine MachineType
+           deriving(Show)
+
+data Field = Field Var Owner
+
+type Src = Field
+type Dst = Field
+
+
+-- Send : dst in the frontend language does not have a type
+-- (syntax : "dst!Msg") but we must infer the owner,
+-- like for the Message arguments
+
 -----------------------------------------------------------------
 
 -- Rules
