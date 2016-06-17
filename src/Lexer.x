@@ -7,13 +7,12 @@ module Lexer where
 
 %wrapper "basic"
 
-$digit = 0-9
-@digits = [$digit]+
-$alpha = [a-zA-Z]
-$eol   = [\n]
-@iden  = $alpha [$alpha $digit \_ ]* (  \[  ( @digits )   \]  )?
-@idenNoBr  = $alpha [$alpha $digit \_ ]*
-@comment   = \/ \/ [^\n]* \n
+$digit    = 0-9
+@digits   = [$digit]+
+$alpha    = [a-zA-Z]
+$eol      = [\n]
+@iden = $alpha [$alpha $digit \_ ]*
+@comment  = \/ \/ [^\n]* \n
 
 tokens :-
 
@@ -57,7 +56,6 @@ tokens :-
 
     @digits         { \s -> TokenNum (read s) }
     @iden           { \s -> TokenIdentifier s }
-    @idenNoBr       { \s -> TokenIdentifierNoBr s }
 
 
 
@@ -98,7 +96,6 @@ data Token = TokenBegin
            | TokenAdd
            | TokenDel
            | TokenIdentifier String
-           | TokenIdentifierNoBr String
            | TokenNum Int
            deriving (Eq,Show)
 

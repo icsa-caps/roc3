@@ -1,6 +1,20 @@
 
 module Ast where
 
+-- type synonyms
+type Fields     = [Field]
+type Field      = TypeDecl
+type MachineType = String
+type Size = Int
+type Dst = Param
+type Src = Param
+type MsgArgs = [MsgArg]
+type MsgArg  = TypeDecl
+type SetName = String
+type VarName = String
+type Index   = Int
+
+
 data Ast        = Model {
                           globals  :: [ TypeDecl],
                           channels :: [ Channel ],
@@ -30,26 +44,22 @@ data Machine    = Machine {
                   deriving(Show)
 
 
-type Fields     = [Field]
 
-type Field      = TypeDecl
 
 -- Field and MsgArg are both TypeDecl
 
 data TypeDecl   = Boolean VarName
                 | Integer VarName Lo Hi
                 | Enum VarName [String]
-                | Node MachineType VarName -- TODO: check MachineType is one of the machines
+                | Vertex MachineType VarName -- TODO: check MachineType is one of the machines
                 | Array Size TypeDecl
                 | Map MachineType TypeDecl
                 | SetNum Size TypeDecl
                 | SetName MachineType TypeDecl
                 deriving(Show)
 
-type MachineType = String
 type Lo = Int
 type Hi  = Int
-type Size = Int
 
 data State  = State String
               deriving(Show)
@@ -68,21 +78,17 @@ data Guard       = Guard Mail     -- extend with arbitrary guards
 
 data Mail        = Issue Msg
                  | Send Msg Dst
-                 | ReceiveFrom Msg Src
+                 | ReceiveFrom Msg (Maybe Src)
                   deriving(Show)
 
 
-type Dst = String
-type Src = Maybe String
 
 
 data Msg     = Msg String MsgArgs
                deriving(Show)
 
 
-type MsgArgs = [MsgArg]
 
-type MsgArg  = TypeDecl
 
 
 -- Response has a similar problem with Guard:
@@ -95,15 +101,16 @@ type MsgArg  = TypeDecl
 data Response   = Response Mail
                 | Update Assignment
                 | SelfIssue String -- will be ignored in the Target AST see mi.c3
-                | Add SetName String
-                | Del SetName String
+                | Add SetName (Either Param Int)
+                | Del SetName (Either Param Int)
                 | Stall
                   deriving(Show)
 
-type SetName = String
-
-data Assignment = Var VarName String
-                | VarNum VarName Int
+data Assignment = Assign Param Param
+                | AssignNum Param Int
                   deriving(Show)
 
-type VarName = String
+
+data Param = Node MachineType Index -- dir[0]
+           | Variable VarName       -- local, global, field
+             deriving(Show)

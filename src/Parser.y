@@ -50,7 +50,6 @@ import Data.List
 
     num         { TokenNum $$ }
     iden        { TokenIdentifier $$ }
-    idenNoBr    { TokenIdentifierNoBr $$ }
 
 %%
 
@@ -70,9 +69,6 @@ Channels1       : iden                                               { [Channel 
 
 Networks        : {-- empty --}                                     { [] }
                 | networks ':' Networks1 ';'                        { $3 }
-
-
-
 
 
 Networks1       : Network                                           { [$1] }
@@ -106,7 +102,7 @@ Field           : TypeDecl                                          { $1 }
 TypeDecl        : boolean iden                                      { Boolean $2 }
                 | int '[' num '.' '.' num ']' iden                  { Integer $8 $3 $6 }
                 | iden '{' IdenList '}'                             { Enum    $1 $3 }
-                | iden iden                                         { Node    $1 $2 }
+                | iden iden                                         { Vertex    $1 $2 }
                 | '[' num ']' TypeDecl                              { Array   $2 $4 }
                 | '[' iden ']' TypeDecl                             { Map     $2 $4 }
                 | set ':' num  TypeDecl                             { SetNum  $3 $4}
@@ -131,17 +127,17 @@ State_Guard     : '(' iden ',' Guard ')' '{' Responses '}'              { (State
 Guard           : Mail                                              { Guard $1 }
 
 
-Mail            : Issue '(' Msg ')'                                { Issue $3 }
-                | Send '(' Msg ',' iden ')'                        { Send $3 $5}
-                | Receive '(' Msg ')'                              { ReceiveFrom $3 Nothing}
-                | Receive '(' Msg ',' iden ')'                     { ReceiveFrom $3 (Just $5) }
-                | '*' Msg                                          { Issue $2 }
-                | iden '!' Msg                                     { Send $3 $1 }
-                | iden '?' Msg                                     { ReceiveFrom $3 (Just $1) }
+Mail            : Issue '(' Msg ')'                                 { Issue $3 }
+                | Send '(' Msg ',' Param ')'                        { Send $3 $5}
+                | Receive '(' Msg ')'                               { ReceiveFrom $3 Nothing}
+                | Receive '(' Msg ',' Param ')'                     { ReceiveFrom $3 (Just $5) }
+                | '*' Msg                                           { Issue $2 }
+                | Param '!' Msg                                     { Send $3 $1 }
+                | Param '?' Msg                                     { ReceiveFrom $3 (Just $1) }
 
 
-Msg             : iden                                             { Msg $1 []}
-                | iden '<' MsgArgs '>'                             { Msg $1 $3 }
+Msg             : iden                                              { Msg $1 []}
+                | iden '<' MsgArgs '>'                              { Msg $1 $3 }
 
 
 MsgArgs         : MsgArg                                           { [$1] }
@@ -161,17 +157,19 @@ Response1       : Response ';'                                     { $1 }
 Response        : Mail                                             { Response $1 }
                 | Assignment                                       { Update $1 }
                 | iden                                             { SelfIssue $1 }
-                | iden '.' add '(' iden ')'                        { Add $1 $5 }
-                | iden '.' del '(' iden ')'                        { Del $1 $5 }
-                | iden '.' add '(' num ')'                         { Add $1 (show $5) }
-                | iden '.' del '(' num ')'                         { Del $1 (show $5) }
+                | iden '.' add '(' Param ')'                       { Add $1 (Left $5)}
+                | iden '.' del '(' Param ')'                       { Del $1 (Left $5) }
+                | iden '.' add '(' num ')'                         { Add $1 (Right $5) }
+                | iden '.' del '(' num ')'                         { Del $1 (Right $5) }
                 | stall                                            { Stall }
 
 
-Assignment      : iden '=' iden                                     { Var $1 $3 }
-                | iden '=' num                                      { VarNum $1 $3 }
+Assignment      : Param '=' Param                                  { Assign $1 $3 }
+                | Param '=' num                                    { AssignNum $1 $3 }
 
 
+Param           : iden '[' num ']'                              { Node $1 $3 }
+                | iden                                          { Variable $1 }
 
 
 {
