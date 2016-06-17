@@ -1,0 +1,38 @@
+-- Directory functions {{{
+-- Add/remove from sets
+
+---------------------------------------------------------
+ -- Receive function 
+function DirectoryReceive(msg:Message; index: DirectoryIndex) : boolean;
+begin
+ alias node: Directorys[index] do
+  switch node.state
+   
+   Case M:
+     if msg.mtype = GetM then
+        node.state := I;
+        Send(Directory,
+             Directory,
+             UNDEFINED);
+        DirectoryState.acks := 10;
+     
+     else
+        ErrorUnhandledMsg();
+   
+   Case I:
+     if msg.mtype = Ack then
+        node.state := M;
+        AddTosharersList(true);
+     
+     else
+        ErrorUnhandledMsg();
+   else
+      ErrorUnhandledState();
+  endswitch;
+ endalias;
+
+ -- Message processed
+ return true;
+end;
+
+-- }}}

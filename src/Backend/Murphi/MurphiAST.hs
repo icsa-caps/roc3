@@ -131,7 +131,7 @@ data MachineFunctions = MachineFunctions [ (MachineType, Sets, ReceiveFunction )
 -- we need a pair of add and remove functions for each set field a machine has
 type Sets            = [TypeDecl] -- in MurphiPrint we check TypeDecl is a set
 
-type ReceiveFunction = [ ( State, [ (Maybe Guard, [Respond]) ] ) ]
+type ReceiveFunction = [ ( State, [ (Maybe Guard, [Response]) ] ) ]
 
 
 data Guard           = Receive MType
@@ -142,7 +142,7 @@ type Point = String -- a point in the network, a node (node is taken)
 type MType           = String --mtype in murphi
 
 
-data Respond         = ToState State
+data Response         = ToState State
                      | Send Message Src Dst    -- see note below for dst
                      | Assign Field (Either Field Val)    -- what if the value also has an owner?
                      | Add SetName (Either Field Val)  -- the owner of the set is the machine
@@ -156,7 +156,7 @@ type Elem = Field
 data Message = Message MType [ Maybe Field ] -- for Owner see bellow
              deriving(Show)
 
--- who owns a field? needed in Respond
+-- who owns a field? needed in Response
 -- i.e. when we print variable assignments or send messages
 -- e.g. to print "dir.owner = cache[1]" we need to know that (in this context)
 -- owner is a field "owned" by dir and is not global
@@ -169,6 +169,7 @@ data Owner = Msg
            deriving(Show)
 
 data Field = Field Var Owner
+           deriving(Show)
 
 type Src = Field
 type Dst = Field
@@ -193,7 +194,7 @@ data Rules = Rules { selfIssueRules   :: [SelfIssueRule],
                      deriving(Show)
 
 
-data SelfIssueRule = SelfIssueRule Guard [Respond] -- Guard is a function of
+data SelfIssueRule = SelfIssueRule Guard [Response] -- Guard is a function of
                     deriving(Show)                  -- the guard in the relevant
                                                     -- part of the front-end
 

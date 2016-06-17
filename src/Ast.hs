@@ -85,11 +85,6 @@ type MsgArgs = [MsgArg]
 type MsgArg  = TypeDecl
 
 
-
-
-
-
-
 -- Response has a similar problem with Guard:
 -- it allows arbitrary msgs to be responses,
 -- while a machine can't repond with a receive

@@ -35,11 +35,12 @@ declGen (iden,val) = decl iden (show val)
 
 
 concatWith :: String -> [String] -> String
-concatWith split = foldr1 (\x y -> x ++ split ++ y)
+concatWith _ []       = ""  -- foldr1 doesnt support empty lists
+concatWith split strs = foldr1 (\x y -> x ++ split ++ y) strs
 
 
 concatln ::  [String] -> String
-concatln arg = (concatWith "\n" arg ) ++ "\n"
+concatln arg = (concatWith "\n" arg )
 
 
 concatcomma :: [String] -> String
@@ -66,7 +67,7 @@ mapconcatln f list = let indiv = map f list
 
 mapconcatlnComma :: (a -> String) -> [a] -> String
 mapconcatlnComma f list = let indiv = map f list
-                          in  concatlnWith ",\n" indiv
+                          in  concatWith ",\n" indiv
 
 
 disjunction :: [String] -> String
@@ -82,7 +83,7 @@ toVarM :: MachineType -> String
 toVarM machine = machine ++ "s"
 
 -- gives the name of the variable used for indexing this type of machine
--- i.e. the name of the corresponding scalarset
+-- i.e. the name of the corresponseing scalarset
 machineIndex :: MachineType -> String
 machineIndex machine = machine ++ "Index"
 
@@ -95,8 +96,8 @@ toMachineState machine = machine ++ "State"
 -- moves each line by the specified number of spaces
 pushBy :: Int -> String -> String
 pushBy num = let spaces = replicate num ' '
-             in  concatln . map (spaces ++ ) . takeWhile (/= "") . splitOn "\n"
-             -- takeWhile is for dismissing the empty new lines
+             in  concatln . map (spaces ++ ) . splitOn "\n"
+             -- filter (/=0) is for dismissing the empty new lines
 
 --------------------------------
 
@@ -108,17 +109,18 @@ snd3 :: (a,b,c) -> b
 snd3 (a,b,c) = b
 
 thrd3 :: (a,b,c) -> c
-thrd (a,b,c) = c
+thrd3 (a,b,c) = c
 
 -- extract info from a Message
-mtype :: Message -> String
-mtype Message mtype _ = mtype
+getMtype :: Message -> String
+getMtype (Message mtype _ ) = mtype
 
-msgparameters :: Message -> [Maybe (Param, Owner)]
-msgparameters Message _ params = params
+getMsgParams :: Message -> [Maybe Field]
+getMsgParams (Message _ params) = params
 
---------------------------------
+-----------------------------------------------------------------
 
+---------- general tomurphi implementations --------------
 -----------------------------------------------------------------
 
 -- type declarations (used throughout the syntax tree)
@@ -158,16 +160,20 @@ instance Cl.MurphiClass Type where
 
 -----------------------------------------------------------------
 
+-- tomurphi implementations for Machine Functions
+
 -- responses (in receive functions)
-instance Cl.MurphiClass Respond where
+
+instance Cl.MurphiClass Response where
+
  -- state :: String
- tomurphi (ToState state)      = "node.state := " ++ state ++ ";"
- -- Message :: Message MsgType [Maybe Field]
- -- src,dst :: Field
- tomurphi (Send Message (mtype params) src dst)
+ tomurphi (ToState state) = "node.state := " ++ state ++ ";"
+
+ -- Message :: Message MsgType [Maybe Field], src,dst :: Field
+ tomurphi (Send (Message mtype params) src dst)
     = "Send(" ++ Cl.tomurphi src ++ ",\n" ++
       "     " ++ Cl.tomurphi dst ++ ",\n" ++
-      pushBy 6 (mapconcatlnComma Cl.tomuphi params) ++ ");"
+      pushBy 5 (mapconcatlnComma Cl.tomurphi params) ++ ");"
 
  -- var,value :: Field
  tomurphi (Assign var value)     = Cl.tomurphi var ++ " := " ++ Cl.tomurphi value ++ ";"
@@ -175,6 +181,7 @@ instance Cl.MurphiClass Respond where
  -- elem :: Either Field Val
  tomurphi (Add setName elem)   = "AddTo" ++ setName ++ "List(" ++ Cl.tomurphi elem ++ ");"
  tomurphi (Del setName elem)   = "RemoveFrom" ++ setName ++ "List(" ++ Cl.tomurphi elem ++ ");"
+ tomurphi (Stall)              = "return false;" -- message is not processed
 
 --------------------------------
 
@@ -183,16 +190,24 @@ instance Cl.MurphiClass Field where
  tomurphi (Field var Msg)    = "msg." ++ var
  tomurphi (Field var (Machine machine)) = toMachineState machine ++ "." ++ var
 
+--------------------------------
 
 instance Cl.MurphiClass (Either Field Val) where
  tomurphi (Left field) = Cl.tomurphi field
  tomurphi (Right val)  = val
 
-instance Cl.MurphiClass Maybe Field where
+--------------------------------
+
+instance Cl.MurphiClass (Maybe Field) where
  tomurphi Nothing = "UNDEFINED"
- tomuprhi (Just (field)) = Cl.tomurphi field
+ tomurphi (Just (field)) = Cl.tomurphi field
 
+--------------------------------
 
+instance Cl.MurphiClass Guard where
+ tomurphi (Receive mtype) = "msg.mtype = " ++ mtype
+ -- make sure the correct alias or variable (<machine>State) is passed for node
+ tomurphi (AtState node state) = node ++ ".state = " ++ state
 
 -----------------------------------------------------------------
 
@@ -200,13 +215,13 @@ instance Cl.MurphiClass Program where
 
  --tomurphi :: Program -> String
  tomurphi (Program constants
-              types
-              variables
-              commonFunctions
-              machineFunctions
-              rules
-              startstate
-              invariants )
+                   types
+                   variables
+                   commonFunctions
+                   machineFunctions
+                   rules
+                   startstate
+                   invariants )
 
     = "-- Constants {{{\n"          ++ Cl.tomurphi constants         ++ "-- }}}" ++
       "-- Types {{{\n"              ++ Cl.tomurphi types             ++ "-- }}}" ++
@@ -441,7 +456,7 @@ instance Cl.MurphiClass CommonFunctions where
    -- list of conditions for adding to a msg to a net
    -- each element of list is the disjunction that is the condition for this net
    vcConds = let temp = map (map ("vc = " ++)) vcs
-            in  map disjunction temp
+             in  map disjunction temp
 
    -- adding a msg to an arbitrary net
    addToNet :: NetName -> String
@@ -484,63 +499,118 @@ instance Cl.MurphiClass CommonFunctions where
 
 
 instance Cl.MurphiClass MachineFunctions where
- tomurphi (MachineFunction machineSetsTypeFunc) = undefined
+ tomurphi (MachineFunctions machineSetsTypeFunc) =
+   mapconcatln setReceiveSingle machineSetsTypeFunc
   where
-   sets     = map fst3 machineSetsTypeFunc
-   machines = map snd3 machineSetsTypeFunc
-   receive  = map thrd3 machineSetsTypeFunc
+   --sets              = map fst3 machineSetsTypeFunc
+   --machines          = map snd3 machineSetsTypeFunc
+   --statesGuardsReps  = map thrd3 machineSetsTypeFunc
 
    -----------------------------
    -- print functions for adding and removing elements from a field that is
    -- a set (e.g. list of sharers in MSI)
    setFunctions :: MachineType -> TypeDecl -> String
-   setFunctionsunction machine set = addToSet set machine ++ "\n" ++
-                                     removeFromSet set machine
+   setFunctions machine set = addToSet machine set ++ "\n" ++
+                              removeFromSet machine set
+
    addToSet :: MachineType ->  TypeDecl -> String
-   addToSet (Decl set (Set _ type)) machine
-     = let thisSet = toVarM machine ++ "." ++ set
-       in  "procedure addTo" ++ name ++ "List" ++
-           "(x: " ++ Cl.tomurphi type ++ ");\nbegin\n" ++
+   addToSet machine (Decl setName (Set _ elemType))
+     = let thisSet = toVarM machine ++ "." ++ setName
+       in  "procedure addTo" ++ setName ++ "List" ++
+           "(x: " ++ Cl.tomurphi elemType ++ ");\nbegin\n" ++
            " if MultiSetCount( i:" ++ thisSet ++ ", " ++
            thisSet ++ "[i] = x ) != 0\n" ++
            " then\n" ++ "  MultiSetAdd(x," ++ thisSet ++ " );\n" ++
            " endif;\nend;\n"
 
-   addToSet _            = error "Used MurphiPrint.removeFromSet on a non-set"
+   addToSet _  _ = error "Used MurphiPrint.removeFromSet on a non-set"
 
    removeFromSet :: MachineType -> TypeDecl -> String
-   removeFromSet machine (Decl set (Set _ type))
+   removeFromSet machine (Decl set (Set _ elemType))
     = let thisSet = toVarM machine ++ "." ++ set
       in  "procedure RemoveFrom" ++ set ++ "List" ++
-          "( x: " ++ Cl.tomurphi type ++ " );\n" ++
+          "( x: " ++ Cl.tomurphi elemType ++ " );\n" ++
           "begin\n" ++
           " MultiSetRemovePred(i:" ++ thisSet ++ "," ++  thisSet ++ "[i] = x);\n" ++
           "end;\n"
 
-   removeFromSet _            = error "Used MurphiPrint.removeFromSet on a non-set"
+   removeFromSet _ _  = error "Used MurphiPrint.removeFromSet on a non-set"
 
    finalSetFunctions :: MachineType -> [TypeDecl] -> String
-   finalSetFunctions machine sets = mapconcatln $ setFunctions machine sets
+   finalSetFunctions machine sets = mapconcatln (setFunctions machine) sets
 
    -----------------------------
 
-   machineReceive machine
+   -----------------------------
+   -- Printing responses and guards e.g taking different cases (if-then) for
+   -- mtype and responseing
+   allResponses :: [Response] -> String
+   allResponses responses = mapconcatln Cl.tomurphi responses
+
+   guardedResponses :: (Maybe Guard, [Response]) -> String
+   guardedResponses (Just guard, responses) = Cl.tomurphi guard ++ " then\n" ++
+                                            pushBy 3 (allResponses responses)
+   -- if no guard, just print the responses
+   guardedResponses (Nothing, responses) = allResponses responses
+
+   elsifResponses :: [(Maybe Guard, [Response])] -> String
+   elsifResponses []           = "" -- do not print anything
+   elsifResponses guardsResps = let indiv = map guardedResponses guardsResps
+                                in  mapconcatln ( "\nelsif " ++ ) indiv ++ "\n"
+
+   ------------
+   -- If no guard, then there is only one case to consider
+   -- and we print the responses
+   finalGuardsResps [(Nothing, responses)] = allResponses responses
+
+   finalGuardsResps ( (Just guard,responses) : rest )
+    = "if " ++ guardedResponses (Just guard, responses) ++ "\n" ++
+      elsifResponses rest  ++ "\n" ++ -- ln is added in elsifResponses. Prettier when rest = []
+      "else\n" ++
+      "   ErrorUnhandledMsg();" -- one ln in ouput however many (even 0) I put here
+
+
+   -----------------------------
+
+   -- taking different cases for each state
+   caseState :: ( State, [ ( Maybe Guard, [Response]) ] ) -> String
+   caseState (state, guardsResps) = "\nCase " ++ state ++ ":\n" ++
+                                    (pushBy 2 (finalGuardsResps guardsResps))
+
+   --Take different cases for all states
+   caseAllStates :: [( State, [ (Maybe Guard, [Response]) ] )] -> String
+   caseAllStates = mapconcatln caseState
+
+   -----------------------------
+
+   -- printing the receive function
+   finalMachineReceive machine statesGuardsReps
     = "function " ++ machine ++ "Receive(msg:Message; index: "
       ++ machineIndex machine ++") : boolean;\n" ++
       "begin\n" ++
       " alias node: " ++ toVarM machine ++ "[index] do\n" ++
       "  switch node.state\n" ++
-      "---------------------- other stuff -----------------------" ++
-      "   else\n" ++
-      "    ErrorUnhandledState();\n\n" ++
+      pushBy 3 (caseAllStates statesGuardsReps) ++
+      "\n   else\n" ++
+      "      ErrorUnhandledState();\n" ++
       "  endswitch;\n" ++
-      " endalias;\n" ++
+      " endalias;\n\n" ++
       " -- Message processed\n" ++
       " return true;\n" ++
       "end;\n"
 
 
-
+   -----------------------------
+   -- set + receive functions
+   setReceiveSingle :: ( MachineType, Sets, ReceiveFunction ) -> String
+   setReceiveSingle (machine, sets, stateGuardsReps) =
+     "-- " ++ machine ++ " functions {{{\n" ++
+     "-- Add/remove from sets\n" ++
+     finalSetFunctions machine sets ++ "\n" ++
+     "---------------------------------------------------------\n" ++
+     " -- Receive function \n" ++
+     finalMachineReceive machine stateGuardsReps ++
+     "\n-- }}}\n"
 
 ----------------------------------------------------------------
 
