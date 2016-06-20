@@ -11,7 +11,6 @@ module MurphiAST where
 type Size             = Int
 type TypeName         = String
 type Val              = String
-type Var              = String
 type VCName           = String
 type NetName          = String
 type Network          = Either OrderedNet UnorderedNet
@@ -24,6 +23,10 @@ type Rec              = String
 type StateName        = String
 type SetName          = String
 type MsgArg           = TypeDecl
+type VarName          = String
+type ArrayName        = String
+type Index            = Int
+
 
 -- helper data structures
 type VCNets = [ (VCName, Network) ]
@@ -42,7 +45,6 @@ data Type = Boolean
 
 type Lo    = Int
 type Hi    = Int
-type Index = String
 
 
 -----------------------------------------------------------------
@@ -137,12 +139,12 @@ type ReceiveFunction = [ ( State, [ (Maybe Guard, [Response]) ] ) ]
 data Guard           = Receive MType
                      | AtState Point State
                       deriving(Show)
-type Point = String -- a point in the network, a node (node is taken)
+type Point = String -- a point in the network, a node (the name node is taken)
 
 type MType           = String --mtype in murphi
 
 
-data Response         = ToState State
+data Response        = ToState State
                      | Send Message Src Dst    -- see note below for dst
                      | Assign Field (Either Field Val)    -- what if the value also has an owner?
                      | Add SetName (Either Field Val)  -- the owner of the set is the machine
@@ -154,7 +156,7 @@ type Elem = Field
 
 -- only for Send
 data Message = Message MType [ Maybe Field ] -- for Owner see bellow
-             deriving(Show)
+               deriving(Show)
 
 -- who owns a field? needed in Response
 -- i.e. when we print variable assignments or send messages
@@ -166,13 +168,18 @@ data Message = Message MType [ Maybe Field ] -- for Owner see bellow
 data Owner = Msg
            | Global
            | Machine MachineType
-           deriving(Show)
+             deriving(Show)
 
+-- change fields to account for elements of arrays i.e. spesific machines
 data Field = Field Var Owner
-           deriving(Show)
+             deriving(Show)
 
 type Src = Field
 type Dst = Field
+
+data Var = Simple VarName
+         | ArrayElem ArrayName Index
+           deriving(Show)
 
 
 -- Send : dst in the frontend language does not have a type
