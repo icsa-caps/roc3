@@ -26,6 +26,7 @@ type MsgArg           = TypeDecl
 type VarName          = String
 type ArrayName        = String
 type Index            = Int
+type AliasName        = String
 
 
 -- helper data structures
@@ -38,7 +39,7 @@ data TypeDecl = Decl Name Type
 data Type = Boolean
           | Integer Lo Hi
           | Enum [Val]
-          | Node MachineType -- TODO: add tomurphi implementation
+          | Node MachineType
           | Array Index Type
           | Set (Either MachineType Size) Type -- Left machine means the size
           deriving(Show)                       -- of the set = #machines
@@ -137,18 +138,18 @@ type ReceiveFunction = [ ( State, [ (Maybe Guard, [Response]) ] ) ]
 
 
 data Guard           = Receive MType
-                     | AtState Point State
-                      deriving(Show)
-type Point = String -- a point in the network, a node (the name node is taken)
+                     | AtStateAlias AliasName State
+                     | AtState MachineType Index State
+                       deriving(Show)
 
 type MType           = String --mtype in murphi
 
 
-data Response        = ToState State
-                     | Send Message Src Dst    -- see note below for dst
-                     | Assign Field (Either Field Val)    -- what if the value also has an owner?
-                     | Add SetName (Either Field Val)  -- the owner of the set is the machine
-                     | Del SetName (Either Field Val)  -- in question. Owner here is  for the elem
+data Response        = ToState MachineType Index State
+                     | Send Message Src Dst     -- see note below for dst
+                     | Assign Field Field     -- what if the value also has an owner?
+                     | Add Owner SetName Field  -- the owner of the set is the machine
+                     | Del Owner SetName Field  -- in question. Owner here is  for the elem
                      | Stall
                        deriving(Show)
 
@@ -167,19 +168,22 @@ data Message = Message MType [ Maybe Field ] -- for Owner see bellow
 -- we want to differentiate between the two srcs
 data Owner = Msg
            | Global
-           | Machine MachineType
+           | Machine MachineType Index
+           | Local                 -- need to add declaration
+           | ThisNode
              deriving(Show)
 
 -- change fields to account for elements of arrays i.e. spesific machines
-data Field = Field Var Owner
+data Field = Field Variable Owner
              deriving(Show)
 
 type Src = Field
 type Dst = Field
 
-data Var = Simple VarName
-         | ArrayElem ArrayName Index
-           deriving(Show)
+data Variable = Simple VarName
+              | ArrayElem ArrayName Index
+              | MachineArray MachineType Index
+                  deriving(Show)
 
 
 -- Send : dst in the frontend language does not have a type

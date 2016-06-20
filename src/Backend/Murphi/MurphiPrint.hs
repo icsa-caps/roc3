@@ -76,28 +76,36 @@ disjunction = concatWith " | "
 
 --------------------------------
 
--- the variable that corresponds to an array of a type of machine
--- e.g. in the original MSI murphi implementation "l1caches" for l1 cache
--- here we just add an 's' in the end
-toVarM :: MachineType -> String
-toVarM machine = machine ++ "s"
-
 -- gives the name of the variable used for indexing this type of machine
 -- i.e. the name of the corresponseing scalarset
 machineIndex :: MachineType -> String
 machineIndex machine = machine ++ "Index"
 
+-- the name of the array of this type of machines
+toMachineArray :: MachineType -> String
+toMachineArray machine = machine ++ "s"
+
+machineArrayAtIndex :: MachineType -> Index -> String
+machineArrayAtIndex machine index = toMachineArray machine ++
+                                   "[" ++ show index ++ "]"
+
+
+
 -- gives the name of the record for this machine (the state of the machine)
 toMachineState :: MachineType -> String
 toMachineState machine = machine ++ "State"
 
+
+
 --------------------------------
+
 
 -- moves each line by the specified number of spaces
 pushBy :: Int -> String -> String
 pushBy num = let spaces = replicate num ' '
              in  concatln . map (spaces ++ ) . splitOn "\n"
              -- filter (/=0) is for dismissing the empty new lines
+
 
 --------------------------------
 
@@ -132,7 +140,7 @@ instance Cl.MurphiClass TypeDecl where
 
 -- for assignment statements
 assign :: TypeDecl -> String
-assign (Decl var varType) = show var ++ ":= " ++ Cl.tomurphi varType ++ ";"
+assign (Decl var varType) = var ++ ":= " ++ Cl.tomurphi varType ++ ";"
 
 
 instance Cl.MurphiClass Type where
@@ -147,7 +155,7 @@ instance Cl.MurphiClass Type where
 
  tomurphi (Node machine)            = machine
 
- tomurphi (Array index otherType)   = let formatInd = fstCap index
+ tomurphi (Array index otherType)   = let formatInd = fstCap (show index)
                                       in   " array [ " ++ formatInd ++ " ]"
                                            ++ " of " ++ Cl.tomurphi otherType
 
@@ -167,7 +175,9 @@ instance Cl.MurphiClass Type where
 instance Cl.MurphiClass Response where
 
  -- state :: String
- tomurphi (ToState state) = "node.state := " ++ state ++ ";"
+ tomurphi (ToState machine index state) = machineArrayAtIndex machine index ++
+                                          ".state = " ++ state ++ ";"
+
 
  -- Message :: Message MsgType [Maybe Field], src,dst :: Field
  tomurphi (Send (Message mtype params) src dst)
@@ -175,20 +185,36 @@ instance Cl.MurphiClass Response where
       "     " ++ Cl.tomurphi dst ++ ",\n" ++
       pushBy 5 (mapconcatlnComma Cl.tomurphi params) ++ ");"
 
- -- var,value :: Field
- tomurphi (Assign var value)     = Cl.tomurphi var ++ " := " ++ Cl.tomurphi value ++ ";"
 
- -- elem :: Either Field Val
- tomurphi (Add setName elem)   = "AddTo" ++ setName ++ "List(" ++ Cl.tomurphi elem ++ ");"
- tomurphi (Del setName elem)   = "RemoveFrom" ++ setName ++ "List(" ++ Cl.tomurphi elem ++ ");"
- tomurphi (Stall)              = "return false;" -- message is not processed
+ tomurphi (Assign var value)    = Cl.tomurphi var ++ " := " ++ Cl.tomurphi value ++ ";"
+
+
+ -- elem :: Field
+ tomurphi (Add owner setName elem)   = Cl.tomurphi owner ++ "AddTo" ++ setName ++ "List(" ++ Cl.tomurphi elem ++ ");"
+ tomurphi (Del owner setName elem)   = Cl.tomurphi owner ++ "RemoveFrom" ++ setName ++ "List(" ++ Cl.tomurphi elem ++ ");"
+ tomurphi (Stall)                    = "return false;" -- message is not processed
+
 
 --------------------------------
 
 instance Cl.MurphiClass Field where
- tomurphi (Field var Global) = var
- tomurphi (Field var Msg)    = "msg." ++ var
- tomurphi (Field var (Machine machine)) = toMachineState machine ++ "." ++ var
+ tomurphi (Field variable owner) = Cl.tomurphi owner ++ Cl.tomurphi variable
+
+--------------------------------
+
+instance Cl.MurphiClass Owner where
+  tomurphi Msg = "msg."
+  tomurphi Global = ""
+  tomurphi Local  = ""
+  tomurphi ThisNode = "node."
+  tomurphi (Machine machine index) = machineArrayAtIndex machine index ++ "."
+
+--------------------------------
+
+instance Cl.MurphiClass Variable where
+ tomurphi (Simple varName) = varName
+ tomurphi (ArrayElem arrayName index) = arrayName ++ "[" ++ show index ++ "]"
+ tomurphi (MachineArray machine index) = machineArrayAtIndex machine index
 
 --------------------------------
 
@@ -207,9 +233,14 @@ instance Cl.MurphiClass (Maybe Field) where
 instance Cl.MurphiClass Guard where
  tomurphi (Receive mtype) = "msg.mtype = " ++ mtype
  -- make sure the correct alias or variable (<machine>State) is passed for node
- tomurphi (AtState node state) = node ++ ".state = " ++ state
+ tomurphi (AtStateAlias node state)       = node ++ ".state = " ++ state
+ tomurphi (AtState machine index state)   = machineArrayAtIndex machine index ++
+                                            ".state = " ++ state
 
 -----------------------------------------------------------------
+
+-----------------------------------------------------------------
+
 
 instance Cl.MurphiClass Program where
 
@@ -318,7 +349,7 @@ instance Cl.MurphiClass Types where
     msgFields    = msgArgs types
     finalMsgArgs = mapconcatln Cl.tomurphi msgFields
     message      = "Message:\n record\n  mtype : MessageType;\n  src : Node\n"
-                   ++ (pushBy 2 finalMsgArgs) ++ " end;\n"
+                   ++ (pushBy 2 finalMsgArgs) ++ "\n end;\n"
 
     -----------------------------
     mstates      = machineStates types
@@ -330,7 +361,7 @@ instance Cl.MurphiClass Types where
                  = toMachineState machine ++ ":\n record\n" ++
                    pushBy 2 ( printEnum "state" states ++
                               concatWith ",\n" (map Cl.tomurphi fields))
-                   ++ " end;\n"
+                   ++ "\n end;\n"
     finalMstates = concatln $ map printMstate mstates
 
 -----------------------------------------------------------------
@@ -340,15 +371,14 @@ instance Cl.MurphiClass Types where
 instance Cl.MurphiClass Variables where
 
  tomurphi :: Variables -> String
- tomurphi variables = "var\n" ++
-                      "-- machines\n"       ++ finalMachines ++ "\n" ++
-                      "--ordered Nets\n"    ++ finalOrd      ++ "\n" ++
+ tomurphi variables = "-- machines\n"       ++ finalMachines ++ "\n" ++
+                      "-- ordered Nets\n"    ++ finalOrd      ++ "\n" ++
                       "-- unordered Nets\n" ++ finalUnord    ++ "\n"
   where
    machineNames = machines variables
    formatMachine :: MachineName -> String
-   formatMachine machine = toVarM machine ++ " array [" ++ machineIndex machine ++ "]"
-                           ++ " of " ++ machine ++ "State;"
+   formatMachine machine = toMachineArray machine ++ ": array [" ++ machineIndex machine ++ "]"
+                           ++ " of " ++ toMachineState machine ++ ";"
    finalMachines = mapconcatln formatMachine machineNames
 
    -----------------------------
@@ -422,19 +452,19 @@ instance Cl.MurphiClass CommonFunctions where
              "               " ++ "dst: Node;\n" ++
              pushBy 15 (mapconcatln Cl.tomurphi msgArgs) ++ ");"
 
-   sendNext = "var\n  msg: Message;\nbegin\n"
+   sendNext = "var\n  msg: Message;\n\nbegin\n"
 
-   sendEnd = "end;\n"
+   sendEnd = "\nend;\n"
 
    msgFieldAssign :: MsgArg -> String
-   msgFieldAssign msgArg = "msg." ++ assign msgArg
+   msgFieldAssign (Decl argname argtype) = "msg." ++ argname ++ ":= " ++ argname
 
    assignments = mapconcatln msgFieldAssign msgArgs
 
    finalSend = sendTop     ++ "\n" ++
                sendNext    ++ "\n" ++
-               assignments ++ "\n" ++
-               printedNets ++ "\n" ++
+               pushBy 5 assignments ++ "\n" ++
+               pushBy 5 printedNets ++ "\n" ++
                sendEnd
 
    -----------------------------
@@ -445,23 +475,28 @@ instance Cl.MurphiClass CommonFunctions where
    -- the one of the VCs of the network
    printedNets = printAddNet nets vcConds
 
+
    -- adding msg to Network
    printAddNet (net:nets) (cond:conds) =
     " if " ++ cond ++ " then\n  " ++ addToNet net ++ "\n" ++ printAddNetRest nets conds
+
 
    printAddNetRest [net] [cond] = " else\n  " ++ addToNet net ++ "\n endif;"
    printAddNetRest (net : nets) (cond : conds)
      = " elsif " ++ cond ++ " then\n  " ++ addToNet net ++"\n" ++ printAddNetRest nets conds
 
-   -- list of conditions for adding to a msg to a net
+
+   -- list of conditions for adding a msg to a net
    -- each element of list is the disjunction that is the condition for this net
    vcConds = let temp = map (map ("vc = " ++)) vcs
              in  map disjunction temp
+
 
    -- adding a msg to an arbitrary net
    addToNet :: NetName -> String
    addToNet net | isOrdered net  = addOrd net
                 | otherwise      = addUnord net
+
 
    -- adding a msg to an ordered net
    addOrd net = let count = countName net
@@ -469,6 +504,7 @@ instance Cl.MurphiClass CommonFunctions where
                     " \"Too many msgs on " ++ net ++ "Q\";\n" ++
                     "  " ++ net ++ "[dst][" ++ count ++ "[dst]] := msg;\n" ++
                     "  " ++ count ++ "[dst] := " ++ count ++ "[dst] + 1;\n"
+
 
    -- adding a msg to an unordered net
    addUnord net =
@@ -486,8 +522,8 @@ instance Cl.MurphiClass CommonFunctions where
    errorFunctions = "procedure ErrorUnhandledMsg();\n" ++
                     "begin\n" ++
                     "  error \"Unhandled message type!\";\n" ++
-                    "end;\n\n"++
-
+                    "end;\n\n"
+                    ++
                     "procedure ErrorUnhandledState();\n" ++
                     "begin\n" ++
                     "  error \"Unhandled state!\";\n"++
@@ -513,9 +549,11 @@ instance Cl.MurphiClass MachineFunctions where
    setFunctions machine set = addToSet machine set ++ "\n" ++
                               removeFromSet machine set
 
-   addToSet :: MachineType ->  TypeDecl -> String
+
+   -- must know also the index of the machine
+   addToSet :: MachineType -> TypeDecl -> String
    addToSet machine (Decl setName (Set _ elemType))
-     = let thisSet = toVarM machine ++ "." ++ setName
+     = let thisSet = toMachineArray machine ++ "." ++ setName
        in  "procedure addTo" ++ setName ++ "List" ++
            "(x: " ++ Cl.tomurphi elemType ++ ");\nbegin\n" ++
            " if MultiSetCount( i:" ++ thisSet ++ ", " ++
@@ -525,9 +563,11 @@ instance Cl.MurphiClass MachineFunctions where
 
    addToSet _  _ = error "Used MurphiPrint.removeFromSet on a non-set"
 
+
+   -- must know also the index of the machine
    removeFromSet :: MachineType -> TypeDecl -> String
    removeFromSet machine (Decl set (Set _ elemType))
-    = let thisSet = toVarM machine ++ "." ++ set
+    = let thisSet = toMachineArray machine ++ "." ++ set
       in  "procedure RemoveFrom" ++ set ++ "List" ++
           "( x: " ++ Cl.tomurphi elemType ++ " );\n" ++
           "begin\n" ++
@@ -543,20 +583,21 @@ instance Cl.MurphiClass MachineFunctions where
 
    -----------------------------
    -- Printing responses and guards e.g taking different cases (if-then) for
-   -- mtype and responseing
+   -- mtype and responding
    allResponses :: [Response] -> String
    allResponses responses = mapconcatln Cl.tomurphi responses
 
    guardedResponses :: (Maybe Guard, [Response]) -> String
    guardedResponses (Just guard, responses) = Cl.tomurphi guard ++ " then\n" ++
-                                            pushBy 3 (allResponses responses)
+                                              pushBy 3 (allResponses responses)
    -- if no guard, just print the responses
    guardedResponses (Nothing, responses) = allResponses responses
 
    elsifResponses :: [(Maybe Guard, [Response])] -> String
-   elsifResponses []           = "" -- do not print anything
-   elsifResponses guardsResps = let indiv = map guardedResponses guardsResps
-                                in  mapconcatln ( "\nelsif " ++ ) indiv ++ "\n"
+   elsifResponses []           = ""
+   elsifResponses guardsResponses =
+     let indiv = map guardedResponses guardsResponses
+     in  mapconcatln ( "\nelsif " ++ ) indiv ++ "\n"
 
    ------------
    -- If no guard, then there is only one case to consider
@@ -565,7 +606,7 @@ instance Cl.MurphiClass MachineFunctions where
 
    finalGuardsResps ( (Just guard,responses) : rest )
     = "if " ++ guardedResponses (Just guard, responses) ++ "\n" ++
-      elsifResponses rest  ++ "\n" ++ -- ln is added in elsifResponses. Prettier when rest = []
+      elsifResponses rest  ++ "\n" ++
       "else\n" ++
       "   ErrorUnhandledMsg();" -- one ln in ouput however many (even 0) I put here
 
@@ -588,13 +629,13 @@ instance Cl.MurphiClass MachineFunctions where
     = "function " ++ machine ++ "Receive(msg:Message; index: "
       ++ machineIndex machine ++") : boolean;\n" ++
       "begin\n" ++
-      " alias node: " ++ toVarM machine ++ "[index] do\n" ++
-      "  switch node.state\n" ++
+     -- " alias node: " ++ toMachineArray machine ++ "[index] do\n" ++
+     -- "  switch " ++ toMachineArray machien ++ ".state\n" ++
       pushBy 3 (caseAllStates statesGuardsReps) ++
       "\n   else\n" ++
       "      ErrorUnhandledState();\n" ++
-      "  endswitch;\n" ++
-      " endalias;\n\n" ++
+      "  endswitch;\n\n" ++
+      --" endalias;\n\n" ++
       " -- Message processed\n" ++
       " return true;\n" ++
       "end;\n"
