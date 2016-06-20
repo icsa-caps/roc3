@@ -1,9 +1,8 @@
 type
 -- for indexing
-CacheInd : scalarset(5);
+CacheIndex : scalarset(5);
 
-DirectoryInd : scalarset(1);
-
+DirectoryIndex : scalarset(1);
 
 Node: union { Cache, Directory };
 
@@ -15,7 +14,7 @@ MessageType: enum { Ack,
 
 -- Message
 Message:
- Record
+ record
   mtype : MessageType;
   src : Node
   src: Cache;
@@ -42,5 +41,4 @@ DirectoryState:
   owner: Cache;,
   ack_rec: 0..5;
  end;
-
 

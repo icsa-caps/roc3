@@ -1,29 +1,31 @@
 Procedure Send(mtype: MessageType;
+               src: Node;
+               dst: Node;
                src: Cache;
-               num: 1..10;
-               dst: Node);
+               num: 1..10;);
 var
   msg: Message;
+
 begin
 
-msg."src":= Cache;
-msg."num":= 1..10;
+     msg.src:= Cache;
+     msg.num:= 1..10;
+      if vc = vcOrd11 | vc = vcOrd12 then
+       Assert(ord1count[dst] < NET_MAX) "Too many msgs on ord1Q";
+       ord1[dst][ord1count[dst]] := msg;
+       ord1count[dst] := ord1count[dst] + 1;
+     
+      elsif vc = vcOrd21 then
+       Assert(ord2count[dst] < NET_MAX) "Too many msgs on ord2Q";
+       ord2[dst][ord2count[dst]] := msg;
+       ord2count[dst] := ord2count[dst] + 1;
+     
+      else
+       Assert (MultiSetCount(i:unord1[dst], true) < NET_MAX)"Too many messages";
+       MultiSetAdd(msg, unord1[dst]);
+     
+      endif;
 
- if vc = vcOrd11 | vc = vcOrd12 then
-  Assert(ord1count[dst] < NET_MAX) "Too many msgs on ord1Q";
-  ord1[dst][ord1count[dst]] := msg;
-  ord1count[dst] := ord1count[dst] + 1;
-
- elsif vc = vcOrd21 then
-  Assert(ord2count[dst] < NET_MAX) "Too many msgs on ord2Q";
-  ord2[dst][ord2count[dst]] := msg;
-  ord2count[dst] := ord2count[dst] + 1;
-
- else
-  Assert (MultiSetCount(i:unord1[dst], true) < NET_MAX)"Too many messages";
-  MultiSetAdd(msg, unord1[dst]);
-
- endif;
 end;
 
 procedure Advanceord1(n:Node);
@@ -51,7 +53,6 @@ begin
  endfor;
  ord2count[n] := ord2count[n] - 1;
 end;
-
 
 procedure ErrorUnhandledMsg();
 begin

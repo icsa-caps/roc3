@@ -5,31 +5,28 @@
  -- Receive function 
 function DirectoryReceive(msg:Message; index: DirectoryIndex) : boolean;
 begin
- alias node: Directorys[index] do
-  switch node.state
    
    Case M:
      if msg.mtype = GetM then
-        node.state := I;
-        Send(Directory,
-             Directory,
-             UNDEFINED);
-        DirectoryState.acks := 10;
+        Directorys[0].state = I;
+        Send(Directorys[0],
+             Directorys[0],
+             5);
+        Directorys[0].acks := 10;
      
      else
         ErrorUnhandledMsg();
    
    Case I:
      if msg.mtype = Ack then
-        node.state := M;
-        AddTosharersList(true);
+        Directorys[0].state = M;
+        Directorys[0].AddTosharersList(true);
      
      else
         ErrorUnhandledMsg();
    else
       ErrorUnhandledState();
   endswitch;
- endalias;
 
  -- Message processed
  return true;
