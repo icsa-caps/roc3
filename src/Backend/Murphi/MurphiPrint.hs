@@ -110,14 +110,17 @@ pushBy num = let spaces = replicate num ' '
 --------------------------------
 
 -- extracting elements of triplets
-fst3 :: (a,b,c) -> a
-fst3 (a,b,c) = a
+fst4 :: (a,b,c,d) -> a
+fst4 (a,b,c,d) = a
 
-snd3 :: (a,b,c) -> b
-snd3 (a,b,c) = b
+snd4 :: (a,b,c,d) -> b
+snd4 (a,b,c,d) = b
 
-thrd3 :: (a,b,c) -> c
-thrd3 (a,b,c) = c
+thrd4 :: (a,b,c,d) -> c
+thrd4 (a,b,c,d) = c
+
+fourth4 :: (a,b,c,d) -> d
+fourth4 (a,b,c,d) = d
 
 -- extract info from a Message
 getMtype :: Message -> String
@@ -126,10 +129,15 @@ getMtype (Message mtype _ ) = mtype
 getMsgParams :: Message -> [Maybe Field]
 getMsgParams (Message _ params) = params
 
+--------------------------------
+
+
+
+-----------------------------------------------------------------
+--------------- helper tomurphi implementations -----------------
 -----------------------------------------------------------------
 
----------- general tomurphi implementations --------------
------------------------------------------------------------------
+
 
 -- type declarations (used throughout the syntax tree)
 
@@ -164,11 +172,7 @@ instance Cl.MurphiClass Type where
  tomurphi (Set (Right size) otherType)   = "multiset[" ++ show size
                                           ++ "] of " ++ Cl.tomurphi otherType
 
-
-
------------------------------------------------------------------
-
--- tomurphi implementations for Machine Functions
+--------------------------------
 
 -- responses (in receive functions)
 
@@ -193,7 +197,6 @@ instance Cl.MurphiClass Response where
  tomurphi (Add owner setName elem)   = Cl.tomurphi owner ++ "AddTo" ++ setName ++ "List(" ++ Cl.tomurphi elem ++ ");"
  tomurphi (Del owner setName elem)   = Cl.tomurphi owner ++ "RemoveFrom" ++ setName ++ "List(" ++ Cl.tomurphi elem ++ ");"
  tomurphi (Stall)                    = "return false;" -- message is not processed
-
 
 --------------------------------
 
@@ -237,9 +240,23 @@ instance Cl.MurphiClass Guard where
  tomurphi (AtState machine index state)   = machineArrayAtIndex machine index ++
                                             ".state = " ++ state
 
------------------------------------------------------------------
+--------------------------------
+
+instance Cl.MurphiClass LocalVariables where
+  tomurphi [] = ""
+  tomurphi localVariables = "var\n" ++
+                            pushBy 2 (mapconcatln Cl.tomurphi localVariables)
+
+--------------------------------
+
+
+
+
 
 -----------------------------------------------------------------
+----------------- Main tomurphi implementations -----------------
+-----------------------------------------------------------------
+
 
 
 instance Cl.MurphiClass Program where
@@ -535,22 +552,24 @@ instance Cl.MurphiClass CommonFunctions where
 
 
 instance Cl.MurphiClass MachineFunctions where
- tomurphi (MachineFunctions machineSetsTypeFunc) =
+ tomurphi (MachineFunctions machineSetsTypeFunc localVariables) =
+   printLocalVars ++
    mapconcatln setReceiveSingle machineSetsTypeFunc
   where
-   --sets              = map fst3 machineSetsTypeFunc
-   --machines          = map snd3 machineSetsTypeFunc
-   --statesGuardsReps  = map thrd3 machineSetsTypeFunc
+   -----------------------------
+   -- local Variables
+
+   printLocalVars = Cl.tomurphi localVariables
 
    -----------------------------
-   -- print functions for adding and removing elements from a field that is
-   -- a set (e.g. list of sharers in MSI)
+   -- add/remove from set
+
    setFunctions :: MachineType -> TypeDecl -> String
    setFunctions machine set = addToSet machine set ++ "\n" ++
                               removeFromSet machine set
 
 
-   -- must know also the index of the machine
+   -- !!!!!!!!!!!!!must know also the index of the machine!!!!!!!!!!!!!!!!!!!!!!!
    addToSet :: MachineType -> TypeDecl -> String
    addToSet machine (Decl setName (Set _ elemType))
      = let thisSet = toMachineArray machine ++ "." ++ setName

@@ -29,8 +29,12 @@ type Index            = Int
 type AliasName        = String
 
 
--- helper data structures
+-- helper data structures, data types
 type VCNets = [ (VCName, Network) ]
+
+-- for variables that are only in a particular function or procedure.
+-- we need the list because we have to print their declarations
+type LocalVariables = [TypeDecl]
 
 -- in place of TypeDecl in Ast, to make printing easier
 data TypeDecl = Decl Name Type
@@ -128,7 +132,10 @@ type Param           = String
 
 -- Machine Functions
 
-data MachineFunctions = MachineFunctions [ (MachineType, Sets, ReceiveFunction ) ]
+data MachineFunctions = MachineFunctions [ ( MachineType,
+                                             Sets,
+                                             ReceiveFunction ) ]
+                                         LocalVariables
                         deriving(Show)
 
 -- we need a pair of add and remove functions for each set field a machine has
