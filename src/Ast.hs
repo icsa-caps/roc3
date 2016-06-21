@@ -79,6 +79,7 @@ data Guard       = Guard Mail     -- extend with arbitrary guards
 data Mail        = Issue Msg
                  | Send Msg Dst
                  | ReceiveFrom Msg (Maybe Src)
+                 | Broadcast Param Msg          -- param should be a set
                   deriving(Show)
 
 

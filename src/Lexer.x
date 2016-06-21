@@ -46,9 +46,11 @@ tokens :-
     boolean         { \s -> TokenBoolean }
     int             { \s -> TokenInt }
     set             { \s -> TokenSet }
+
     Issue           { \s -> TokenIssue }
     Receive         { \s -> TokenReceive }
     Send            { \s -> TokenSend }
+    broadcast       { \s -> TokenBroadcast }
     stall           { \s -> TokenStall }
     Trans           { \s -> TokenTrans }
     add             { \s -> TokenAdd }
@@ -91,6 +93,7 @@ data Token = TokenBegin
            | TokenIssue
            | TokenReceive
            | TokenSend
+           | TokenBroadcast
            | TokenStall
            | TokenTrans
            | TokenAdd

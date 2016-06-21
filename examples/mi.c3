@@ -32,19 +32,19 @@ machine Cache:[4] {
   }
 
   (M, *Read_Write) {    // ignore the responses that have only
-    	hit;		 // strings in their body. Not contributing
-  }			 // to the model
+    	hit;		      // strings in their body. Not contributing
+  }			      // to the model
 
   (IM, *Read_Write) {
-    	stall;		// should stall be a special word so that murphi returns
-  }			// false i.e. the msg is not processed?
+    	stall;		
+  }			    
 
   (IM, src?Data, M) {
 	Dir[0]!Ack;
   }
 
-  (M, Dir[0]?Fwd_GetM<cache src1, dir dir>, I) { // we can infer which variables
-   	 src1!Data;  				   // are msg args see node in the end
+  (M, Dir[0]?Fwd_GetM<cache src1, dir dir>, I) {   // we can infer which variables
+   	 src1!Data;  				          // are msg args see note in the end
   }
 
 }
@@ -57,28 +57,32 @@ machine Dir:[1] {
  ack {sent,received,waiting},
 
  [Cache] boolean acks,    		// or by a machine, 
-					// in which case they are maps
+					      // in which case they are maps
 
  set:Cache Cache modifiers, 	// the size of the set is #caches
 
  set:5 boolean other; 	      // the set can store up to 5 elements
 
-  (I, src?GetM,IM) {   
+  (I, src?GetM, IM) {   
     	owner = src;
 	modifiers.add(src);	     
 	src!Data;
   }
 
   (M, src?GetM,IM) {
-    owner!Fwd_GetM<cache src, dir dir>; // in murphi: Send(Fwd_GetM, owner, src)
+    owner!Fwd_GetM<cache src, dir dir>; // in murphi:Send(Fwd_GetM, owner, src)
     owner = src;	   // the argument of the message becomes the sender
     modifiers.del(src);
   }
 
   (IM, src?GetM ) {
     modifiers.add(src);
-    stall;
-  }
+    broadcast(modifiers, NewModifier<cache src>); // broadcast to a set
+    stall;					         // msg received by every
+						         // machine in the set
+  }						         // if typeOf set != machine, 
+						         // error at some point
+
 
   (IM, src?Ack, M) {
    }
