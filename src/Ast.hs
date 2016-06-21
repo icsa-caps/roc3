@@ -8,6 +8,7 @@ type MachineType = String
 type Size = Int
 type Dst = Param
 type Src = Param
+type DstSet = Param
 type MsgArgs = [MsgArg]
 type MsgArg  = TypeDecl
 type SetName = String
@@ -79,7 +80,7 @@ data Guard       = Guard Mail     -- extend with arbitrary guards
 data Mail        = Issue Msg
                  | Send Msg Dst
                  | ReceiveFrom Msg (Maybe Src)
-                 | Broadcast Param Msg          -- param should be a set
+                 | Broadcast Src DstSet Msg          -- param should be a set
                   deriving(Show)
 
 

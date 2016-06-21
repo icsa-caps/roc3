@@ -132,7 +132,7 @@ Mail            : Issue '(' Msg ')'                                 { Issue $3 }
                 | Send '(' Msg ',' Param ')'                        { Send $3 $5}
                 | Receive '(' Msg ')'                               { ReceiveFrom $3 Nothing}
                 | Receive '(' Msg ',' Param ')'                     { ReceiveFrom $3 (Just $5) }
-                | broadcast '(' Param ',' Msg ')'                   { Broadcast $3 $5 }
+                | broadcast '(' Param ',' Param ',' Msg ')'         { Broadcast $3 $5 $7 }
                 | '*' Msg                                           { Issue $2 }
                 | Param '!' Msg                                     { Send $3 $1 }
                 | Param '?' Msg                                     { ReceiveFrom $3 (Just $1) }

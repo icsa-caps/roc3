@@ -77,7 +77,7 @@ machine Dir:[1] {
 
   (IM, src?GetM ) {
     modifiers.add(src);
-    broadcast(modifiers, NewModifier<cache src>); // broadcast to a set
+    broadcast(dir, modifiers, NewModifier<cache src>); // broadcast to a set
     stall;					         // msg received by every
 						         // machine in the set
   }						         // if typeOf set != machine, 
