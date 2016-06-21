@@ -134,8 +134,8 @@ type Param           = String
 
 data MachineFunctions = MachineFunctions [ ( MachineType,
                                              Sets,
-                                             ReceiveFunction ) ]
-                                         LocalVariables
+                                             ReceiveFunction,
+                                             LocalVariables ) ]
                         deriving(Show)
 
 -- we need a pair of add and remove functions for each set field a machine has

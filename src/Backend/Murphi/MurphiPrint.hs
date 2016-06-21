@@ -110,17 +110,15 @@ pushBy num = let spaces = replicate num ' '
 --------------------------------
 
 -- extracting elements of triplets
-fst4 :: (a,b,c,d) -> a
-fst4 (a,b,c,d) = a
+fst3 :: (a,b,c,d) -> a
+fst3 (a,b,c,d) = a
 
-snd4 :: (a,b,c,d) -> b
-snd4 (a,b,c,d) = b
+snd3 :: (a,b,c,d) -> b
+snd3 (a,b,c,d) = b
 
-thrd4 :: (a,b,c,d) -> c
-thrd4 (a,b,c,d) = c
+thrd3 :: (a,b,c,d) -> c
+thrd3 (a,b,c,d) = c
 
-fourth4 :: (a,b,c,d) -> d
-fourth4 (a,b,c,d) = d
 
 -- extract info from a Message
 getMtype :: Message -> String
@@ -194,9 +192,15 @@ instance Cl.MurphiClass Response where
 
 
  -- elem :: Field
- tomurphi (Add owner setName elem)   = Cl.tomurphi owner ++ "AddTo" ++ setName ++ "List(" ++ Cl.tomurphi elem ++ ");"
- tomurphi (Del owner setName elem)   = Cl.tomurphi owner ++ "RemoveFrom" ++ setName ++ "List(" ++ Cl.tomurphi elem ++ ");"
- tomurphi (Stall)                    = "return false;" -- message is not processed
+ tomurphi (Add (Machine machine index) setName elem)
+   = "AddTo" ++ toMachineArray machine ++ fstCap setName ++ "List(" ++
+     Cl.tomurphi elem ++ ", " ++ show index ++ ");"
+
+ tomurphi (Del (Machine machine index) setName elem)
+   = "RemoveFrom" ++ toMachineArray machine ++ fstCap setName ++ "List(" ++
+     Cl.tomurphi elem ++ ", " ++ show index ++ ");"
+
+ tomurphi (Stall) = "return false;" -- message is not processed
 
 --------------------------------
 
@@ -552,14 +556,11 @@ instance Cl.MurphiClass CommonFunctions where
 
 
 instance Cl.MurphiClass MachineFunctions where
- tomurphi (MachineFunctions machineSetsTypeFunc localVariables) =
-   printLocalVars ++
-   mapconcatln setReceiveSingle machineSetsTypeFunc
-  where
-   -----------------------------
-   -- local Variables
 
-   printLocalVars = Cl.tomurphi localVariables
+ tomurphi (MachineFunctions machine_Sets_ReceiveFuncion_LocalVars ) =
+   mapconcatln setReceiveSingle machine_Sets_ReceiveFuncion_LocalVars
+
+  where
 
    -----------------------------
    -- add/remove from set
@@ -569,15 +570,15 @@ instance Cl.MurphiClass MachineFunctions where
                               removeFromSet machine set
 
 
-   -- !!!!!!!!!!!!!must know also the index of the machine!!!!!!!!!!!!!!!!!!!!!!!
    addToSet :: MachineType -> TypeDecl -> String
    addToSet machine (Decl setName (Set _ elemType))
-     = let thisSet = toMachineArray machine ++ "." ++ setName
-       in  "procedure addTo" ++ setName ++ "List" ++
-           "(x: " ++ Cl.tomurphi elemType ++ ");\nbegin\n" ++
-           " if MultiSetCount( i:" ++ thisSet ++ ", " ++
-           thisSet ++ "[i] = x ) != 0\n" ++
-           " then\n" ++ "  MultiSetAdd(x," ++ thisSet ++ " );\n" ++
+     = let thisSet = toMachineArray machine ++ "[index]." ++ setName
+       in  "procedure addTo" ++ toMachineArray machine ++ setName ++ "List" ++
+           "(x: " ++ Cl.tomurphi elemType ++ ", index: " ++ machineIndex machine ++
+           ");\nbegin\n" ++
+           " if MultiSetCount(i:" ++ thisSet ++ ", " ++
+           thisSet ++ "[i] = x) != 0\n" ++
+           " then\n" ++ "   MultiSetAdd(x," ++ thisSet ++ ");\n" ++
            " endif;\nend;\n"
 
    addToSet _  _ = error "Used MurphiPrint.removeFromSet on a non-set"
@@ -585,13 +586,13 @@ instance Cl.MurphiClass MachineFunctions where
 
    -- must know also the index of the machine
    removeFromSet :: MachineType -> TypeDecl -> String
-   removeFromSet machine (Decl set (Set _ elemType))
-    = let thisSet = toMachineArray machine ++ "." ++ set
-      in  "procedure RemoveFrom" ++ set ++ "List" ++
-          "( x: " ++ Cl.tomurphi elemType ++ " );\n" ++
-          "begin\n" ++
-          " MultiSetRemovePred(i:" ++ thisSet ++ "," ++  thisSet ++ "[i] = x);\n" ++
-          "end;\n"
+   removeFromSet machine (Decl setName (Set _ elemType))
+    = let thisSet = toMachineArray machine ++ "[index]." ++ setName
+      in  "procedure RemoveFrom" ++ toMachineArray machine ++ setName ++ "List" ++
+          "( x: " ++ Cl.tomurphi elemType ++ ", index:" ++ machineIndex machine ++
+          " );\nbegin" ++
+          " MultiSetRemovePred(i:" ++ thisSet ++ "," ++  thisSet ++ "[i] = x);\n"
+          ++ "end;\n"
 
    removeFromSet _ _  = error "Used MurphiPrint.removeFromSet on a non-set"
 
@@ -644,17 +645,16 @@ instance Cl.MurphiClass MachineFunctions where
    -----------------------------
 
    -- printing the receive function
-   finalMachineReceive machine statesGuardsReps
+   finalMachineReceive :: MachineType -> ReceiveFunction -> LocalVariables -> String
+   finalMachineReceive machine statesGuardsReps localVariables
     = "function " ++ machine ++ "Receive(msg:Message; index: "
       ++ machineIndex machine ++") : boolean;\n" ++
+      Cl.tomurphi localVariables ++
       "begin\n" ++
-     -- " alias node: " ++ toMachineArray machine ++ "[index] do\n" ++
-     -- "  switch " ++ toMachineArray machien ++ ".state\n" ++
       pushBy 3 (caseAllStates statesGuardsReps) ++
       "\n   else\n" ++
       "      ErrorUnhandledState();\n" ++
       "  endswitch;\n\n" ++
-      --" endalias;\n\n" ++
       " -- Message processed\n" ++
       " return true;\n" ++
       "end;\n"
@@ -662,14 +662,14 @@ instance Cl.MurphiClass MachineFunctions where
 
    -----------------------------
    -- set + receive functions
-   setReceiveSingle :: ( MachineType, Sets, ReceiveFunction ) -> String
-   setReceiveSingle (machine, sets, stateGuardsReps) =
+   setReceiveSingle :: ( MachineType, Sets, ReceiveFunction, LocalVariables ) -> String
+   setReceiveSingle (machine, sets, stateGuardsReps, localVariables) =
      "-- " ++ machine ++ " functions {{{\n" ++
      "-- Add/remove from sets\n" ++
      finalSetFunctions machine sets ++ "\n" ++
      "---------------------------------------------------------\n" ++
      " -- Receive function \n" ++
-     finalMachineReceive machine stateGuardsReps ++
+     finalMachineReceive machine stateGuardsReps localVariables ++
      "\n-- }}}\n"
 
 ----------------------------------------------------------------
