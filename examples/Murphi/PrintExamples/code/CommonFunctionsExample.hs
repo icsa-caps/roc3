@@ -21,7 +21,13 @@ arg2 = Decl "num" (Integer 1 10)
 
 sendInfo = ([arg1,arg2], netsVCs)
 
-comFun = FuncParams orderedNetNames sendInfo
+-- broadcast
+setField = SetField ( Field (Simple "sharers") (Machine "Directory" 0) ) (Node "Cache")
+msg      = Message "Ack" [Nothing, Nothing]
+broadcast1 = ( setField, msg )
+broadcastInfo = [broadcast1]
+
+comFun = FuncParams orderedNetNames sendInfo broadcastInfo
 
 murphiSrc = tomurphi comFun
 

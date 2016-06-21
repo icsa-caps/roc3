@@ -8,8 +8,8 @@ var
 
 begin
 
-     msg.src:= Cache;
-     msg.num:= 1..10;
+     msg.src:= src
+     msg.num:= num
       if vc = vcOrd11 | vc = vcOrd12 then
        Assert(ord1count[dst] < NET_MAX) "Too many msgs on ord1Q";
        ord1[dst][ord1count[dst]] := msg;
@@ -52,6 +52,20 @@ begin
   endif;
  endfor;
  ord2count[n] := ord2count[n] - 1;
+end;
+
+procedure CastAckSharers(src:Node);
+begin
+  for n:Node do
+    if  ( IsMember(n, Cache) &
+       MultiSetCount(i:Directorys[0].sharers, Directorys[0].sharers[i] = n) != 0 )
+    then
+      Send(src,
+           dst,
+           UNDEFINED,
+           UNDEFINED);
+    endif;
+  endfor;
 end;
 
 procedure ErrorUnhandledMsg();

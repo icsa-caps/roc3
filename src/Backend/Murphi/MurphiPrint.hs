@@ -209,6 +209,17 @@ instance Cl.MurphiClass Field where
 
 --------------------------------
 
+
+variableName :: Variable -> String
+variableName (Simple varName)              = varName
+variableName (ArrayElem arrayName _)       = arrayName
+variableName (MachineArray machineName _)  = machineName
+
+fieldName :: Field -> String
+fieldName (Field variable owner) = variableName variable
+
+
+
 instance Cl.MurphiClass Owner where
   tomurphi Msg = "msg."
   tomurphi Global = ""
@@ -434,9 +445,10 @@ instance Cl.MurphiClass Variables where
 
 
 instance Cl.MurphiClass CommonFunctions where
- tomurphi (FuncParams orderedNetNames sendInfo  ) =
+ tomurphi (FuncParams orderedNetNames sendInfo broadcastInfo  ) =
     finalSend      ++ "\n" ++
     finalAdvanceQ  ++ "\n" ++
+    finalBroadcast ++ "\n" ++
     errorFunctions ++ "\n"
 
   where
@@ -538,7 +550,37 @@ instance Cl.MurphiClass CommonFunctions where
    isOrdered :: NetName -> Bool
    isOrdered net = net `elem` orderedNetNames
 
+
+
    -----------------------------
+   -- broadcasting functions
+
+   -- broadcast for a single set and msg
+   singleBroadcast :: (SetField, Message) -> String
+   singleBroadcast (SetField field elemType, msg)
+     = let setName = fieldName field
+           (Message mtype _) = msg
+           srcField = Field (Simple "src") Local
+           dstField = Field (Simple "dst") Local
+       in  "procedure Cast" ++ fstCap mtype ++ fstCap setName ++
+           "(src:Node);\n" ++  -- Node = union of machines,
+                                  -- only machines can broadcast msgs
+           "begin\n" ++
+           "  for n:Node do\n" ++
+           "    if  ( IsMember(n, " ++ Cl.tomurphi elemType ++  ") &\n" ++
+           "       MultiSetCount(i:" ++ Cl.tomurphi field ++ ", "
+           ++ Cl.tomurphi field ++ "[i] = n) != 0 )\n" ++
+           "    then\n" ++
+           ( pushBy 6 (Cl.tomurphi (Send msg srcField dstField)) ) ++ "\n" ++
+           "    endif;\n" ++
+           "  endfor;\n" ++
+           "end;\n"
+
+   -- all broadcast functions
+   finalBroadcast = mapconcatln singleBroadcast broadcastInfo
+
+   -----------------------------
+
    -- error functions
    errorFunctions = "procedure ErrorUnhandledMsg();\n" ++
                     "begin\n" ++
@@ -563,6 +605,7 @@ instance Cl.MurphiClass MachineFunctions where
   where
 
    -----------------------------
+
    -- add/remove from set
 
    setFunctions :: MachineType -> TypeDecl -> String

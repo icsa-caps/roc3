@@ -23,6 +23,7 @@ type Rec              = String
 type StateName        = String
 type SetName          = String
 type MsgArg           = TypeDecl
+type MsgArgs          = [MsgArg]
 type VarName          = String
 type ArrayName        = String
 type Index            = Int
@@ -32,13 +33,47 @@ type AliasName        = String
 -- helper data structures, data types
 type VCNets = [ (VCName, Network) ]
 
+
+-- only for Send and Broadcast
+data Message = Message MType [ Maybe Field ] -- for Owner see bellow
+               deriving(Show)
+
+
+data Owner = Msg
+           | Global
+           | Machine MachineType Index
+           | Local                 -- need to add declaration
+           | ThisNode
+             deriving(Show)
+
+
+-- change fields to account for elements of arrays i.e. spesific machines
+data Field = Field Variable Owner
+             deriving(Show)
+
+-- for printing broadcasting functions
+data SetField = SetField Field Type   -- Type is the type of the elements
+                deriving(Show)
+
+type Src = Field
+type Dst = Field
+
+
+data Variable = Simple VarName
+              | ArrayElem ArrayName Index
+              | MachineArray MachineType Index
+                  deriving(Show)
+
+
 -- for variables that are only in a particular function or procedure.
 -- we need the list because we have to print their declarations
 type LocalVariables = [TypeDecl]
 
+
 -- in place of TypeDecl in Ast, to make printing easier
 data TypeDecl = Decl Name Type
               deriving(Show)
+
 
 data Type = Boolean
           | Integer Lo Hi
@@ -48,11 +83,14 @@ data Type = Boolean
           | Set (Either MachineType Size) Type -- Left machine means the size
           deriving(Show)                       -- of the set = #machines
 
+
 type Lo    = Int
 type Hi    = Int
 
 
 -----------------------------------------------------------------
+-----------------------------------------------------------------
+
 data Program = Program Constants
                        Types
                        Variables
@@ -63,7 +101,10 @@ data Program = Program Constants
                        Invariants
                 deriving(Show)
 
+
 -----------------------------------------------------------------
+-----------------------------------------------------------------
+
 -- Constants
 
 
@@ -74,6 +115,8 @@ data Constants = Constants {
                 deriving(Show)
 
 -----------------------------------------------------------------
+-----------------------------------------------------------------
+
 -- Types
 data Types  = Types
              {
@@ -85,7 +128,7 @@ data Types  = Types
 
                 msgType         :: [String], -- kinds of msgs (Ack, Fwd etc.)
 
-                msgArgs         :: [MsgArg], -- only info we need to print msg
+                msgArgs         :: MsgArgs, -- only info we need to print msg
 
                 machineStates   :: [ (MachineType,
                                     [State],       -- states of each machine
@@ -95,6 +138,8 @@ data Types  = Types
 
 
 -----------------------------------------------------------------
+-----------------------------------------------------------------
+
 -- Variables
 
 data Variables      = Variables {
@@ -114,20 +159,23 @@ netName (Left (OrderedNet name _))    = name
 netName (Right (UnorderedNet name _)) = name
 
 
-
+-----------------------------------------------------------------
 -----------------------------------------------------------------
 
 -- Common Functions
 data CommonFunctions = FuncParams {
                         -- need one advanceQ for each ordered net!
                         advanceQ        :: [OrderedNetName],
-                        send            :: ( [MsgArg], [(NetName,[VCName])] )
+                        send            :: ( MsgArgs, [(NetName,[VCName])] ),
+                        -- we assume the field is a set
+                        broadcast       :: [ (SetField, Message) ]
                         -- MSI has also a BCastInv procedure
 
                        } deriving(Show)
 
 type Param           = String
 
+-----------------------------------------------------------------
 -----------------------------------------------------------------
 
 -- Machine Functions
@@ -154,6 +202,7 @@ type MType           = String --mtype in murphi
 
 data Response        = ToState MachineType Index State
                      | Send Message Src Dst     -- see note below for dst
+                     | Broadcast Message DstSet
                      | Assign Field Field     -- what if the value also has an owner?
                      | Add Owner SetName Field  -- the owner of the set is the machine
                      | Del Owner SetName Field  -- in question. Owner here is  for the elem
@@ -161,42 +210,10 @@ data Response        = ToState MachineType Index State
                        deriving(Show)
 
 type Elem = Field
-
--- only for Send
-data Message = Message MType [ Maybe Field ] -- for Owner see bellow
-               deriving(Show)
-
--- who owns a field? needed in Response
--- i.e. when we print variable assignments or send messages
--- e.g. to print "dir.owner = cache[1]" we need to know that (in this context)
--- owner is a field "owned" by dir and is not global
--- (in which case we would print "owner = cache[1]")
--- or if we want to print "Send(msg.src)" or "Send(cache[1].src)"
--- we want to differentiate between the two srcs
-data Owner = Msg
-           | Global
-           | Machine MachineType Index
-           | Local                 -- need to add declaration
-           | ThisNode
-             deriving(Show)
-
--- change fields to account for elements of arrays i.e. spesific machines
-data Field = Field Variable Owner
-             deriving(Show)
-
-type Src = Field
-type Dst = Field
-
-data Variable = Simple VarName
-              | ArrayElem ArrayName Index
-              | MachineArray MachineType Index
-                  deriving(Show)
+type DstSet = Field -- we assume the variable refers to a set
 
 
--- Send : dst in the frontend language does not have a type
--- (syntax : "dst!Msg") but we must infer the owner,
--- like for the Message arguments
-
+-----------------------------------------------------------------
 -----------------------------------------------------------------
 
 -- Rules
@@ -227,6 +244,7 @@ data ReceiveUnordNet  = ReceiveUnordNet NetName [VCName] [MachineType]
 -- maybe we could have them in a global variable
 
 -----------------------------------------------------------------
+-----------------------------------------------------------------
 
 -- Startstate
 -- TODO
@@ -236,7 +254,7 @@ data Startstate = Startstate String
 
 
 
-
+-----------------------------------------------------------------
 -----------------------------------------------------------------
 
 -- Invariants
@@ -246,4 +264,5 @@ data Invariants = Invariants String
 
 
 
+-----------------------------------------------------------------
 -----------------------------------------------------------------
