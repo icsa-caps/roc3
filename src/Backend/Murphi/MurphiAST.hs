@@ -28,6 +28,7 @@ type VarName          = String
 type ArrayName        = String
 type Index            = Int
 type AliasName        = String
+type RuleName         = String
 
 
 -- helper data structures, data types
@@ -223,20 +224,29 @@ type DstSet = Field -- we assume the variable refers to a set
 -- just an optimization, no need to do it
 
 
-data Rules = Rules { selfIssueRules   :: [SelfIssueRule],
-                     receiveOrdNets   :: [ReceiveOrdNet],
-                     receiveUnordNets :: [ReceiveUnordNet] }
-                     deriving(Show)
+data Rules = Rules SelfIssueRules
+                   ReceiveOrdNets
+                   ReceiveUnordNets
+             deriving(Show)
+
+type SelfIssueRules = [( MachineType, [SelfIssueRule] )]
+type ReceiveOrdNets = [ReceiveOrdNet]
+type ReceiveUnordNets = [ReceiveUnordNet]
 
 
-data SelfIssueRule = SelfIssueRule Guard [Response] -- Guard is a function of
-                    deriving(Show)                  -- the guard in the relevant
-                                                    -- part of the front-end
 
-data ReceiveOrdNet    = ReceiveOrdNet NetName [VCName] [MachineType]
+-- the guard should (mostly) be AtStateAlias "node" <state>
+data SelfIssueRule    = SelfIssueRule RuleName Guard [Response]  -- Guard is a function of
+                        deriving(Show)                  -- the guard in the relevant
+                                                        -- part of the front-end
+
+-- we need a list of all the machines in the receive rules, because we
+-- have IsMember calls for each of them
+-- to check that the message is accepted by the machine it is sent to
+data ReceiveOrdNet    = ReceiveOrdNet RuleName NetName [VCName] [MachineType]
                         deriving(Show)
 
-data ReceiveUnordNet  = ReceiveUnordNet NetName [VCName] [MachineType]
+data ReceiveUnordNet  = ReceiveUnordNet RuleName NetName [VCName] [MachineType]
                         deriving(Show)
 
 

@@ -74,12 +74,25 @@ disjunction :: [String] -> String
 disjunction = concatWith " | "
 
 
+-- printing if-elsif-else-statements
+printIfElse :: [String] -> [String] -> String
+printIfElse (cond:conditions) (bod:bodies) = "if " ++ cond ++ " then\n  " ++
+                                             bod ++ "\n\n" ++
+                                             printElsif conditions bodies
+
+
+-- printing elsif to else statements
+printElsif :: [String] -> [String] -> String
+printElsif [cond] [body]                   = "else\n  " ++ body ++ "endif;"
+printElsif (cond:conditions) (body:bodies)  = "elsif " ++ cond ++ " then\n  " ++
+                                             body ++ "\n\n" ++
+                                             printElsif conditions bodies
 --------------------------------
 
 -- gives the name of the variable used for indexing this type of machine
 -- i.e. the name of the corresponseing scalarset
-machineIndex :: MachineType -> String
-machineIndex machine = machine ++ "Index"
+toMachineIndex :: MachineType -> String
+toMachineIndex machine = machine ++ "Index"
 
 -- the name of the array of this type of machines
 toMachineArray :: MachineType -> String
@@ -129,6 +142,9 @@ getMsgParams (Message _ params) = params
 
 --------------------------------
 
+-- how many msgs are in this buffer?
+countName :: NetName -> String
+countName netName = netName ++ "count"
 
 
 -----------------------------------------------------------------
@@ -265,6 +281,14 @@ instance Cl.MurphiClass LocalVariables where
 --------------------------------
 
 
+instance Cl.MurphiClass SelfIssueRule where
+  tomurphi (SelfIssueRule rulename guard responses)
+    = "rule \"" ++ rulename ++ "\"\n" ++
+      pushBy 2 (Cl.tomurphi guard) ++ "\n" ++
+      "=>\n" ++
+      pushBy 2 (mapconcatln Cl.tomurphi responses) ++ "\n" ++
+      "endrule;"
+
 
 
 
@@ -353,7 +377,7 @@ instance Cl.MurphiClass Types where
                       in  map ( \size -> "scalarset(" ++ show size ++ ")" ) sizes
 
     finalScalarsets = let machines       = map fst machinesSizes
-                          formatMachines = map (machineIndex) machines
+                          formatMachines = map (toMachineIndex) machines
                           finalPairs     = zip formatMachines scalarsets
                           -- use uncurry decl instead of declGen (that takes pairs)
                           -- because the latter has show to the second argument
@@ -409,7 +433,7 @@ instance Cl.MurphiClass Variables where
   where
    machineNames = machines variables
    formatMachine :: MachineName -> String
-   formatMachine machine = toMachineArray machine ++ ": array [" ++ machineIndex machine ++ "]"
+   formatMachine machine = toMachineArray machine ++ ": array [" ++ toMachineIndex machine ++ "]"
                            ++ " of " ++ toMachineState machine ++ ";"
    finalMachines = mapconcatln formatMachine machineNames
 
@@ -452,8 +476,6 @@ instance Cl.MurphiClass CommonFunctions where
     errorFunctions ++ "\n"
 
   where
-   countName :: NetName -> String
-   countName netName = netName ++ "count"
 
    -- advance ordered network queue
    advanceQ netName = let count = countName netName
@@ -617,7 +639,7 @@ instance Cl.MurphiClass MachineFunctions where
    addToSet machine (Decl setName (Set _ elemType))
      = let thisSet = toMachineArray machine ++ "[index]." ++ setName
        in  "procedure addTo" ++ toMachineArray machine ++ setName ++ "List" ++
-           "(x: " ++ Cl.tomurphi elemType ++ ", index: " ++ machineIndex machine ++
+           "(x: " ++ Cl.tomurphi elemType ++ ", index: " ++ toMachineIndex machine ++
            ");\nbegin\n" ++
            " if MultiSetCount(i:" ++ thisSet ++ ", " ++
            thisSet ++ "[i] = x) != 0\n" ++
@@ -632,7 +654,7 @@ instance Cl.MurphiClass MachineFunctions where
    removeFromSet machine (Decl setName (Set _ elemType))
     = let thisSet = toMachineArray machine ++ "[index]." ++ setName
       in  "procedure RemoveFrom" ++ toMachineArray machine ++ setName ++ "List" ++
-          "( x: " ++ Cl.tomurphi elemType ++ ", index:" ++ machineIndex machine ++
+          "( x: " ++ Cl.tomurphi elemType ++ ", index:" ++ toMachineIndex machine ++
           " );\nbegin" ++
           " MultiSetRemovePred(i:" ++ thisSet ++ "," ++  thisSet ++ "[i] = x);\n"
           ++ "end;\n"
@@ -691,7 +713,7 @@ instance Cl.MurphiClass MachineFunctions where
    finalMachineReceive :: MachineType -> ReceiveFunction -> LocalVariables -> String
    finalMachineReceive machine statesGuardsReps localVariables
     = "function " ++ machine ++ "Receive(msg:Message; index: "
-      ++ machineIndex machine ++") : boolean;\n" ++
+      ++ toMachineIndex machine ++") : boolean;\n" ++
       Cl.tomurphi localVariables ++
       "begin\n" ++
       pushBy 3 (caseAllStates statesGuardsReps) ++
@@ -720,7 +742,118 @@ instance Cl.MurphiClass MachineFunctions where
 
 
 instance Cl.MurphiClass Rules where
- tomurphi = undefined
+ tomurphi (Rules selfIssued receiveOrdNets receiveUnordNets)
+   = finalSelfIssued ++
+     "-- ordered networks receive rules" ++
+     finalReceiveOrdNets ++
+     "-- unordered networks receive rules" ++
+     finalReceiveUnordNets
+
+  where
+   -----------------------------
+   -- self-issued rules
+
+   -- self-issued rules of one machine
+   singleMachineSelfIssueRules :: (MachineType, [SelfIssueRule]) -> String
+   singleMachineSelfIssueRules (machine, rules)
+     = "-- " ++ machine ++ " self-issued rules\n"++
+       "ruleset index:" ++ toMachineIndex machine ++ " do\n" ++
+       "  alias node:" ++ toMachineArray machine ++ "[index] do\n\n" ++
+       pushBy 4 (mapconcatln Cl.tomurphi rules) ++ "\n" ++
+       "  endalias;\n" ++
+       "endruleset;\n"
+
+   -- self-issued rules for all machines
+   allSelfIssued :: [(MachineType, [SelfIssueRule])] -> String
+   allSelfIssued = mapconcatln singleMachineSelfIssueRules
+
+   finalSelfIssued = allSelfIssued selfIssued
+
+   -----------------------------
+   -- unordered network rules
+
+   -- a single unordered net receive rule
+   singleUnordNet :: ReceiveUnordNet -> String
+   singleUnordNet (ReceiveUnordNet ruleName netName vcs machines)
+     = let disjunctVCs = disjunction $ map ("msg.vc = " ++ ) vcs
+           allIsMember  = map (isMember "n") machines
+           allProcess  = map processMessage machines
+           casesMachines = printIfElse allIsMember allProcess
+       in  "ruleset n:Node do\n" ++
+           "  choose midx:" ++ netName ++ "[n] do\n" ++
+           "    alias chan:net[n]\n" ++
+           "      alias msg:chan[midx]\n\n" ++
+
+            "       rule " ++ ruleName ++ "\n" ++
+            pushBy 10 (disjunctVCs)    ++ "\n" ++
+                    "=>\n" ++
+            pushBy 10 casesMachines    ++ "\n" ++
+            "       endrule;\n\n" ++
+
+            "     endalias;\n"    ++
+            "   endalias;\n"      ++
+            "  endchoose;\n"      ++
+            "endruleset;\n"
+
+   -- receive rules for a list of unordered nets
+   allUnordNet :: [ReceiveUnordNet] -> String
+   allUnordNet = mapconcatln singleUnordNet
+
+   -- final
+   finalReceiveUnordNets = allUnordNet receiveUnordNets
+
+    -----------
+   -- helper functions
+   isMember :: String -> MachineName -> String
+   isMember alias machine = "IsMember(" ++ alias ++ ", " ++ machine ++ ")"
+
+   processMessage :: MachineName -> String
+   processMessage machine = "if " ++ machine ++ "Receive(msg,n) then \n" ++
+                             "  MultisetRemove(midx, chan);\n" ++
+                             "endif;\n"
+   -----------
+
+
+   -----------------------------
+   -- ordered network rules
+
+   -- a single ordered net receive rule
+   singleOrdNet :: ReceiveOrdNet -> String
+   singleOrdNet (ReceiveOrdNet ruleName netName vcs machines)
+     = let disjunctVCs = disjunction $ map ("msg.vc = " ++ ) vcs
+           allIsMember  = map (isMember "n") machines
+           allDeQ  = map (deQ netName) machines
+           casesMachines = printIfElse allIsMember allDeQ
+       in  "ruleset n:Node do\n" ++
+           "  choose midx:" ++ netName ++ "[n] do\n" ++
+           "    alias chan:net[n]\n" ++
+           "      alias msg:chan[midx]\n\n" ++
+
+           "       rule " ++ ruleName ++ "\n" ++
+           "         " ++ countName netName ++ "[n] > 0\n" ++
+           "       =>\n" ++
+           pushBy 9 casesMachines ++ "\n" ++
+           "       endrule;\n\n" ++
+
+           "     endalias;\n"    ++
+           "   endalias;\n"      ++
+           "  endchoose;\n"      ++
+           "endruleset;\n"
+
+   -- helper function
+   deQ :: NetName -> MachineName -> String
+   deQ net machine = "if " ++ machine ++ "Receive then\n" ++
+                     "   Advance" ++ net ++ "(n);\n" ++
+                     "endif;"
+
+
+   -- receive rules for a list of ordered nets
+   allOrdNet :: [ReceiveOrdNet] -> String
+   allOrdNet = mapconcatln singleOrdNet
+
+   -- applying it
+   finalReceiveOrdNets = allOrdNet receiveOrdNets
+   -----------------------------
 
 ----------------------------------------------------------------
 
