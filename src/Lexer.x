@@ -59,7 +59,6 @@ tokens :-
 
     @digits         { \s -> TokenNum (read s) }
     @iden           { \s -> TokenIdentifier s }
-    '1'             { \s -> TokenNumOne }
 
 
 
@@ -104,7 +103,7 @@ data Token = TokenBegin
            | TokenDel
            | TokenIdentifier String
            | TokenNum Int
-           | TokenNumOne
+
 
            deriving (Eq,Show)
 
