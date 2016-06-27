@@ -29,10 +29,16 @@ type ArrayName        = String
 type Index            = Int
 type AliasName        = String
 type RuleName         = String
+type MachineIndex     = String
 
 
 -- helper data structures, data types
 type VCNets = [ (VCName, Network) ]
+
+data Machine = Symmetric MachineType Size
+             | Alias String
+             | Nonsym MachineType Int
+             deriving(Show)
 
 
 -- only for Send and Broadcast
@@ -42,7 +48,7 @@ data Message = Message MType [ Maybe Field ] -- for Owner see bellow
 
 data Owner = Msg
            | Global
-           | Machine MachineType Index
+           | Owner Machine
            | Local                 -- need to add declaration
            | ThisNode
              deriving(Show)
@@ -62,8 +68,9 @@ type Dst = Field
 
 data Variable = Simple VarName
               | ArrayElem ArrayName Index
-              | MachineArray MachineType Index
+              | MachineArray Machine
                   deriving(Show)
+
 
 
 -- for variables that are only in a particular function or procedure.
@@ -121,11 +128,7 @@ data Constants = Constants {
 -- Types
 data Types  = Types
              {
-                machineSizesT    :: [(MachineType,Size)],   -- the scalarsets for indexing
-
-                nodes           :: [MachineType],         -- union of the machines
-
-                --vcType          :: Size,
+                 machinesFoTypes :: [Machine],
 
                 msgType         :: [String], -- kinds of msgs (Ack, Fwd etc.)
 
@@ -194,14 +197,13 @@ type ReceiveFunction = [ ( State, [ (Maybe Guard, [Response]) ] ) ]
 
 
 data Guard           = Receive MType
-                     | AtStateAlias AliasName State
-                     | AtState MachineType Index State
+                     | AtState Machine State
                        deriving(Show)
 
 type MType           = String --mtype in murphi
 
 
-data Response        = ToState MachineType Index State
+data Response        = ToState Machine State
                      | Send Message Src Dst     -- see note below for dst
                      | Broadcast Message DstSet
                      | Assign Field Field     -- what if the value also has an owner?
