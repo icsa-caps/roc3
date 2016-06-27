@@ -32,11 +32,14 @@ data Network = Network Order String [Channel]
                deriving(Show)
 
 data Order = Ord | Unord
-            deriving(Show,Enum)
+             deriving(Show,Enum)
 
+data Symmetry = Symmetric | Nonsymmetric
+                deriving(Show, Enum)
 
 
 data Machine    = Machine {
+                            symmetry :: Symmetry,
                             machineType :: String,
                             size :: Int,
                             fields :: [Field],
@@ -57,7 +60,7 @@ data TypeDecl   = Boolean VarName
                 | Map MachineType TypeDecl
                 | SetNum Size TypeDecl
                 | SetName MachineType TypeDecl
-                deriving(Show)
+                  deriving(Show)
 
 type Lo = Int
 type Hi  = Int
@@ -81,16 +84,11 @@ data Mail        = Issue Msg
                  | Send Msg Dst
                  | ReceiveFrom Msg (Maybe Src)
                  | Broadcast Src DstSet Msg          -- param should be a set
-                  deriving(Show)
-
-
+                   deriving(Show)
 
 
 data Msg     = Msg String MsgArgs
                deriving(Show)
-
-
-
 
 
 -- Response has a similar problem with Guard:

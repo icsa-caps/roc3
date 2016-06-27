@@ -28,15 +28,17 @@ import Data.List
     ':'           { TokenColon }
     '.'           { TokenFullStop }
 
-    global      { TokenGlobal }
-    channels    { TokenChannels }
-    networks    { TokenNetworks }
-    ordered     { TokenOrdered }
-    unordered   { TokenUnordered }
-    machine     { TokenMachine }
-    boolean     { TokenBoolean }
-    int         { TokenInt }
-    set         { TokenSet }
+
+    global        { TokenGlobal }
+    channels      { TokenChannels }
+    networks      { TokenNetworks }
+    ordered       { TokenOrdered }
+    unordered     { TokenUnordered }
+    machine       { TokenMachine }
+    nonsymmetric  { TokenNonsymmetric }
+    boolean       { TokenBoolean }
+    int           { TokenInt }
+    set           { TokenSet }
 
 
     Issue       { TokenIssue }
@@ -52,7 +54,10 @@ import Data.List
     num         { TokenNum $$ }
     iden        { TokenIdentifier $$ }
 
+
+
 %%
+
 
 Model           : Globals Channels Networks Machines                 { Model $1 $2 $3 $4 }
 
@@ -85,7 +90,18 @@ Machines        : Machine                                           { [$1] }
                 | Machines Machine                                  { $2 : $1 }
 
 
-Machine         : machine iden ':' Range '{' Fields States_Guards '}'  { Machine $2 $4 $6 $7 }
+Machine         : Sym                                               { $1 }
+                | Nonsym                                            { $1 }
+
+
+Nonsym          : machine iden '{' Fields States_Guards '}'                         { Machine Nonsymmetric $2 1 $4 $5 }
+                | nonsymmetric machine iden ':' Range '{' Fields States_Guards '}'  { Machine Nonsymmetric $3 $5 $7 $8 }
+
+
+Sym             : machine iden ':' Range '{' Fields States_Guards '}'               { Machine Symmetric $2 $4 $6 $7 }
+
+
+
 
 
 Fields          : {-- empty --}                                     { [] }

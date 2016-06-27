@@ -43,6 +43,7 @@ tokens :-
     ordered         { \s -> TokenOrdered }
     unordered       { \s -> TokenUnordered }
     machine         { \s -> TokenMachine }
+    nonsymmetric    { \s -> TokenNonsymmetric }
     boolean         { \s -> TokenBoolean }
     int             { \s -> TokenInt }
     set             { \s -> TokenSet }
@@ -58,6 +59,8 @@ tokens :-
 
     @digits         { \s -> TokenNum (read s) }
     @iden           { \s -> TokenIdentifier s }
+    '1'             { \s -> TokenNumOne }
+
 
 
 
@@ -87,6 +90,7 @@ data Token = TokenBegin
            | TokenOrdered
            | TokenUnordered
            | TokenMachine
+           | TokenNonsymmetric
            | TokenBoolean
            | TokenInt
            | TokenSet
@@ -100,6 +104,8 @@ data Token = TokenBegin
            | TokenDel
            | TokenIdentifier String
            | TokenNum Int
+           | TokenNumOne
+
            deriving (Eq,Show)
 
 scanTokens = alexScanTokens
