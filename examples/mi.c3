@@ -49,7 +49,9 @@ machine Cache:[4] {
 
 }
 
-machine Dir:[1] {
+machine Dir {	                    // because it has size 1, it will be
+					// parsed as nonsymmetric
+	
  int[1..10] nums,      		// integers must have ranges
 
  [5]boolean working,   		// arrays are indexed by nums
