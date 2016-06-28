@@ -30,6 +30,7 @@ type Index            = Int
 type AliasName        = String
 type RuleName         = String
 type MachineIndex     = String
+type StartVal         = String
 
 
 -- helper data structures, data types
@@ -43,9 +44,20 @@ type VCNets = [ (VCName, Network) ]
 -- of a machine. So we can refer to that.
 
 data Machine = Sym MachineType
-             | Nonsym MachineType Index
-             | Alias String
+             | Nonsym MachineType NonsymMIndex
+             | Synonym String
                deriving(Show)
+
+-- we may refer to non-symmetric machines using a formal parameter
+-- (e.g. in the receive function, a loop or a ruleset)
+-- and we may refer to them also directly, which is also their purpose and
+-- difference from symmetric machines
+-- (e.g. sending a message to the second instance of the machine)
+-- Arbitrary is for the former and Specific for the latter
+data NonsymMIndex = Arbitrary
+                  | Specific Index
+                    deriving(Show)
+
 
 data Symmetry = Symmetric | Nonsymmetric
                 deriving(Show)
@@ -284,12 +296,17 @@ data ReceiveUnordNet  = ReceiveUnordNet RuleName NetName [VCName] [MachineType]
 -----------------------------------------------------------------
 
 -- Startstate
--- TODO
-data Startstate = Startstate String
-                deriving(Show)
+data Startstate = Startstate {
+                                machinesStart      ::  [(MachineType,
+                                                         State,
+                                                        [FieldStart])],
+                                orderedNetsStart   ::  [OrderedNetName],
+                                unorderedNetsStart :: [UnorderedNetName]
+                             }
+                  deriving(Show)
 
 
-
+type FieldStart = (VarName, Maybe StartVal)
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
