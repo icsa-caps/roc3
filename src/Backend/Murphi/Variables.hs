@@ -12,29 +12,26 @@ module Variables where
 import  MurphiAST
 import qualified MurphiClass as Cl
 import Data.Char
-import Data.List.Split -- for tokenizing strings
-                       -- splitOn is used in pushBy
 
 -- general helper functions
-import MurphiGenHelper
+import GenHelper
 
 -- helper tomurphi implementations
-import tomurphiHelper
+import TomurphiHelper
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
 
 instance Cl.MurphiClass Variables where
 
- tomurphi :: Variables -> String
  tomurphi variables = "-- machines\n"       ++ finalMachines ++ "\n" ++
-                      "-- ordered Nets\n"    ++ finalOrd      ++ "\n" ++
+                      "-- ordered Nets\n"   ++ finalOrd      ++ "\n" ++
                       "-- unordered Nets\n" ++ finalUnord    ++ "\n"
   where
    machineNames = machines variables
    formatMachine :: MachineName -> String
-   formatMachine machine = toMachineArray machine ++ ": array [" ++ toMachineScalar machine ++ "]"
-                           ++ " of " ++ toMachineState machine ++ ";"
+   formatMachine machine = toMachineArrayStr machine ++ ": array [" ++ indexNameStr machine ++ "]"
+                           ++ " of " ++ toMachineStateStr machine ++ ";"
    finalMachines = mapconcatln formatMachine machineNames
 
    -----------------------------
