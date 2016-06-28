@@ -34,6 +34,7 @@ instance Cl.MurphiClass Types where
   where
     -----------------------------
     -- machine indices
+    -- indexTypeStr used for getting the type of index variables
 
 
 
@@ -49,7 +50,7 @@ instance Cl.MurphiClass Types where
     -- for symmetric machines, print scalarsets
     machineScalarset :: MachineType -> String
     machineScalarset (machine)
-      = decl machine "scalarset(" ++ machineSizeStr machine ++ ")"
+      = decl (indexTypeStr machine) "scalarset(" ++ machineSizeStr machine ++ ")"
 
     -- for non-symmetric machines, print enums
     -- the values are <machine name><num>
@@ -61,13 +62,13 @@ instance Cl.MurphiClass Types where
             pairs = zip front [0,1..num-1]
             -- turn each pair into the desired string/Enum value
             enumValues = map ( \(machine, num) -> machine ++ show num ) pairs
-        in  printEnum (machine) enumValues
+        in  printEnum (indexTypeStr machine) enumValues
 
     -----------------------------
 
     -- node i.e. the union of the machines
     finalNodes  = "Node: union { " ++
-                   concatcomma ( map fst3 (machinesSym types) )
+                   concatcomma ( map indexTypeStr (map fst3 (machinesSym types)) )
                   ++ " };\n"
 
     -----------------------------

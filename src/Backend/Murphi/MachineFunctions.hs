@@ -43,9 +43,10 @@ instance Cl.MurphiClass MachineFunctions where
 
    addToSet :: MachineType -> TypeDecl -> String
    addToSet machine (Decl setName (Set _ elemType))
-     = let thisSet = toMachineArrayStr machine ++ "[index]." ++ setName
+     = let thisSet =indexedFormalStr machine ++ "." ++ setName
        in  "procedure addTo" ++ fstCap machine ++ setName ++ "List" ++
-           "(x: " ++ Cl.tomurphi elemType ++ ", index: " ++ indexNameStr machine ++
+           "(x: " ++ Cl.tomurphi elemType ++ ", " ++
+           formalIndexStr machine ++ " : " ++ indexTypeStr machine ++
            ");\nbegin\n" ++
            "  if MultiSetCount(i:" ++ thisSet ++ ", " ++
            thisSet ++ "[i] = x) != 0\n" ++
@@ -58,9 +59,10 @@ instance Cl.MurphiClass MachineFunctions where
 
    removeFromSet :: MachineType -> TypeDecl -> String
    removeFromSet machine (Decl setName (Set _ elemType))
-    = let thisSet = toMachineArrayStr machine ++ "[index]." ++ setName
+    = let thisSet = indexedFormalStr machine ++ "." ++ setName
       in  "procedure RemoveFrom" ++ fstCap machine ++ setName ++ "List" ++
-          "( x: " ++ Cl.tomurphi elemType ++ ", index:" ++ indexNameStr machine ++
+          "( x: " ++ Cl.tomurphi elemType ++ ", " ++
+          formalIndexStr machine ++ " : " ++ formalIndexStr machine ++
           " );\nbegin" ++
           " MultiSetRemovePred(i:" ++ thisSet ++ "," ++  thisSet ++ "[i] = x);\n"
           ++ "end;\n"
@@ -121,8 +123,9 @@ instance Cl.MurphiClass MachineFunctions where
    -- printing the receive function
    finalMachineReceive :: MachineType -> ReceiveFunction -> LocalVariables -> String
    finalMachineReceive machine statesGuardsReps localVariables
-    = "function " ++ machine ++ "Receive(msg:Message; index: "
-      ++ indexNameStr machine ++") : boolean;\n" ++
+    = "function " ++ machine ++ "Receive(msg:Message; " ++
+      formalIndexStr machine ++ " : "++ indexTypeStr machine
+      ++ ") : boolean;\n" ++
       Cl.tomurphi localVariables ++
       "begin\n" ++
       pushBy 3 (caseAllStates statesGuardsReps) ++
