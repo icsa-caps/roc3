@@ -2,18 +2,18 @@
 module Ast where
 
 -- type synonyms
-type Fields     = [Field]
-type Field      = TypeDecl
-type MachineType = String
-type Size = Int
-type Dst = Param
-type Src = Param
-type DstSet = Param
-type MsgArgs = [MsgArg]
-type MsgArg  = TypeDecl
-type SetName = String
-type VarName = String
-type Index   = Int
+type Fields       = [Field]
+type MachineType  = String
+type Size         = Int
+type Dst          = Param
+type Src          = Param
+type DstSet       = Param
+type MsgArgs      = [MsgArg]
+type MsgArg       = TypeDecl
+type SetName      = String
+type VarName      = String
+type Index        = Int
+type StartVal     = String
 
 
 data Ast        = Model {
@@ -42,12 +42,14 @@ data Machine    = Machine {
                             symmetry :: Symmetry,
                             machineType :: String,
                             size :: Int,
+                            startstate :: State,
                             fields :: [Field],
                             machineFunction ::  [ ( State, Guard, Maybe State, [Response] ) ]
                            }
                   deriving(Show)
 
-
+data Field = Field TypeDecl (Maybe StartVal)
+             deriving(Show)
 
 
 -- Field and MsgArg are both TypeDecl

@@ -36,6 +36,7 @@ import Data.List
     unordered     { TokenUnordered }
     machine       { TokenMachine }
     nonsymmetric  { TokenNonsymmetric }
+    startstate    { TokenStartstate }
     boolean       { TokenBoolean }
     int           { TokenInt }
     set           { TokenSet }
@@ -94,11 +95,14 @@ Machine         : Sym                                               { $1 }
                 | Nonsym                                            { $1 }
 
 
-Nonsym          : machine iden '{' Fields States_Guards '}'                         { Machine Nonsymmetric $2 1 $4 $5 }
-                | nonsymmetric machine iden ':' Range '{' Fields States_Guards '}'  { Machine Nonsymmetric $3 $5 $7 $8 }
+Nonsym          : machine iden '{' Startstate Fields States_Guards '}'                         { Machine Nonsymmetric $2 1 $4 $5 $6 }
+                | nonsymmetric machine iden ':' Range '{' Startstate Fields States_Guards '}'  { Machine Nonsymmetric $3 $5 $7 $8 $9 }
 
 
-Sym             : machine iden ':' Range '{' Fields States_Guards '}'               { Machine Symmetric $2 $4 $6 $7 }
+Sym             : machine iden ':' Range '{' Startstate Fields States_Guards '}'               { Machine Symmetric $2 $4 $6 $7 $8 }
+
+
+Startstate      : startstate ':' iden                               { State $3 }
 
 
 
@@ -111,7 +115,11 @@ Fields          : {-- empty --}                                     { [] }
 Fields1         : Field                                             { [$1] }
                 | Fields1 ',' Field                                 { $3 : $1 }
 
-Field           : TypeDecl                                          { $1 }
+Field           : TypeDecl  StartVal                                { Field $1 $2 }
+
+
+StartVal        : {-- empty --}                                     { Nothing }
+                | '(' iden ')'                                      { Just $2 }
 
 -- may change to <iden> : <type> if hard to convert to target ast
 -- where iden is first arg (arrays are the problem)

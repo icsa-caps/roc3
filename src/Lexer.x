@@ -44,6 +44,7 @@ tokens :-
     unordered       { \s -> TokenUnordered }
     machine         { \s -> TokenMachine }
     nonsymmetric    { \s -> TokenNonsymmetric }
+    startstate      { \s -> TokenStartstate }
     boolean         { \s -> TokenBoolean }
     int             { \s -> TokenInt }
     set             { \s -> TokenSet }
@@ -90,6 +91,7 @@ data Token = TokenBegin
            | TokenUnordered
            | TokenMachine
            | TokenNonsymmetric
+           | TokenStartstate
            | TokenBoolean
            | TokenInt
            | TokenSet
