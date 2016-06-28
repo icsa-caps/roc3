@@ -13,7 +13,7 @@ import Data.List.Split -- for tokenizing strings
                        -- splitOn is used in pushBy
 
 -- general helper functions
-import MurphiGenHelper
+import GenHelper
 
 -- helper tomurphi implementations
 import tomurphiHelper
@@ -25,17 +25,16 @@ import tomurphiHelper
 
 instance Cl.MurphiClass Constants where
 
- --tomurphi :: Constants -> String
  tomurphi (Constants machineSizes vcs) = "const\nMachine Sizes\n" ++ machinesSizes
                                         ++ "\n\n"
                                         ++ "Network parameters\n" ++ netParams
                                         ++ "NET_MAX: " ++ show netMax
   where
 
-    onlyMachines     = map fst machineSizes
-    onlySizes        = map snd machineSizes
-    machineSize      = map (++"Size") onlyMachines
-    machinesSizes    = mapconcatln declGen (zip machineSize onlySizes)
+    onlyMachines   = map fst machineSizes
+    onlySizes      = map snd machineSizes
+    sizeNames      = map (machineSizeStr) onlyMachines
+    machinesSizes  = mapconcatln declGen (zip sizeNames  onlySizes)
 
     ---- <machineName>Size : <num>;
     --------------------------------

@@ -15,10 +15,10 @@ import Data.List.Split -- for tokenizing strings
                        -- splitOn is used in pushBy
 
 -- general helper functions
-import MurphiGenHelper
+import GenHelper
 
 -- helper tomurphi implementations
-import tomurphiHelper
+import TomurphiHelper
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
@@ -85,7 +85,7 @@ instance Cl.MurphiClass CommonFunctions where
    vcs  = map snd netVCs
 
    -- all the if-then clauses for checking for each network if the msg is in
-   -- the one of the VCs of the network
+   -- one of the VCs of that network
    printedNets = printAddNet nets vcConds
 
 
@@ -101,7 +101,7 @@ instance Cl.MurphiClass CommonFunctions where
 
    -- list of conditions for adding a msg to a net
    -- each element of list is the disjunction that is the condition for this net
-   vcConds = let temp = map (map ("vc = " ++)) vcs
+   vcConds = let temp = map (map ("vc = " ++)) vcs  -- vcs :: [[VCName]]
              in  map disjunction temp
 
 
@@ -126,6 +126,7 @@ instance Cl.MurphiClass CommonFunctions where
     "  MultiSetAdd(msg, " ++ net ++ "[dst]);\n"
 
    -----------------------------
+   
    -- helper function
    isOrdered :: NetName -> Bool
    isOrdered net = net `elem` orderedNetNames
@@ -133,7 +134,10 @@ instance Cl.MurphiClass CommonFunctions where
 
 
    -----------------------------
+
    -- broadcasting functions
+   -- one broadcasting funtion for each pair of set and msg
+   -- murphi cannot handle more generality
 
    -- broadcast for a single set and msg
    singleBroadcast :: (SetField, Message) -> String
@@ -143,7 +147,7 @@ instance Cl.MurphiClass CommonFunctions where
            srcField = Field (Simple "src") Local
            dstField = Field (Simple "dst") Local
        in  "procedure Cast" ++ fstCap mtype ++ fstCap setName ++
-           "(src:Node);\n" ++  -- Node = union of machines,
+           "(src:Node);\n" ++     -- Node = union of machines,
                                   -- only machines can broadcast msgs
            "begin\n" ++
            "  for n:Node do\n" ++

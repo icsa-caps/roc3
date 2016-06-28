@@ -13,10 +13,10 @@ import Data.List.Split -- for tokenizing strings
                        -- splitOn is used in pushBy
 
 -- general helper functions
-import MurphiGenHelper
+import GenHelper
 
 -- helper tomurphi implementations
-import tomurphiHelper
+import TomurphiHelper
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
@@ -38,8 +38,8 @@ instance Cl.MurphiClass Rules where
    singleMachineSelfIssueRules :: (MachineType, [SelfIssueRule]) -> String
    singleMachineSelfIssueRules (machine, rules)
      = "-- " ++ machine ++ " self-issued rules\n"++
-       "ruleset index:" ++ toMachineScalar machine ++ " do\n" ++
-       "  alias node:" ++ toMachineArray machine ++ "[index] do\n\n" ++
+       "ruleset index:" ++ indexNameStr machine ++ " do\n" ++
+       "  alias node:" ++ toMachineArrayStr machine ++ "[index] do\n\n" ++
        pushBy 4 (mapconcatln Cl.tomurphi rules) ++ "\n" ++
        "  endalias;\n" ++
        "endruleset;\n"

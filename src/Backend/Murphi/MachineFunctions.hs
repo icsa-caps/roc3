@@ -14,10 +14,10 @@ import Data.List.Split -- for tokenizing strings
                        -- splitOn is used in pushBy
 
 -- general helper functions
-import MurphiGenHelper
+import GenHelper
 
 -- helper tomurphi implementations
-import tomurphiHelper
+import TomurphiHelper
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
@@ -34,7 +34,7 @@ instance Cl.MurphiClass MachineFunctions where
 
    -----------------------------
 
-   -- add/remove from set
+   -- add/remove from set functions
 
    setFunctions :: MachineType -> TypeDecl -> String
    setFunctions machine set = addToSet machine set ++ "\n" ++
@@ -43,24 +43,24 @@ instance Cl.MurphiClass MachineFunctions where
 
    addToSet :: MachineType -> TypeDecl -> String
    addToSet machine (Decl setName (Set _ elemType))
-     = let thisSet = toMachineArray machine ++ "[index]." ++ setName
-       in  "procedure addTo" ++ toMachineArray machine ++ setName ++ "List" ++
-           "(x: " ++ Cl.tomurphi elemType ++ ", index: " ++ toMachineScalar machine ++
+     = let thisSet = toMachineArrayStr machine ++ "[index]." ++ setName
+       in  "procedure addTo" ++ fstCap machine ++ setName ++ "List" ++
+           "(x: " ++ Cl.tomurphi elemType ++ ", index: " ++ indexNameStr machine ++
            ");\nbegin\n" ++
-           " if MultiSetCount(i:" ++ thisSet ++ ", " ++
+           "  if MultiSetCount(i:" ++ thisSet ++ ", " ++
            thisSet ++ "[i] = x) != 0\n" ++
-           " then\n" ++ "   MultiSetAdd(x," ++ thisSet ++ ");\n" ++
-           " endif;\nend;\n"
+           "  then\n" ++ "   MultiSetAdd(x," ++ thisSet ++ ");\n" ++
+           "  endif;\nend;\n"
 
-   addToSet _  _ = error "Used MurphiPrint.removeFromSet on a non-set"
+   addToSet _  _ = error "Used MurphiPrint.addToSet on a non-set"
 
+   -----------------------------
 
-   -- must know also the index of the machine
    removeFromSet :: MachineType -> TypeDecl -> String
    removeFromSet machine (Decl setName (Set _ elemType))
-    = let thisSet = toMachineArray machine ++ "[index]." ++ setName
-      in  "procedure RemoveFrom" ++ toMachineArray machine ++ setName ++ "List" ++
-          "( x: " ++ Cl.tomurphi elemType ++ ", index:" ++ toMachineScalar machine ++
+    = let thisSet = toMachineArrayStr machine ++ "[index]." ++ setName
+      in  "procedure RemoveFrom" ++ fstCap machine ++ setName ++ "List" ++
+          "( x: " ++ Cl.tomurphi elemType ++ ", index:" ++ indexNameStr machine ++
           " );\nbegin" ++
           " MultiSetRemovePred(i:" ++ thisSet ++ "," ++  thisSet ++ "[i] = x);\n"
           ++ "end;\n"
@@ -71,16 +71,18 @@ instance Cl.MurphiClass MachineFunctions where
    finalSetFunctions machine sets = mapconcatln (setFunctions machine) sets
 
    -----------------------------
-
    -----------------------------
+
    -- Printing responses and guards e.g taking different cases (if-then) for
    -- mtype and responding
    allResponses :: [Response] -> String
    allResponses responses = mapconcatln Cl.tomurphi responses
 
+   -----------------------------
+
    guardedResponses :: (Maybe Guard, [Response]) -> String
    guardedResponses (Just guard, responses) = Cl.tomurphi guard ++ " then\n" ++
-                                              pushBy 3 (allResponses responses)
+                                              pushBy 2 (allResponses responses)
    -- if no guard, just print the responses
    guardedResponses (Nothing, responses) = allResponses responses
 
@@ -90,7 +92,8 @@ instance Cl.MurphiClass MachineFunctions where
      let indiv = map guardedResponses guardsResponses
      in  mapconcatln ( "\nelsif " ++ ) indiv ++ "\n"
 
-   ------------
+   -----------------------------
+
    -- If no guard, then there is only one case to consider
    -- and we print the responses
    finalGuardsResps [(Nothing, responses)] = allResponses responses
@@ -99,7 +102,7 @@ instance Cl.MurphiClass MachineFunctions where
     = "if " ++ guardedResponses (Just guard, responses) ++ "\n" ++
       elsifResponses rest  ++ "\n" ++
       "else\n" ++
-      "   ErrorUnhandledMsg();" -- one ln in ouput however many (even 0) I put here
+      "   ErrorUnhandledMsg();\n" -- one ln in ouput however many (even 0) I put here
 
 
    -----------------------------
@@ -107,7 +110,7 @@ instance Cl.MurphiClass MachineFunctions where
    -- taking different cases for each state
    caseState :: ( State, [ ( Maybe Guard, [Response]) ] ) -> String
    caseState (state, guardsResps) = "\nCase " ++ state ++ ":\n" ++
-                                    (pushBy 2 (finalGuardsResps guardsResps))
+                                    (pushBy 3 (finalGuardsResps guardsResps))
 
    --Take different cases for all states
    caseAllStates :: [( State, [ (Maybe Guard, [Response]) ] )] -> String
@@ -119,7 +122,7 @@ instance Cl.MurphiClass MachineFunctions where
    finalMachineReceive :: MachineType -> ReceiveFunction -> LocalVariables -> String
    finalMachineReceive machine statesGuardsReps localVariables
     = "function " ++ machine ++ "Receive(msg:Message; index: "
-      ++ toMachineScalar machine ++") : boolean;\n" ++
+      ++ indexNameStr machine ++") : boolean;\n" ++
       Cl.tomurphi localVariables ++
       "begin\n" ++
       pushBy 3 (caseAllStates statesGuardsReps) ++
@@ -132,6 +135,8 @@ instance Cl.MurphiClass MachineFunctions where
 
 
    -----------------------------
+   ----------------------------
+
    -- set + receive functions
    setReceiveSingle :: ( MachineType, Sets, ReceiveFunction, LocalVariables ) -> String
    setReceiveSingle (machine, sets, stateGuardsReps, localVariables) =

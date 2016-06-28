@@ -130,6 +130,11 @@ data Program = Program Constants
 -----------------------------------------------------------------
 -----------------------------------------------------------------
 
+-- Constants, Types and Variables should not use the Machine datatype,
+-- but tuples that have the machine name and any other information necessary
+-- for printing
+
+
 -- Constants
 
 
@@ -190,6 +195,8 @@ data CommonFunctions = FuncParams {
                         advanceQ        :: [OrderedNetName],
                         send            :: ( MsgArgs, [(NetName,[VCName])] ),
                         -- we assume the field is a set
+                        -- one broadcasting function for each pair
+                        -- of set of fields and a message
                         broadcast       :: [ (SetField, Message) ]
                         -- MSI has also a BCastInv procedure
 
