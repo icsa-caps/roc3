@@ -114,13 +114,28 @@ toMachineState = toMachineStateStr . getName
 
 --------------------------------
 
--- synonym of index type, either the name of an enum (non symmetric machines)
--- or of a sclaraset (symmetric machines)
-indexNameStr :: MachineType -> String
-indexNameStr machine = machine ++ "Index"
 
-indexName :: Machine -> String
-indexName = indexNameStr . getName
+-- formal parameter for indexing
+formalIndexStr :: MachineType -> String
+formalIndexStr machine = machine ++ "IndexVar"
+
+formalIndex :: Machine -> String
+formalIndex = formalIndexStr . getName
+
+-- refering to machine indexed in a
+indexedFormalStr :: MachineType -> String
+indexedFormalStr machine = toMachineArrayStr machine ++
+                                 "[" ++ formalIndexStr machine ++ "]"
+
+-- the type synonym of the indexing variables
+-- i.e. scalarset for symmetric and Enum for nonsymmetric
+-- machines
+
+indexTypeStr :: MachineType -> String
+indexTypeStr machine = machine ++ "IndexType"
+
+indexType :: Machine -> String
+indexType = indexTypeStr . getName
 
 --------------------------------
 
@@ -135,14 +150,21 @@ machineSize machine = machineSizeStr $ getName machine
 
 -- index variable used as a formal parameter in functions, loops etc.
 -- the latter is global; it is the value of a enum
-localIndex :: Machine -> String
-localIndex (Sym name)           = [head name]           -- fst letter
-localIndex (Nonsym name index)  = name ++ show index
+generalIndex :: Machine -> String
+generalIndex (Sym name)           = name ++ "IndexVar"           -- fst letter
+generalIndex (Nonsym name index)
+   = case index of (Specific num) -> name ++ show num
+                   (Arbitrary)    -> name ++ "IndexVar"
+
 
 -- entry in array of machine states
 -- again used as a local variable
-indexedMachine :: Machine -> String
-indexedMachine machine = toMachineArray machine ++ "[" ++ localIndex machine ++ "]"
+indexedMachineGen :: Machine -> String
+-- when we use a synonym for the machine in some context
+-- (e.g. src, dst)
+indexedMachineGen (Synonym var) = var
+indexedMachineGen machine = toMachineArray machine ++
+                        "[" ++ generalIndex machine ++ "]"
 
 -- use node as index
 indexedByNode :: Machine -> String
