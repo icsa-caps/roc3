@@ -35,11 +35,27 @@ type MachineIndex     = String
 -- helper data structures, data types
 type VCNets = [ (VCName, Network) ]
 
-data Machine = Symmetric MachineType Size
-             | Alias String
-             | Nonsym MachineType Int
-             deriving(Show)
 
+
+-- for accessing a machine
+-- WE DO NOT NEED THE SIZE OF THE MACHINES
+-- we declare a constant equal to the size
+-- of a machine. So we can refer to that.
+
+data Machine = Sym MachineType
+             | Nonsym MachineType Index
+             | Alias String
+               deriving(Show)
+
+data Symmetry = Symmetric | Nonsymmetric
+                deriving(Show)
+
+-- this datatype SHOULD NOT BE USED AT THE DECLARATION PARTS
+-- i.e. not in Constants, Types and Variables
+-- where we can use pairs of machine name and the other piece of
+-- information we need
+
+-----------------------------------------------------------------
 
 -- only for Send and Broadcast
 data Message = Message MType [ Maybe Field ] -- for Owner see bellow
@@ -48,8 +64,8 @@ data Message = Message MType [ Maybe Field ] -- for Owner see bellow
 
 data Owner = Msg
            | Global
-           | Owner Machine
-           | Local                 -- need to add declaration
+           | Owner Machine    -- use indexedMachine when printing
+           | Local            -- need to add declaration
            | ThisNode
              deriving(Show)
 
@@ -69,7 +85,8 @@ type Dst = Field
 data Variable = Simple VarName
               | ArrayElem ArrayName Index
               | MachineArray Machine
-                  deriving(Show)
+              | MachineIndex Machine
+                deriving(Show)
 
 
 
@@ -128,7 +145,8 @@ data Constants = Constants {
 -- Types
 data Types  = Types
              {
-                 machinesFoTypes :: [Machine],
+                machinesSym :: [(MachineType, Size, Symmetry)], -- we need the size
+                                                                -- to print enums
 
                 msgType         :: [String], -- kinds of msgs (Ack, Fwd etc.)
 

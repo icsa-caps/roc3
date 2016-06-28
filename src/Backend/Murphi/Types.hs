@@ -13,10 +13,10 @@ import Data.List.Split -- for tokenizing strings
                        -- splitOn is used in pushBy
 
 -- general helper functions
-import MurphiGenHelper
+import GenHelper
 
 -- helper tomurphi implementations
-import tomurphiHelper
+import TomurphiHelper
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
@@ -25,8 +25,8 @@ instance Cl.MurphiClass Types where
 
  tomurphi types = "type\n" ++
                   "-- for indexing\n"   ++ finalIndexVars  ++ "\n"
-                                        ++ finalNodes      ++ "\n" ++
-                  vcType ++ "\n" ++
+                                        ++ finalNodes      ++ "\n"
+                                        ++ vcType          ++ "\n" ++
                   "-- Message Type\n"   ++ finalMsgType    ++ "\n" ++
                   "-- Message\n"        ++ message         ++ "\n" ++
                   "-- Machine States\n" ++ finalMstates    ++ "\n"
@@ -35,37 +35,39 @@ instance Cl.MurphiClass Types where
     -----------------------------
     -- machine indices
 
+
+
     -- print the indices of all machines
-    finalIndexVars = map machineIndex (machinesForType types)
+    finalIndexVars = mapconcatln machineIndex (machinesSym types)
 
     -- print the index used for this machine, symmetric or non-symmetric
-    machineIndex :: Machine -> String
-    machineIndex machine = case machine of (Symmetric _ _)   -> machineScalarset machine
-                                           (Nonsym _ _)      -> machineEnums machine
+    machineIndex :: (MachineType, Size, Symmetry) -> String
+    machineIndex (machine, num, symmetry)
+        = case symmetry of (Symmetric)    -> machineScalarset machine
+                           (Nonsymmetric) -> machineEnums (machine, num)
 
     -- for symmetric machines, print scalarsets
-    machineScalarset :: Machine -> String
-    machineScalarset (Symmetric machine size)
-      = decl toMachineScalar (Symmetric machine size)
-             "scalarset(" ++ show size ++ ")"
+    machineScalarset :: MachineType -> String
+    machineScalarset (machine)
+      = decl machine "scalarset(" ++ machineSizeStr machine ++ ")"
 
     -- for non-symmetric machines, print enums
     -- the values are <machine name><num>
     -- e.g. dir1, dir2, dir3
-    machineEnums :: Machine -> String
-    machineEnums (Nonsym machine num)
+    machineEnums :: (MachineType, Size) -> String
+    machineEnums (machine, num)
       = let front = replicate num machine -- need num copies of machine
             -- match each copy with a number
             pairs = zip front [0,1..num-1]
-            -- turn each pair into the desired string/enum
+            -- turn each pair into the desired string/Enum value
             enumValues = map ( \(machine, num) -> machine ++ show num ) pairs
-        in  printEnum machine enumValues
+        in  printEnum (machine) enumValues
 
     -----------------------------
 
     -- node i.e. the union of the machines
     finalNodes  = "Node: union { " ++
-                   concatcomma (map indexName (machinesForType types))
+                   concatcomma ( map fst3 (machinesSym types) )
                   ++ " };\n"
 
     -----------------------------
@@ -84,22 +86,28 @@ instance Cl.MurphiClass Types where
     -- fields/arguments of msgs (e.g. src)
     msgFields    = msgArgs types
     finalMsgArgs = mapconcatln Cl.tomurphi msgFields
-    message      = "Message:\n record\n  mtype : MessageType;\n  src : Node\n"
-                   ++ (pushBy 2 finalMsgArgs) ++ "\n end;\n"
+    message      = "Message:\n" ++
+                   "  record\n" ++
+                   "    mtype : MessageType;\n" ++
+                   "    src : Node\n" ++
+                   (pushBy 4 finalMsgArgs) ++ "\n" ++
+                   "end;\n"
 
     -----------------------------
 
-    -- machine state record
-    mstates      = machineStates types
+    -- machine state
+    -- record of state, which is an Enum of the possible states,
+    -- and the fields of the machine
 
-    printMstate :: (MachineName,[StateName],[TypeDecl]) -> String
+    mstates = machineStates types
 
-
+    printMstate :: (MachineName, [StateName], [TypeDecl]) -> String
     printMstate (machine, states, fields)
-                 = toMachineState machine ++ ":\n record\n" ++
+                 = toMachineStateStr machine ++ ":\n record\n" ++
                    pushBy 2 ( printEnum "state" states ++
                               concatWith ",\n" (map Cl.tomurphi fields))
                    ++ "\n end;\n"
+
     finalMstates = concatln $ map printMstate mstates
 
 -----------------------------------------------------------------

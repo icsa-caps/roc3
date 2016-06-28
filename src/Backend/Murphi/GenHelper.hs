@@ -163,14 +163,14 @@ pushBy num = let spaces = replicate num ' '
 ----------------------------------------------------------------
 
 -- extracting elements of triplets
-fst3 :: (a,b,c,d) -> a
-fst3 (a,b,c,d) = a
+fst3 :: (a,b,c) -> a
+fst3 (a,b,c) = a
 
-snd3 :: (a,b,c,d) -> b
-snd3 (a,b,c,d) = b
+snd3 :: (a,b,c) -> b
+snd3 (a,b,c) = b
 
-thrd3 :: (a,b,c,d) -> c
-thrd3 (a,b,c,d) = c
+thrd3 :: (a,b,c) -> c
+thrd3 (a,b,c) = c
 
 
 -- extract info from a Message
