@@ -38,8 +38,9 @@ instance Cl.MurphiClass Rules where
    singleMachineSelfIssueRules :: (MachineType, [SelfIssueRule]) -> String
    singleMachineSelfIssueRules (machine, rules)
      = "-- " ++ machine ++ " self-issued rules\n"++
-       "ruleset index:" ++ indexNameStr machine ++ " do\n" ++
-       "  alias node:" ++ toMachineArrayStr machine ++ "[index] do\n\n" ++
+       "ruleset"++ formalIndexStr machine ++ ":" ++ indexTypeStr machine
+       ++  " do\n" ++
+       "  alias node:" ++ indexedFormalStr machine ++ " do\n\n" ++
        pushBy 4 (mapconcatln Cl.tomurphi rules) ++ "\n" ++
        "  endalias;\n" ++
        "endruleset;\n"

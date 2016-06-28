@@ -30,7 +30,8 @@ instance Cl.MurphiClass Variables where
   where
    machineNames = machines variables
    formatMachine :: MachineName -> String
-   formatMachine machine = toMachineArrayStr machine ++ ": array [" ++ indexNameStr machine ++ "]"
+   formatMachine machine = toMachineArrayStr machine ++
+                          ": array [" ++ indexTypeStr machine ++ "]"
                            ++ " of " ++ toMachineStateStr machine ++ ";"
    finalMachines = mapconcatln formatMachine machineNames
 
