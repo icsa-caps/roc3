@@ -6,8 +6,11 @@ module GenHelper where
 
 --------------------------------
 
-import MurphiAST
-import MurphiClass
+import  MurphiAST
+import qualified MurphiClass as Cl
+import Data.Char
+import Data.List.Split -- for tokenizing strings
+                       -- splitOn is used in pushBy
 
 --------------------------------
 
@@ -78,41 +81,77 @@ printElsif (cond:conditions) (body:bodies)  = "elsif " ++ cond ++ " then\n  " ++
                                              printElsif conditions bodies
 
 
-----------------------------------------------------------------
+-----------------------------------------------------------------
+---------------- Methods for the Machine datatype ---------------
+-----------------------------------------------------------------
 
--- gives the name of the variable used for indexing a symmetric machine
--- i.e. the name of the corresponseing scalarset
-toMachineScalar :: Machine -> String
-toMachineScalar (Symmetric machine _) = machine ++ "Scalar"
+-- most functions have two versions:
+-- one taking as argument the machine name (String)
+-- and another taking a machine (Machine)
 
--- used for indexing a machine
-toMachineIndex :: MachineType -> String
-toMachineIndex machine = machine ++ "Index"
 
--- the name of the array of this type of machines
-toMachineArray :: MachineType -> String
-toMachineArray machine = machine ++ "s"
+getName :: Machine -> String
+getName (Sym name)       = name
+getName (Nonsym name _)  = name
 
+--------------------------------
+
+-- array of states (records with states and fields)
+toMachineArrayStr :: MachineType -> String
+toMachineArrayStr machine = machine ++ "s"
+
+toMachineArray :: Machine -> String
+toMachineArray = toMachineArrayStr . getName
+
+--------------------------------
+
+-- gives the name of the record for this machine (the state of the machine)
+toMachineStateStr :: MachineType -> String
+toMachineStateStr machine = machine ++ "State"
+
+toMachineState :: Machine -> String
+toMachineState = toMachineStateStr . getName
+
+--------------------------------
 
 -- synonym of index type, either the name of an enum (non symmetric machines)
 -- or of a sclaraset (symmetric machines)
-indexName machine   = case machine of
-                      (Symmetric _ _)     -> toMachineScalar machine
-                      (Nonsym name _) -> name
+indexNameStr :: MachineType -> String
+indexNameStr machine = machine ++ "Index"
+
+indexName :: Machine -> String
+indexName = indexNameStr . getName
+
+--------------------------------
+
+-- constant holding the size of this machine
+machineSizeStr :: MachineType -> String
+machineSizeStr machineName = machineName ++ "Size"
+
+machineSize :: Machine -> String
+machineSize machine = machineSizeStr $ getName machine
+
+--------------------------------
+
+-- index variable used as a formal parameter in functions, loops etc.
+-- the latter is global; it is the value of a enum
+localIndex :: Machine -> String
+localIndex (Sym name)           = [head name]           -- fst letter
+localIndex (Nonsym name index)  = name ++ show index
+
+-- entry in array of machine states
+-- again used as a local variable
+indexedMachine :: Machine -> String
+indexedMachine machine = toMachineArray machine ++ "[" ++ localIndex machine ++ "]"
+
+-- use node as index
+indexedByNode :: Machine -> String
+indexedByNode machine = toMachineArray machine ++ "[node]"
 
 
-
--- gives the name of the record for this machine (the state of the machine)
-toMachineState :: Machine -> String
-toMachineState machine = machine ++ "State"
-
--- retrieve the name of a machine (which is not an alias)
-getMachineType :: Machine -> String
-getMachineType (Machine machineType) = machineType
-getMachineType (Nonsym machineType num) = machineType
 
 ----------------------------------------------------------------
-
+----------------------------------------------------------------
 
 -- moves each line by the specified number of spaces
 pushBy :: Int -> String -> String
@@ -145,9 +184,9 @@ getMsgParams (Message _ params) = params
 
 
 variableName :: Variable -> String
-variableName (Simple varName)              = varName
-variableName (ArrayElem arrayName _)       = arrayName
-variableName (MachineArray machineName _)  = machineName
+variableName (Simple varName)         = varName
+variableName (ArrayElem arrayName _)  = arrayName
+variableName (MachineArray machine)   = getName machine
 
 fieldName :: Field -> String
 fieldName (Field variable owner) = variableName variable
