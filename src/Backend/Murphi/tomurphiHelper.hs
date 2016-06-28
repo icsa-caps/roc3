@@ -2,27 +2,49 @@
 --------------- helper tomurphi implementations -----------------
 -----------------------------------------------------------------
 
-module tomurphiHelper where
+-- allow type synonyms and composite types to implement typeclasses
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE InstanceSigs #-}
+
+module TomurphiHelper where
 
 --------------------------------
 
 import MurphiAST
-import MurphiClass
+import qualified MurphiClass as Cl
+import GenHelper
 
 --------------------------------
 
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+
+-- When we refer to machines,
+-- if they are symmetric:
+-- we either need the index variable we use in functions or the array of
+-- machine states indexed at the index variable
+-- And if they are non-symmetric, we refer to either
+-- a specific value of the Enum index variable, or to the array of states
+-- indexed at this value of the Enum
+
+-- We have one method for each in GenHelper and we use these two
+-- instead of tomurphi
+
+-- For the first use generalIndex and for the second indexedArray
+
+-- We may use "node" to index a machine.
+-- Here a machine is indexed only by its standard local index;
+-- for node use it as apropriate in the outer tomurphi implementation
 -----------------------------------------------------------------
 -----------------------------------------------------------------
 
 
 instance Cl.MurphiClass Machine where
   tomurphi :: Machine -> String
-  tomurphi (Machine machineType machineIndex ) = machineType ++
-                                                "[" ++ machineIndex ++ "]"
-
-  tomurphi (Alias alias)                       = alias
-
-  tomurphi (Nonsym machineType num)       = machineType ++ show num
+  tomurphi (Sym machineType)         = machineType
+  tomurphi (Nonsym machineType num)  = machineType ++ show num
+  tomurphi (Synonym var)             = var
 
 
 -----------------------------------------------------------------
@@ -69,7 +91,7 @@ instance Cl.MurphiClass Type where
 instance Cl.MurphiClass Response where
 
  -- state :: String
- tomurphi (ToState machine state) = Cl.tomurphi machine ++
+ tomurphi (ToState machine state) = indexedMachineGen machine ++
                                     ".state = " ++ state ++ ";"
 
 
@@ -84,13 +106,13 @@ instance Cl.MurphiClass Response where
 
 
  -- elem :: Field
- tomurphi (Add (Machine machine index) setName elem)
-   = "AddTo" ++ toMachineArray machine ++ fstCap setName ++ "List(" ++
-     Cl.tomurphi elem ++ ", " ++ show index ++ ");"
+ tomurphi (Add (Owner machine) setName elem)
+   = "AddTo" ++ indexedMachineGen machine ++ fstCap setName ++ "List(" ++
+     Cl.tomurphi elem ++ ", " ++ generalIndex machine ++ ");"
 
- tomurphi (Del (Machine machine index) setName elem)
-   = "RemoveFrom" ++ toMachineArray machine ++ fstCap setName ++ "List(" ++
-     Cl.tomurphi elem ++ ", " ++ show index ++ ");"
+ tomurphi (Del (Owner machine) setName elem)
+   = "RemoveFrom" ++ indexedMachineGen machine ++ fstCap setName ++ "List(" ++
+     Cl.tomurphi elem ++ ", " ++ generalIndex machine ++ ");"
 
  tomurphi (Stall) = "return false;" -- message is not processed
 
@@ -110,7 +132,7 @@ instance Cl.MurphiClass Owner where
   tomurphi Global = ""
   tomurphi Local  = ""
   tomurphi ThisNode = "node."
-  tomurphi (Owner machine) = Cl.tomurphi machine ++ "."
+  tomurphi (Owner machine) = indexedMachineGen machine ++ "."
 
 
 ----------------------------------------------------------------
@@ -119,7 +141,8 @@ instance Cl.MurphiClass Owner where
 instance Cl.MurphiClass Variable where
  tomurphi (Simple varName) = varName
  tomurphi (ArrayElem arrayName index) = arrayName ++ "[" ++ show index ++ "]"
- tomurphi (MachineArray machine) = Cl.tomurphi machine
+ tomurphi (MachineArray machine) = indexedMachineGen machine
+ tomurphi (MachineIndex machine) = generalIndex machine
 
 
 ----------------------------------------------------------------
@@ -143,7 +166,7 @@ instance Cl.MurphiClass (Maybe Field) where
 
 instance Cl.MurphiClass Guard where
  tomurphi (Receive mtype) = "msg.mtype = " ++ mtype
- tomurphi (AtState machine state)  = Cl.tomurphi machine ++ ".state = " ++ state
+ tomurphi (AtState machine state)  = indexedMachineGen machine ++ ".state = " ++ state
 
 
 ----------------------------------------------------------------
