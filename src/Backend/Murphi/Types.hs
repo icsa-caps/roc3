@@ -99,6 +99,7 @@ instance Cl.MurphiClass Types where
     -- machine state
     -- record of state, which is an Enum of the possible states,
     -- and the fields of the machine
+    -- this is the type of the elements of the arrays
 
     mstates = machineStates types
 

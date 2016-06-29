@@ -38,13 +38,13 @@ instance Cl.MurphiClass Variables where
    -----------------------------
 
    ordNets = orderedNets variables
-   formatOrd :: String -> String
+   formatOrd :: OrderedNetName -> String
    formatOrd net = net ++ ": array [Node] of array [0..NET_MAX-1] of Message;"
 
-   counts :: String -> String
+   counts :: OrderedNetName -> String
    counts net = net ++ "count: array [Node] of 0..NET_MAX;"
 
-   combineArrayCount :: String -> String
+   combineArrayCount :: OrderedNetName -> String
    combineArrayCount net = formatOrd net ++ "\n" ++ counts net
 
    finalOrd = let  ordNetNames = map netName $ map (Left) ordNets
@@ -53,7 +53,7 @@ instance Cl.MurphiClass Variables where
    -----------------------------
 
    unordNets = unorderedNets variables
-   formatUnord :: String -> String
+   formatUnord :: UnorderedNetName -> String
    formatUnord net = net ++ ": array [Node] of multiset [NET_MAX] of Message;"
 
    finalUnord = let unordNetNames = map netName $ map (Right) unordNets
