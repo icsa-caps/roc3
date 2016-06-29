@@ -3,7 +3,7 @@
 // each declaration is of type TypeDecl,
 // just like the arguments of messages or 
 // the field declarations of machines
-global: int[0..1000] msgsExchanged;
+// global: int[0..1000] msgsExchanged; not supported in Backend at this stage
 
 // here are the model's channels
 channels: c1,c2,c3; 
@@ -93,6 +93,16 @@ startstate: I
   (IM, src?Ack, M) {
    }
 }
+
+
+Invariants
+Forall c in Cache, exists d in Directory : d.modifiers = c
+
+
+
+
+
+
 
 
 

@@ -17,7 +17,7 @@ type StartVal     = String
 
 
 data Ast        = Model {
-                          globals  :: [ TypeDecl],
+                          -- globals  :: [ TypeDecl], not suppported in backend
                           channels :: [ Channel ],
                           networks :: [ Network ],
                           machines :: [ Machine ]
