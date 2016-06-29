@@ -23,6 +23,12 @@ isOrdered _               = False
 
 --------------------------------
 
+backSymmetry :: F.Symmetry -> B.Symmetry
+backSymmetry (F.Symmetric)    = B.Symmetric
+backSymmetry (F.Nonsymmetric) = B.Nonsymmetric
+
+--------------------------------
+
 
 ----------------------------------------------------------------
 ----------------------------------------------------------------
@@ -37,11 +43,6 @@ getMachineNames frontAST = let machinesAllInfo = F.machines frontAST
 
 --------------------------------
 
-getMachineSizes :: F.Ast -> [B.Size]
-getMachineSizes frontAST = let machinesAllInfo = F.machines frontAST
-                           in  map F.size machinesAllInfo
-
---------------------------------
 
 getVCNames :: F.Ast -> [B.VCName]
 getVCNames frontAST = let channelsAllInfo = F.channels frontAST
@@ -69,6 +70,32 @@ getUnordNetNames frontAST = let allNets = F.networks frontAST
 
 --------------------------------
 
+----------------------------------------------------------------
+----------------------------------------------------------------
+-- getting machine info
+
+getMachineSizes :: F.Ast -> [B.Size]
+getMachineSizes frontAST = let machinesAllInfo = F.machines frontAST
+                           in  map F.size machinesAllInfo
+
+--------------------------------
+
+getSymmetries :: F.Ast -> [B.Symmetry]
+getSymmetries frontAST = let machinesAllInfo = F.machines frontAST
+                             frontSymmetries = map F.symmetry machinesAllInfo
+                         in  map backSymmetry frontSymmetries
+
+--------------------------------
+
+getStartstate :: F.Ast -> [B.State]
+getStartstate frontAST = let machinesAllInfo = F.machines frontAST
+                         in  map startstate machinesAllInfo
+
+--------------------------------
+
+
+
+--------------------------------
 
 
 ----------------------------------------------------------------
