@@ -14,6 +14,7 @@ import qualified Backend.Murphi.MurphiAST as B
 
 -- Helper functions
 
+
 --------------------------------
 
 -- is a net ordered?
@@ -29,6 +30,61 @@ backSymmetry (F.Nonsymmetric) = B.Nonsymmetric
 
 --------------------------------
 
+getStateName :: F.State -> String
+getStateName (F.State name) = name
+
+--------------------------------
+
+----------------------------------------------------------------
+
+-- functions for low-level constructs (e.g. responses, type declarations etc.)
+
+-------------------------------
+Transforming type declarations
+--------------------------------
+
+getTypeDeclName :: F.TypeDecl -> String
+getTypeDeclName (F.Boolean varName)       = varName
+getTypeDeclName (F.Integer varName _ _)   = varName
+getTypeDeclName (F.Enum varName _)        = varName
+getTypeDeclName (F.Vertex _ varName)      = varName
+getTypeDeclName (F.Array _ otherTypeDecl) = getTypeDeclName otherTypeDecl
+getTypeDeclName (F.Set _ otherTypeDecl)   = getTypeDeclName otherTypeDecl
+
+--------------------------------
+
+-- returns the type of this type declaration
+-- (e.g.boolean, array of array of enums etc.)
+getType :: F.TypeDecl -> B.Type
+getType (F.Boolean _)             = B.Boolean
+
+getType (F.Integer _ lo hi)       = B.Integer lo hi
+
+getType (F.Enum _ values)         = B.Enum values
+
+getType (F.Vertex machineType _)  = B.Node machineType
+
+getType (F.Array (Left size) otherDecl)
+  = B.Array (Left size) (getType otherDecl)
+
+getType (F.Array (Right machine) otherDecl)
+  = B.Array (Right machine) (getType otherDecl)
+
+getType (F.Set (Left size) otherDecl)
+  = B.Set (Left size) (getType otherDecl)
+
+getType (F.Set (Right machine) otherDecl)
+  = B.Set (Right machine) (getType otherDecl)
+
+--------------------------------
+
+-- getting from the fronend type declaration to the backend type declaration
+transTypeDecl :: F.TypeDecl -> B.TypeDecl
+transTypeDecl frontTypeDecl = B.Decl (getTypeDeclName frontTypeDecl)
+                                     (getType frontTypeDecl)
+
+--------------------------------
+--------------------------------
 
 ----------------------------------------------------------------
 ----------------------------------------------------------------
@@ -89,7 +145,9 @@ getSymmetries frontAST = let machinesAllInfo = F.machines frontAST
 
 getStartstate :: F.Ast -> [B.State]
 getStartstate frontAST = let machinesAllInfo = F.machines frontAST
-                         in  map startstate machinesAllInfo
+                         in  map (getStateName . F.startstate) machinesAllInfo
+
+
 
 --------------------------------
 
