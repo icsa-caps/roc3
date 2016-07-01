@@ -60,7 +60,7 @@ import Data.List
 %%
 
 
-Model           : Globals Channels Networks Machines                 { Model $1 $2 $3 $4 }
+Model           : Channels Networks Machines                 { Model $1 $2 $3 }
 
 Globals         : {-- empty --}                                      { [] }
                 | global ':' Globals1 ';'                            { $3 }
@@ -128,10 +128,10 @@ TypeDecl        : boolean iden                                      { Boolean $2
                 | int '[' num '.' '.' num ']' iden                  { Integer $8 $3 $6 }
                 | iden '{' IdenList '}'                             { Enum    $1 $3 }
                 | iden iden                                         { Vertex    $1 $2 }
-                | '[' num ']' TypeDecl                              { Array   $2 $4 }
-                | '[' iden ']' TypeDecl                             { Map     $2 $4 }
-                | set ':' num  TypeDecl                             { SetNum  $3 $4}
-                | set ':' iden  TypeDecl                            { SetName $3 $4 }
+                | '[' num ']' TypeDecl                              { Array  (Left $2)  $4 }
+                | '[' iden ']' TypeDecl                             { Array  (Right $2) $4 }
+                | set ':' num  TypeDecl                             { Set  (Left $3) $4}
+                | set ':' iden  TypeDecl                            { Set (Right $3) $4 }
 
 
 IdenList        : iden                                              { [$1] }
@@ -170,7 +170,8 @@ MsgArgs         : MsgArg                                           { [$1] }
                 | MsgArgs ',' MsgArg                               { $3 : $1 }
 
 
-MsgArg          : TypeDecl                                         { $1 }
+MsgArg          : TypeDecl '=' iden                                { MsgArg $1 $3 }
+                | TypeDecl                                         { MsgArg $1 (getTypeDeclName $1) }
 
 
 Responses       : {-- empty --}                                    { [] }
@@ -195,7 +196,7 @@ Assignment      : Param '=' Param                                  { Assign $1 $
 
 
 Param           : iden '[' num ']'                              { Node $1 $3 }
-                | iden                                          { Variable $1 }
+                | iden                                          { VarOrVal $1 }
 
 
 {

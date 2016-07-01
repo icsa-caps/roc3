@@ -46,13 +46,13 @@ machine Cache:[4] {
 	Dir[0]!Ack;
   }
 
-  (M, Dir[0]?Fwd_GetM<cache src1, dir dir>, I) {   // we can infer which variables
+  (M, Dir[0]?Fwd_GetM<cache mod=src1, node direct=dir>, I) {   // we can infer which variables
    	 src1!Data;  				          // are msg args see note in the end
   }
 
 }
 
-machine Dir {	                     // because it has size 1, it will be
+machine Dir {	               // because it has size 1, it will be
  		                    // parsed as nonsymmetric
 
 startstate: I 
@@ -63,7 +63,8 @@ startstate: I
 
  ack {sent,received,waiting} (sent) , // initial value is sent
 
- [Cache] boolean acks,
+ [Cache] boolean acks,               // acks is indexed by the scalarset/enum 
+                                    // cache states are indexed too
 
  set:Cache Cache modifiers, 	// the size of the set is #caches
 
@@ -76,7 +77,7 @@ startstate: I
   }
 
   (M, src?GetM,IM) {
-    owner!Fwd_GetM<cache src, dir dir>; // in murphi:Send(Fwd_GetM, owner, src)
+    owner!Fwd_GetM<cache src, node direct=dir>; // in murphi:Send(Fwd_GetM, owner, src)
     owner = src;	   // the argument of the message becomes the sender
     modifiers.del(src);
   }
@@ -93,17 +94,6 @@ startstate: I
   (IM, src?Ack, M) {
    }
 }
-
-
-Invariants
-Forall c in Cache, exists d in Directory : d.modifiers = c
-
-
-
-
-
-
-
 
 
 
