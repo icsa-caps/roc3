@@ -19,7 +19,6 @@ type StartVal     = String
 data Ast        = Model {
                           -- globals  :: [ TypeDecl], not suppported in backend
                           -- we can add it back easily in the front-end
-                          channels :: [ Channel ],
                           networks :: [ Network ],
                           machines :: [ Machine ]
                         }
@@ -84,9 +83,9 @@ data Guard       = Guard Mail     -- extend with arbitrary guards
 -- infer sender/receiver from current machine
 
 data Mail        = Issue Msg
-                 | Send Msg Dst
-                 | ReceiveFrom Msg (Maybe Src)
-                 | Broadcast Src DstSet Msg          -- param should be a set
+                 | Send Msg Dst Channel
+                 | ReceiveFrom Msg (Maybe Src) Channel
+                 | Broadcast Src DstSet Msg Channel         -- param should be a set
                    deriving(Show)
 
 

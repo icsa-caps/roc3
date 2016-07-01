@@ -27,6 +27,7 @@ import Data.List
     '*'           { TokenStar }
     ':'           { TokenColon }
     '.'           { TokenFullStop }
+    '@'           { TokenAt }
 
 
     global        { TokenGlobal }
@@ -60,39 +61,41 @@ import Data.List
 %%
 
 
-Model           : Channels Networks Machines                 { Model $1 $2 $3 }
+Model           : Networks Machines                 { Model $1 $2 }
 
-Globals         : {-- empty --}                                      { [] }
-                | global ':' Globals1 ';'                            { $3 }
+Globals         : {-- empty --}                               { [] }
+                | global ':' Globals1 ';'                     { $3 }
 
-Globals1        : TypeDecl                                           { [$1] }
-                | Globals1 ',' TypeDecl                              { $3 : $1 }
-
-Channels        : {-- empty --}                                      { [] }
-                | channels ':' Channels1 ';'                         { $3 }
-
-Channels1       : iden                                               { [Channel $1] }
-                | Channels1 ',' iden                                 { (Channel $3) : $1 }
-
-Networks        : {-- empty --}                                     { [] }
-                | networks ':' Networks1 ';'                        { $3 }
+Globals1        : TypeDecl                                    { [$1] }
+                | Globals1 ',' TypeDecl                       { $3 : $1 }
 
 
-Networks1       : Network                                           { [$1] }
-                | Networks1 ',' Network                             { $3 : $1 }
+Channels       : Channel                                      { [$1] }
+               | Channels ',' Channel                         { ($3) : $1 }
+
+Channel        : iden                                         { Channel $1 }
+
+Networks        : {-- empty --}                               { [] }
+                | networks ':' Networks1 ';'                  { $3 }
+
+
+Networks1       : Network                                     { [$1] }
+                | Networks1 ',' Network                       { $3 : $1 }
 
 
 
-Network         : ordered iden '{' IdenList '}'                     { Network Ord $2 (map (Channel) $4) }
-                | unordered iden '{' IdenList '}'                   { Network Unord $2 (map (Channel) $4) }
+Network         : ordered iden '{' Channels '}'               { Network Ord $2 $4 }
+                | unordered iden '{' Channels '}'             { Network Unord $2 $4 }
+                | ordered '{' Channels '}'                    { Network Ord "SingleNet" $3 }
+                | unordered '{' Channels '}'                  { Network Unord "SingleNet" $3 }
 
 
-Machines        : Machine                                           { [$1] }
-                | Machines Machine                                  { $2 : $1 }
+Machines        : Machine                                     { [$1] }
+                | Machines Machine                            { $2 : $1 }
 
 
-Machine         : Sym                                               { $1 }
-                | Nonsym                                            { $1 }
+Machine         : Sym                                         { $1 }
+                | Nonsym                                      { $1 }
 
 
 Nonsym          : machine iden '{' Startstate Fields States_Guards '}'                         { Machine Nonsymmetric $2 1 $4 $5 $6 }
@@ -152,14 +155,14 @@ State_Guard     : '(' iden ',' Guard ')' '{' Responses '}'              { (State
 Guard           : Mail                                              { Guard $1 }
 
 
-Mail            : Issue '(' Msg ')'                                 { Issue $3 }
-                | Send '(' Msg ',' Param ')'                        { Send $3 $5}
-                | Receive '(' Msg ')'                               { ReceiveFrom $3 Nothing}
-                | Receive '(' Msg ',' Param ')'                     { ReceiveFrom $3 (Just $5) }
-                | broadcast '(' Param ',' Param ',' Msg ')'         { Broadcast $3 $5 $7 }
-                | '*' Msg                                           { Issue $2 }
-                | Param '!' Msg                                     { Send $3 $1 }
-                | Param '?' Msg                                     { ReceiveFrom $3 (Just $1) }
+Mail            : Issue '(' Msg ')'                                        { Issue $3 }
+                | Send '(' Msg ',' Param ')' '@' Channel                    { Send $3 $5 ($8) }
+                | Receive '(' Msg ')' '@' Channel                           { ReceiveFrom $3 Nothing ($6) }
+                | Receive '(' Msg ',' Param ')' '@' Channel                 { ReceiveFrom $3 (Just $5) ($8) }
+                | broadcast '(' Param ',' Param ',' Msg ')' '@' Channel     { Broadcast $3 $5 $7 ( $10) }
+                | '*' Msg                                                  { Issue $2 }
+                | Param '!' Msg '@' Channel                                 { Send $3 $1 ($5) }
+                | Param '?' Msg '@' Channel                                 { ReceiveFrom $3 (Just $1) ($5) }
 
 
 Msg             : iden                                              { Msg $1 []}

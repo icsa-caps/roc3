@@ -5,8 +5,6 @@
 // the field declarations of machines
 // global: int[0..1000] msgsExchanged; not supported in Backend at this stage
 
-// here are the model's channels
-channels: c1,c2,c3; 
 
 // and here are the model's networks
 networks: ordered net1{c1}, unordered net2{c1,c2};
@@ -31,7 +29,7 @@ machine Cache:[4] {
   // i.e. the receive function
 
   (I, *Read_Write, IM) {
-    	Dir[0]!GetM;
+    	Dir[0]!GetM@c1;
   }
 
   (M, *Read_Write) {    // ignore the responses that have only
@@ -42,12 +40,12 @@ machine Cache:[4] {
     	stall;		
   }			    
 
-  (IM, src?Data, M) {
-	Dir[0]!Ack;
+  (IM, src?Data@c1, M) {
+	Dir[0]!Ack@c2;
   }
 
-  (M, Dir[0]?Fwd_GetM<cache mod=src1, node direct=dir>, I) {   // we can infer which variables
-   	 src1!Data;  				          // are msg args see note in the end
+  (M, Dir[0]?Fwd_GetM<cache mod=src1, node direct=dir>@c1, I) {   // we can infer which variables
+   	 src1!Data@c1;  				          // are msg args see note in the end
   }
 
 }
@@ -70,28 +68,28 @@ startstate: I
 
  set:5 boolean other; 	      
 
-  (I, src?GetM, IM) {   
+  (I, src?GetM@c1, IM) {   
     	owner = src;
 	modifiers.add(src);	     
-	src!Data;
+	src!Data@c1;
   }
 
-  (M, src?GetM,IM) {
-    owner!Fwd_GetM<cache src, node direct=dir>; // in murphi:Send(Fwd_GetM, owner, src)
+  (M, src?GetM@c1,IM) {
+    owner!Fwd_GetM<cache src, node direct=dir>@c1; // in murphi:Send(Fwd_GetM, owner, src)
     owner = src;	   // the argument of the message becomes the sender
     modifiers.del(src);
   }
 
-  (IM, src?GetM ) {
+  (IM, src?GetM@c1 ) {
     modifiers.add(src);
-    broadcast(dir, modifiers, NewModifier<cache src>); // broadcast to a set
+    broadcast(dir, modifiers, NewModifier<cache src>)@c2; // broadcast to a set
     stall;					         // msg received by every
 						         // machine in the set
   }						         // if typeOf set != machine, 
 						         // error at some point
 
 
-  (IM, src?Ack, M) {
+  (IM, src?Ack@c2, M) {
    }
 }
 
