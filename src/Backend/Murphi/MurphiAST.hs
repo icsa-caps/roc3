@@ -11,6 +11,7 @@ module MurphiAST where
 type Size             = Int
 type TypeName         = String
 type Val              = String
+type ArgName          = String
 type VCName           = String
 type NetName          = String
 type Network          = Either OrderedNet UnorderedNet
@@ -72,7 +73,8 @@ data Symmetry = Symmetric | Nonsymmetric
 -- only for Send and Broadcast
 data Message = Message MType [ Maybe Field ] -- for Owner see bellow
                deriving(Show)
-
+-- The list of Message arguments has fields, instead of variables
+-- with the owner set to Msg, in order to print them like "msg." ++ fieldName
 
 data Owner = Msg
            | Global
@@ -107,7 +109,8 @@ data Variable = Simple VarName
 type LocalVariables = [TypeDecl]
 
 
--- in place of TypeDecl in Ast, to make printing easier
+-- in place of TypeDecl in Ast
+-- to make printing easier the name is at the begining
 data TypeDecl = Decl Name Type
               deriving(Show)
 
@@ -115,9 +118,10 @@ data TypeDecl = Decl Name Type
 data Type = Boolean
           | Integer Lo Hi
           | Enum [Val]
-          | Node MachineType
-          | Array Index Type
-          | Set (Either MachineType Size) Type -- Left machine means the size
+          | Node MachineType -- printed in Types as machine index type
+          | Array (Either Size MachineType) Type -- if Machine, indexed by the
+                                                 -- machine index, scalarset or enum
+          | Set (Either Size MachineType) Type -- Left machine means the size
           deriving(Show)                       -- of the set = #machines
 
 
@@ -233,17 +237,21 @@ type Sets            = [TypeDecl] -- in MurphiPrint we check TypeDecl is a set
 type ReceiveFunction = [ ( State, [ (Maybe Guard, [Response]) ] ) ]
 
 
-data Guard           = Receive MType
+data Guard           = Receive MType [(ArgName, (Either Field Val))] (Maybe VCName)
                      | AtState Machine State
                        deriving(Show)
+
+-- Note on Guard, Receive: the list is the value each msg arg must have (if any)
+-- we use field for the values because they may be machine fields or local vars
+-- apart from values
 
 type MType           = String --mtype in murphi
 
 
 data Response        = ToState Machine State
-                     | Send Message Src Dst     -- see note below for dst
+                     | Send Message Src Dst VCName    -- see note below for dst
                      | Broadcast Message DstSet
-                     | Assign Field Field     -- what if the value also has an owner?
+                     | Assign Field Field
                      | Add Owner SetName Field  -- the owner of the set is the machine
                      | Del Owner SetName Field  -- in question. Owner here is  for the elem
                      | Stall
@@ -305,8 +313,11 @@ data Startstate = Startstate {
                              }
                   deriving(Show)
 
-
-type FieldStart = (VarName, Maybe StartVal)
+-- must support also arrays which are initialised with loops
+-- the fields of a machien are of type TypeDecl (see Types section),
+-- so the FieldStart should be the same
+-- we must have ALL the fields of the machine
+type FieldStart = (TypeDecl, Maybe StartVal)
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------

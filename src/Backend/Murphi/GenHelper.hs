@@ -32,7 +32,7 @@ concatWith split strs = foldr1 (\x y -> x ++ split ++ y) strs
 
 
 concatln ::  [String] -> String
-concatln arg = (concatWith "\n" arg )
+concatln  = concatWith "\n"
 
 
 concatcomma :: [String] -> String
@@ -82,7 +82,7 @@ printElsif (cond:conditions) (body:bodies)  = "elsif " ++ cond ++ " then\n  " ++
 
 
 -----------------------------------------------------------------
----------------- Methods for the Machine datatype ---------------
+---------------------- Methods for Machines ---------------------
 -----------------------------------------------------------------
 
 -- most functions have two versions:
@@ -129,7 +129,8 @@ indexedFormalStr machine = toMachineArrayStr machine ++
 
 -- the type synonym of the indexing variables
 -- i.e. scalarset for symmetric and Enum for nonsymmetric
--- machines
+-- machines. To iterate over all of the indices of a machine write
+-- formalIndexStr machine ++ ":" ++ indexTypeStr machine
 
 indexTypeStr :: MachineType -> String
 indexTypeStr machine = machine ++ "IndexType"

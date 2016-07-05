@@ -56,30 +56,28 @@ instance Cl.MurphiClass TypeDecl where
 --------------------------------
 
 
--- for assignment statements
-assign :: TypeDecl -> String
-assign (Decl var varType) = var ++ ":= " ++ Cl.tomurphi varType ++ ";"
-
-
 instance Cl.MurphiClass Type where
 
- tomurphi Boolean                   = "boolean"
+  tomurphi Boolean                   = "boolean"
 
- tomurphi (Integer lo hi)           = show lo ++ ".." ++ show hi
+  tomurphi (Integer lo hi)           = show lo ++ ".." ++ show hi
 
- tomurphi (Enum values)             = "enum { " ++
+  tomurphi (Enum values)             = "enum { " ++
                                       ( concatWith ",\n" values )
                                       ++ " }"
 
- tomurphi (Node machine)            = machine
+  tomurphi (Node machine)            = indexTypeStr machine
 
- tomurphi (Array index otherType)   = let formatInd = fstCap (show index)
-                                      in   " array [ " ++ formatInd ++ " ]"
-                                           ++ " of " ++ Cl.tomurphi otherType
+  tomurphi (Array (Right machine) otherType)
+    = "array [ " ++ indexTypeStr machine ++ " ]"
+      ++ " of " ++ Cl.tomurphi otherType
 
- tomurphi (Set (Left machine) otherType) = "multiset[" ++ machine ++ "Size"
+  tomurphi (Array (Left size) otherType)
+    = "array [" ++ "0.." ++ show size ++ "-1] of " ++ Cl.tomurphi otherType
+
+  tomurphi (Set (Right machine) otherType) = "multiset[" ++ machine ++ "Size"
                                           ++ "] of " ++ Cl.tomurphi otherType
- tomurphi (Set (Right size) otherType)   = "multiset[" ++ show size
+  tomurphi (Set (Left size) otherType)   = "multiset[" ++ show size
                                           ++ "] of " ++ Cl.tomurphi otherType
 
 
@@ -96,9 +94,10 @@ instance Cl.MurphiClass Response where
 
 
  -- Message :: Message MsgType [Maybe Field], src, dst :: Field
- tomurphi (Send (Message mtype params) src dst)
+ tomurphi (Send (Message mtype params) src dst vc)
     = "Send(" ++ Cl.tomurphi src ++ ",\n" ++
       "     " ++ Cl.tomurphi dst ++ ",\n" ++
+      "     " ++ vc         ++ ",\n" ++
       pushBy 5 (mapconcatlnComma Cl.tomurphi params) ++ ");"
 
 
@@ -165,9 +164,31 @@ instance Cl.MurphiClass (Maybe Field) where
 
 
 instance Cl.MurphiClass Guard where
- tomurphi (Receive mtype) = "msg.mtype = " ++ mtype
- tomurphi (AtState machine state)  = indexedMachineGen machine ++ ".state = " ++ state
+  tomurphi (Receive mtype [] vc)      =  printMType mtype ++ printMsgVC vc
+  tomurphi (Receive mtype argVals vc) = let temp = map printArgCond argVals
+                                            argConds = concatWith " & " temp
+                                        in  printMType mtype ++ " & " ++
+                                            argConds ++ printMsgVC vc
 
+  tomurphi (AtState machine state)
+    = indexedMachineGen machine ++ ".state = " ++ state
+
+-------------------------------------------------
+-- helper functions for this section
+-- (didnt work in where clause)
+
+printMType :: MType -> String
+printMType mtype = "msg.mtype = " ++ mtype
+
+printMsgVC :: Maybe VCName -> String
+printMsgVc (Nothing) = ""
+printMsgVC (Just vc) = " & msg.vc = " ++ vc
+
+printArgCond :: (ArgName, (Either Field Val)) -> String
+printArgCond (arg, (Right const)) = "msg." ++ arg ++ "=" ++ const
+printArgCond (arg, (Left field))  = "msg." ++ arg ++ "=" ++ Cl.tomurphi field
+
+-------------------------------------------------
 
 ----------------------------------------------------------------
 
