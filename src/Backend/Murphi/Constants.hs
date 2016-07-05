@@ -39,7 +39,7 @@ instance Cl.MurphiClass Constants where
     ---- <machineName>Size : <num>;
     --------------------------------
 
-    vcVal     = zip (map ("VC_" ++) vcs) [0,1..]
+    vcVal     = zip (vcs) [0,1..]
 
     vcDecl    = mapconcatln declGen vcVal
 
