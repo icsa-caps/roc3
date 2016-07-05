@@ -172,8 +172,8 @@ MsgArgs         : MsgArg                                           { [$1] }
                 | MsgArgs ',' MsgArg                               { $3 : $1 }
 
 
-MsgArg          : TypeDecl '=' iden                                { MsgArg $1 $3 }
-                | TypeDecl                                         { MsgArg $1 (getTypeDeclName $1) }
+MsgArg          : TypeDecl '=' iden                                { GuardAssign $1 $3 }
+                | TypeDecl                                         { MsgArg $1 }
 
 
 Responses       : {-- empty --}                                    { [] }

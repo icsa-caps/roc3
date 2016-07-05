@@ -93,10 +93,14 @@ data Msg         = Msg MType MsgArgs
                    deriving(Show)
 
 
-data MsgArg      = MsgArg TypeDecl VarName -- the type declaration is
-                   deriving(Show)          -- the type of the argument and
-                                           -- its name
+data MsgArg      = GuardAssign TypeDecl VarName
+                 | MsgArg TypeDecl
+                   deriving(Show)
 
+-- Note: for the first constructor, we either assign a value
+-- to the message argument (if in Send) or we check the argument for a value
+-- (in Receive). When transforming the AST we figure out which of the two.
+-- the second constructor is used when we want neither of the above.
 
 
 -- Response has a similar problem with Guard:
