@@ -117,6 +117,8 @@ data Response   = Response Mail
 
 data Assignment = Assign Param Param
                 | AssignNum Param Int
+                | AssignLocal TypeDecl Param
+                | AssignLocalNum TypeDecl Int
                   deriving(Show)
 
 
@@ -152,3 +154,5 @@ getTypeDeclName (Set _ otherTypeDecl)   = getTypeDeclName otherTypeDecl
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
+
+-- vim: set ft=haskell

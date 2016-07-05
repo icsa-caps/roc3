@@ -75,7 +75,8 @@ startstate: I
   }
 
   (M, src?GetM,IM) {
-    owner!Fwd_GetM<cache src, node direct=dir>@c1; // in murphi:Send(Fwd_GetM, owner, src)
+    owner!Fwd_GetM<cache src, node direct>@c1; // in murphi:Send(Fwd_GetM, owner, src)
+    Dir thisDirectory = direct;
     owner = src;	   // the argument of the message becomes the sender
     modifiers.del(src);
   }

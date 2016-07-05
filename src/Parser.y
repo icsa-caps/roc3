@@ -193,8 +193,10 @@ Response        : Mail                                             { Response $1
                 | stall                                            { Stall }
 
 
-Assignment      : Param '=' Param                                  { Assign $1 $3 }
-                | Param '=' num                                    { AssignNum $1 $3 }
+Assignment      : Param    '=' Param                               { Assign $1 $3 }
+                | Param    '=' num                                 { AssignNum $1 $3 }
+                | TypeDecl '=' Param                               { AssignLocal $1 $3 }
+                | TypeDecl '=' num                                 { AssignLocalNum $1 $3 }
 
 
 Param           : iden '[' num ']'                              { Node $1 $3 }
