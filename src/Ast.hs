@@ -84,7 +84,7 @@ data Guard       = Guard Mail     -- extend with arbitrary guards
 
 data Mail        = Issue Msg
                  | Send Msg Dst Channel
-                 | ReceiveFrom Msg (Maybe Src) Channel
+                 | ReceiveFrom Msg (Maybe Src) (Maybe Channel) -- Nothing if we do not care about the channel
                  | Broadcast Src DstSet Msg Channel         -- param should be a set
                    deriving(Show)
 

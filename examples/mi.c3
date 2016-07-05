@@ -44,8 +44,8 @@ machine Cache:[4] {
 	Dir[0]!Ack@c2;
   }
 
-  (M, Dir[0]?Fwd_GetM<cache mod=src1, node direct=dir>@c1, I) {   // we can infer which variables
-   	 src1!Data@c1;  				          // are msg args see note in the end
+  (M, Dir[0]?Fwd_GetM<cache mod=src1, node direct=dir>, I) {   // we can infer which variables
+   	 src1!Data@c1;  				                   // are msg args see note in the end
   }
 
 }
@@ -68,13 +68,13 @@ startstate: I
 
  set:5 boolean other; 	      
 
-  (I, src?GetM@c1, IM) {   
+  (I, src?GetM, IM) {   
     	owner = src;
 	modifiers.add(src);	     
 	src!Data@c1;
   }
 
-  (M, src?GetM@c1,IM) {
+  (M, src?GetM,IM) {
     owner!Fwd_GetM<cache src, node direct=dir>@c1; // in murphi:Send(Fwd_GetM, owner, src)
     owner = src;	   // the argument of the message becomes the sender
     modifiers.del(src);

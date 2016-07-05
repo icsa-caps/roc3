@@ -61,7 +61,7 @@ import Data.List
 %%
 
 
-Model           : Networks Machines                 { Model $1 $2 }
+Model           : Networks Machines                           { Model $1 $2 }
 
 Globals         : {-- empty --}                               { [] }
                 | global ':' Globals1 ';'                     { $3 }
@@ -152,17 +152,16 @@ State_Guard     : '(' iden ',' Guard ')' '{' Responses '}'              { (State
                 | '(' iden ',' Guard ',' iden ')' '{' Responses '}'     { (State $2, $4, Just (State $6), $9) }
 
 
-Guard           : Mail                                              { Guard $1 }
+Guard           : Mail                                                  { Guard $1 }
 
 
-Mail            : Issue '(' Msg ')'                                        { Issue $3 }
-                | Send '(' Msg ',' Param ')' '@' Channel                    { Send $3 $5 ($8) }
-                | Receive '(' Msg ')' '@' Channel                           { ReceiveFrom $3 Nothing ($6) }
-                | Receive '(' Msg ',' Param ')' '@' Channel                 { ReceiveFrom $3 (Just $5) ($8) }
+Mail            : Issue '(' Msg ')'                                         { Issue $3 }
                 | broadcast '(' Param ',' Param ',' Msg ')' '@' Channel     { Broadcast $3 $5 $7 ( $10) }
-                | '*' Msg                                                  { Issue $2 }
+                | '*' Msg                                                   { Issue $2 }
                 | Param '!' Msg '@' Channel                                 { Send $3 $1 ($5) }
-                | Param '?' Msg '@' Channel                                 { ReceiveFrom $3 (Just $1) ($5) }
+                | Param '?' Msg '@' Channel                                 { ReceiveFrom $3 (Just $1) (Just $5) }
+                | Param '?' Msg                                             { ReceiveFrom $3 (Just $1) (Nothing) }
+
 
 
 Msg             : iden                                              { Msg $1 []}
