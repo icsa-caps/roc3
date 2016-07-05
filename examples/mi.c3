@@ -41,6 +41,7 @@ machine Cache:[4] {
   }			    
 
   (IM, src?Data@c1, M) {
+	int[0..10] integer = 5 + 3/2;
 	Dir[0]!Ack@c2;
   }
 

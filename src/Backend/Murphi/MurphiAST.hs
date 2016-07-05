@@ -38,7 +38,7 @@ type StartVal         = String
 type VCNets = [ (VCName, Network) ]
 
 
-
+-----------------------------------------------------------------
 -- for accessing a machine
 -- WE DO NOT NEED THE SIZE OF THE MACHINES
 -- we declare a constant equal to the size
@@ -122,11 +122,24 @@ data Type = Boolean
           | Array (Either Size MachineType) Type -- if Machine, indexed by the
                                                  -- machine index, scalarset or enum
           | Set (Either Size MachineType) Type -- Left machine means the size
-          deriving(Show)                       -- of the set = #machines
+            deriving(Show)                     -- of the set = #machines
 
 
 type Lo    = Int
 type Hi    = Int
+
+
+-- data type for integer expressions
+
+data IntExp = Sum   IntExp IntExp
+            | Minus IntExp IntExp
+            | Times IntExp IntExp
+            | Div   IntExp IntExp
+            | Group IntExp
+            | Const Int
+            | IntVar Field  -- must find if it s local, machine field etc.
+              deriving(Show)
+
 
 
 -----------------------------------------------------------------
@@ -252,6 +265,7 @@ data Response        = ToState Machine State
                      | Send Message Src Dst VCName    -- see note below for dst
                      | Broadcast Message DstSet
                      | Assign Field Field
+                     | AssignInt Field IntExp
                      | Add Owner SetName Field  -- the owner of the set is the machine
                      | Del Owner SetName Field  -- in question. Owner here is  for the elem
                      | Stall

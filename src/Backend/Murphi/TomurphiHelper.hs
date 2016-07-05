@@ -101,7 +101,11 @@ instance Cl.MurphiClass Response where
       pushBy 5 (mapconcatlnComma Cl.tomurphi params) ++ ");"
 
 
- tomurphi (Assign var value)    = Cl.tomurphi var ++ " := " ++ Cl.tomurphi value ++ ";"
+ tomurphi (Assign var value)    = Cl.tomurphi var ++ " := "
+                                  ++ Cl.tomurphi value ++ ";"
+
+ tomurphi (AssignInt field intExp) = Cl.tomurphi field ++ " := "
+                                     ++ Cl.tomurphi intExp ++ ";"
 
 
  -- elem :: Field
@@ -212,4 +216,16 @@ instance Cl.MurphiClass SelfIssueRule where
       "endrule;"
 
 
+-----------------------------------------------------------------
+
+instance Cl.MurphiClass IntExp where
+  tomurphi (Sum exp1 exp2)    = Cl.tomurphi exp1 ++ " + " ++ Cl.tomurphi exp2
+  tomurphi (Minus exp1 exp2)  = Cl.tomurphi exp1 ++ " - " ++ Cl.tomurphi exp2
+  tomurphi (Times exp1 exp2)  = Cl.tomurphi exp1 ++ " * " ++ Cl.tomurphi exp2
+  tomurphi (Div   exp1 exp2)  = Cl.tomurphi exp1 ++ " / " ++ Cl.tomurphi exp2
+  tomurphi (Group exp)        = "(" ++ Cl.tomurphi exp ++ ")"
+  tomurphi (Const num)        = show num
+  tomurphi (IntVar field)     = Cl.tomurphi field
+
+-----------------------------------------------------------------
 -----------------------------------------------------------------

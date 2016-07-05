@@ -34,11 +34,15 @@ tokens :-
     \?              { \s -> TokenQsMark }
     \!              { \s -> TokenExclMark }
     \*              { \s -> TokenStar }
+    \/              { \s -> TokenSlash }
+    \+              { \s -> TokenPlus }
+    \-              { \s -> TokenMinus }
     \:              { \s -> TokenColon }
     \.              { \s -> TokenFullStop }
+    \@              { \s -> TokenAt }
 
     global          { \s -> TokenGlobal }
-    channels        { \s -> TokenChannels }
+    vcs        { \s -> TokenVCs }
     networks        { \s -> TokenNetworks }
     ordered         { \s -> TokenOrdered }
     unordered       { \s -> TokenUnordered }
@@ -82,10 +86,14 @@ data Token = TokenBegin
            | TokenQsMark
            | TokenExclMark
            | TokenStar
+           | TokenSlash
+           | TokenPlus
+           | TokenMinus
            | TokenColon
            | TokenFullStop
+           | TokenAt
            | TokenGlobal
-           | TokenChannels
+           | TokenVCs
            | TokenNetworks
            | TokenOrdered
            | TokenUnordered

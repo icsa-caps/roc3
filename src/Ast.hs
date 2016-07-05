@@ -25,10 +25,10 @@ data Ast        = Model {
                   deriving(Show)
 
 
-data Channel = Channel String
+data VC = VC String
                deriving(Show)
 
-data Network = Network Order String [Channel]
+data Network = Network Order String [VC]
                deriving(Show)
 
 data Order = Ord | Unord
@@ -83,9 +83,9 @@ data Guard       = Guard Mail     -- extend with arbitrary guards
 -- infer sender/receiver from current machine
 
 data Mail        = Issue Msg
-                 | Send Msg Dst Channel
-                 | ReceiveFrom Msg (Maybe Src) (Maybe Channel) -- Nothing if we do not care about the channel
-                 | Broadcast Src DstSet Msg Channel         -- param should be a set
+                 | Send Msg Dst VC
+                 | ReceiveFrom Msg (Maybe Src) (Maybe VC) -- Nothing if we do not care about the vc
+                 | Broadcast Src DstSet Msg VC         -- param should be a set
                    deriving(Show)
 
 
@@ -120,9 +120,9 @@ data Response   = Response Mail
 
 
 data Assignment = Assign Param Param
-                | AssignNum Param Int
+                | AssignNum Param IntExp
                 | AssignLocal TypeDecl Param
-                | AssignLocalNum TypeDecl Int
+                | AssignLocalNum TypeDecl IntExp
                   deriving(Show)
 
 
@@ -143,17 +143,17 @@ data Param = Node MachineType Index -- for nonsymmetric machines
 -- variable when we make the assignment or better search first in the list
 -- of globals
 
-----------------------
--- helper function
 
--- returns the name of a type declaration
-getTypeDeclName :: TypeDecl -> String
-getTypeDeclName (Boolean varName)       = varName
-getTypeDeclName (Integer varName _ _)   = varName
-getTypeDeclName (Enum varName _)        = varName
-getTypeDeclName (Vertex _ varName)      = varName
-getTypeDeclName (Array _ otherTypeDecl) = getTypeDeclName otherTypeDecl
-getTypeDeclName (Set _ otherTypeDecl)   = getTypeDeclName otherTypeDecl
+data IntExp = Sum   IntExp IntExp
+            | Minus IntExp IntExp
+            | Times IntExp IntExp
+            | Div   IntExp IntExp
+            | Group IntExp
+            | Const Int
+            | IntVar VarName  -- must find if it s local, machine field etc.
+              deriving(Show)
+
+
 
 
 -----------------------------------------------------------------

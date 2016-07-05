@@ -24,14 +24,17 @@ import Data.List
     '='           { TokenEq }
     '?'           { TokenQsMark }
     '!'           { TokenExclMark}
+    '+'           { TokenPlus }
+    '-'           { TokenMinus }
     '*'           { TokenStar }
+    '/'           { TokenSlash }
     ':'           { TokenColon }
     '.'           { TokenFullStop }
     '@'           { TokenAt }
 
 
     global        { TokenGlobal }
-    channels      { TokenChannels }
+    vcs      { TokenVCs }
     networks      { TokenNetworks }
     ordered       { TokenOrdered }
     unordered     { TokenUnordered }
@@ -58,6 +61,12 @@ import Data.List
 
 
 
+
+
+%left '+' '-'
+%left '*'
+%left '/'
+
 %%
 
 
@@ -70,10 +79,10 @@ Globals1        : TypeDecl                                    { [$1] }
                 | Globals1 ',' TypeDecl                       { $3 : $1 }
 
 
-Channels       : Channel                                      { [$1] }
-               | Channels ',' Channel                         { ($3) : $1 }
+VCs             : VC                                          { [$1] }
+                | VCs ',' VC                                  { ($3) : $1 }
 
-Channel        : iden                                         { Channel $1 }
+VC              : iden                                        { VC $1 }
 
 Networks        : {-- empty --}                               { [] }
                 | networks ':' Networks1 ';'                  { $3 }
@@ -84,10 +93,10 @@ Networks1       : Network                                     { [$1] }
 
 
 
-Network         : ordered iden '{' Channels '}'               { Network Ord $2 $4 }
-                | unordered iden '{' Channels '}'             { Network Unord $2 $4 }
-                | ordered '{' Channels '}'                    { Network Ord "SingleNet" $3 }
-                | unordered '{' Channels '}'                  { Network Unord "SingleNet" $3 }
+Network         : ordered iden '{' VCs '}'               { Network Ord $2 $4 }
+                | unordered iden '{' VCs '}'             { Network Unord $2 $4 }
+                | ordered '{' VCs '}'                    { Network Ord "SingleNet" $3 }
+                | unordered '{' VCs '}'                  { Network Unord "SingleNet" $3 }
 
 
 Machines        : Machine                                     { [$1] }
@@ -156,10 +165,10 @@ Guard           : Mail                                                  { Guard 
 
 
 Mail            : Issue '(' Msg ')'                                         { Issue $3 }
-                | broadcast '(' Param ',' Param ',' Msg ')' '@' Channel     { Broadcast $3 $5 $7 ( $10) }
+                | broadcast '(' Param ',' Param ',' Msg ')' '@' VC     { Broadcast $3 $5 $7 ( $10) }
                 | '*' Msg                                                   { Issue $2 }
-                | Param '!' Msg '@' Channel                                 { Send $3 $1 ($5) }
-                | Param '?' Msg '@' Channel                                 { ReceiveFrom $3 (Just $1) (Just $5) }
+                | Param '!' Msg '@' VC                                 { Send $3 $1 ($5) }
+                | Param '?' Msg '@' VC                                 { ReceiveFrom $3 (Just $1) (Just $5) }
                 | Param '?' Msg                                             { ReceiveFrom $3 (Just $1) (Nothing) }
 
 
@@ -194,13 +203,22 @@ Response        : Mail                                             { Response $1
 
 
 Assignment      : Param    '=' Param                               { Assign $1 $3 }
-                | Param    '=' num                                 { AssignNum $1 $3 }
+                | Param    '=' IntExp                              { AssignNum $1 $3 }
                 | TypeDecl '=' Param                               { AssignLocal $1 $3 }
-                | TypeDecl '=' num                                 { AssignLocalNum $1 $3 }
+                | TypeDecl '=' IntExp                              { AssignLocalNum $1 $3 }
 
 
 Param           : iden '[' num ']'                              { Node $1 $3 }
                 | iden                                          { VarOrVal $1 }
+
+
+IntExp          : IntExp '+' IntExp                             { Sum $1 $3 }
+                | '-' IntExp                                    { Minus $2 }
+                | '(' IntExp ')'                                { Group $2 }
+                | IntExp '*' IntExp                             { Times $1 $3 }
+                | IntExp '/' IntExp                             { Div $1 $3 }
+                | num                                           { Const $1 }
+                | iden                                          { IntVar $1 }
 
 
 {
