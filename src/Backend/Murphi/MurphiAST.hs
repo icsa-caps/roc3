@@ -1,5 +1,5 @@
 
-module MurphiAST where
+module Backend.Murphi.MurphiAST where
 
 -- this AST captures the subset of the murphi language
 -- as it is used in the MSI protocol implementations
@@ -47,7 +47,7 @@ type VCNets = [ (VCName, Network) ]
 data Machine = Sym MachineType
              | Nonsym MachineType NonsymMIndex
              | Synonym String
-               deriving(Show)
+               deriving(Show,Eq)
 
 -- we may refer to non-symmetric machines using a formal parameter
 -- (e.g. in the receive function, a loop or a ruleset)
@@ -57,11 +57,11 @@ data Machine = Sym MachineType
 -- Arbitrary is for the former and Specific for the latter
 data NonsymMIndex = Arbitrary
                   | Specific Index
-                    deriving(Show)
+                    deriving(Show,Eq)
 
 
 data Symmetry = Symmetric | Nonsymmetric
-                deriving(Show)
+                deriving(Show,Eq)
 
 -- this datatype SHOULD NOT BE USED AT THE DECLARATION PARTS
 -- i.e. not in Constants, Types and Variables
@@ -72,7 +72,7 @@ data Symmetry = Symmetric | Nonsymmetric
 
 -- only for Send and Broadcast
 data Message = Message MType [ Maybe Field ] -- for Owner see bellow
-               deriving(Show)
+               deriving(Show,Eq)
 -- The list of Message arguments has fields, instead of variables
 -- with the owner set to Msg, in order to print them like "msg." ++ fieldName
 
@@ -81,16 +81,16 @@ data Owner = Msg
            | Owner Machine    -- use indexedMachine when printing
            | Local            -- need to add declaration
            | ThisNode
-             deriving(Show)
+             deriving(Show,Eq)
 
 
 -- change fields to account for elements of arrays i.e. spesific machines
 data Field = Field Variable Owner
-             deriving(Show)
+             deriving(Show,Eq)
 
 -- for printing broadcasting functions
 data SetField = SetField Field Type   -- Type is the type of the elements
-                deriving(Show)
+                deriving(Show,Eq)
 
 type Src = Field
 type Dst = Field
@@ -100,7 +100,7 @@ data Variable = Simple VarName
               | ArrayElem ArrayName Index
               | MachineArray Machine
               | MachineIndex Machine
-                deriving(Show)
+                deriving(Show,Eq)
 
 
 
@@ -112,7 +112,7 @@ type LocalVariables = [TypeDecl]
 -- in place of TypeDecl in Ast
 -- to make printing easier the name is at the begining
 data TypeDecl = Decl Name Type
-              deriving(Show)
+                deriving(Show,Eq)
 
 
 data Type = Boolean
@@ -122,7 +122,7 @@ data Type = Boolean
           | Array (Either Size MachineType) Type -- if Machine, indexed by the
                                                  -- machine index, scalarset or enum
           | Set (Either Size MachineType) Type -- Left machine means the size
-            deriving(Show)                     -- of the set = #machines
+            deriving(Show,Eq)                     -- of the set = #machines
 
 
 type Lo    = Int
@@ -138,7 +138,7 @@ data IntExp = Sum   IntExp IntExp
             | Group IntExp
             | Const Int
             | IntVar Field  -- must find if it s local, machine field etc.
-              deriving(Show)
+              deriving(Show,Eq)
 
 
 
@@ -153,7 +153,7 @@ data Program = Program Constants
                        Rules
                        Startstate
                        Invariants
-                deriving(Show)
+                deriving(Show,Eq)
 
 
 -----------------------------------------------------------------
@@ -169,9 +169,9 @@ data Program = Program Constants
 
 data Constants = Constants {
                              machineSizesC :: [(MachineType,Size)],
-                             vcs          :: [VCName]
+                             vcs           :: [VCName]
                            }
-                deriving(Show)
+                 deriving(Show,Eq)
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
@@ -190,7 +190,7 @@ data Types  = Types
                                     [State],       -- states of each machine
                                     [TypeDecl]) ]  -- fields of the machine
              }
-             deriving(Show)
+             deriving(Show,Eq)
 
 
 -----------------------------------------------------------------
@@ -203,12 +203,12 @@ data Variables      = Variables {
                                   orderedNets :: [OrderedNet],
                                   unorderedNets :: [UnorderedNet]
                                  }
-                                 deriving(Show)
+                                 deriving(Show,Eq)
 
 data OrderedNet     = OrderedNet Name Size
-                      deriving(Show)
+                      deriving(Show,Eq)
 data UnorderedNet   = UnorderedNet Name Size
-                      deriving(Show)
+                      deriving(Show,Eq)
 
 netName :: Network -> String
 netName (Left (OrderedNet name _))    = name
@@ -229,7 +229,7 @@ data CommonFunctions = FuncParams {
                         broadcast       :: [ (SetField, Message) ]
                         -- MSI has also a BCastInv procedure
 
-                       } deriving(Show)
+                       } deriving(Show,Eq)
 
 type Param           = String
 
@@ -242,7 +242,7 @@ data MachineFunctions = MachineFunctions [ ( MachineType,
                                              Sets,
                                              ReceiveFunction,
                                              LocalVariables ) ]
-                        deriving(Show)
+                        deriving(Show,Eq)
 
 -- we need a pair of add and remove functions for each set field a machine has
 type Sets            = [TypeDecl] -- in MurphiPrint we check TypeDecl is a set
@@ -252,7 +252,7 @@ type ReceiveFunction = [ ( State, [ (Maybe Guard, [Response]) ] ) ]
 
 data Guard           = Receive MType [(ArgName, (Either Field Val))] (Maybe VCName)
                      | AtState Machine State
-                       deriving(Show)
+                       deriving(Show,Eq)
 
 -- Note on Guard, Receive: the list is the value each msg arg must have (if any)
 -- we use field for the values because they may be machine fields or local vars
@@ -269,7 +269,7 @@ data Response        = ToState Machine State
                      | Add Owner SetName Field  -- the owner of the set is the machine
                      | Del Owner SetName Field  -- in question. Owner here is  for the elem
                      | Stall
-                       deriving(Show)
+                       deriving(Show,Eq)
 
 type Elem = Field
 type DstSet = Field -- we assume the variable refers to a set
@@ -288,7 +288,7 @@ type DstSet = Field -- we assume the variable refers to a set
 data Rules = Rules SelfIssueRules
                    ReceiveOrdNets
                    ReceiveUnordNets
-             deriving(Show)
+             deriving(Show,Eq)
 
 type SelfIssueRules = [( MachineType, [SelfIssueRule] )]
 type ReceiveOrdNets = [ReceiveOrdNet]
@@ -298,17 +298,17 @@ type ReceiveUnordNets = [ReceiveUnordNet]
 
 -- the guard should (mostly) be AtStateAlias "node" <state>
 data SelfIssueRule    = SelfIssueRule RuleName Guard [Response]  -- Guard is a function of
-                        deriving(Show)                  -- the guard in the relevant
+                        deriving(Show,Eq)                  -- the guard in the relevant
                                                         -- part of the front-end
 
 -- we need a list of all the machines in the receive rules, because we
 -- have IsMember calls for each of them
 -- to check that the message is accepted by the machine it is sent to
 data ReceiveOrdNet    = ReceiveOrdNet RuleName NetName [VCName] [MachineType]
-                        deriving(Show)
+                        deriving(Show,Eq)
 
 data ReceiveUnordNet  = ReceiveUnordNet RuleName NetName [VCName] [MachineType]
-                        deriving(Show)
+                        deriving(Show,Eq)
 
 
 -- we need the machines for isMember
@@ -325,7 +325,7 @@ data Startstate = Startstate {
                                 orderedNetsStart   ::  [OrderedNetName],
                                 unorderedNetsStart :: [UnorderedNetName]
                              }
-                  deriving(Show)
+                  deriving(Show,Eq)
 
 -- must support also arrays which are initialised with loops
 -- the fields of a machien are of type TypeDecl (see Types section),
@@ -339,7 +339,7 @@ type FieldStart = (TypeDecl, Maybe StartVal)
 -- Invariants
 -- TODO
 data Invariants = Invariants String
-                  deriving(Show)
+                  deriving(Show,Eq)
 
 
 

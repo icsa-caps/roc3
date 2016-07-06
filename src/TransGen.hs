@@ -6,6 +6,8 @@ module TransGen where
 
 -----------------------------------------------------------------
 
+import Data.Maybe -- for fromJust
+import Data.List  -- for nub
 import qualified Ast as F
 import qualified Backend.Murphi.MurphiAST as B
 
@@ -35,14 +37,27 @@ getStateName (F.State name) = name
 
 --------------------------------
 
+-- get the vcs of a network
+getChanNet :: F.Network -> [F.VC]
+getChanNet (F.Network order name vcs) = vcs
+
+--------------------------------
+
+-- get the names of all the vcs of the model
+getAllVCs :: F.Ast -> [String]
+getAllVCs frontAST = let nets = F.networks frontAST
+                         vcs = concat $ map getChanNet nets
+                     in  map (\(F.VC name) -> name) vcs
+
 ----------------------------------------------------------------
 
 -- functions for low-level constructs (e.g. responses, type declarations etc.)
 
 -------------------------------
-Transforming type declarations
+-- Transforming type declarations
 --------------------------------
 
+-- returns the name of a type declaration
 getTypeDeclName :: F.TypeDecl -> String
 getTypeDeclName (F.Boolean varName)       = varName
 getTypeDeclName (F.Integer varName _ _)   = varName
@@ -101,8 +116,9 @@ getMachineNames frontAST = let machinesAllInfo = F.machines frontAST
 
 
 getVCNames :: F.Ast -> [B.VCName]
-getVCNames frontAST = let channelsAllInfo = F.channels frontAST
-                      in  map (\ (F.Channel name) -> name) channelsAllInfo
+getVCNames frontAST = let nets = F.networks frontAST
+                          vcs  = map ( \(F.Network _ _ vcs) -> vcs ) nets
+                      in  map (\(F.VC name) -> name) $ concat vcs
 
 --------------------------------
 
@@ -143,9 +159,9 @@ getSymmetries frontAST = let machinesAllInfo = F.machines frontAST
 
 --------------------------------
 
-getStartstate :: F.Ast -> [B.State]
-getStartstate frontAST = let machinesAllInfo = F.machines frontAST
-                         in  map (getStateName . F.startstate) machinesAllInfo
+getStartstates :: F.Ast -> [B.State]
+getStartstates frontAST = let machinesAllInfo = F.machines frontAST
+                          in  map (getStateName . F.startstate) machinesAllInfo
 
 
 
@@ -156,5 +172,63 @@ getStartstate frontAST = let machinesAllInfo = F.machines frontAST
 --------------------------------
 
 
-----------------------------------------------------------------
-----------------------------------------------------------------
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+-- extracting the msg args
+
+-- transform a msg arg
+transMsgArg :: F.MsgArg -> B.MsgArg
+transMsgArg (F.GuardAssign typeDecl _)  = transTypeDecl typeDecl
+transMsgArg (F.MsgArg typeDecl)         = transTypeDecl typeDecl
+
+
+-- get arguments of a message
+argOfMsg :: F.Msg -> [F.MsgArg]
+argOfMsg (F.Msg _ args) = args
+
+
+-- get msg args from mail transformed to backend msg args
+msgArgMail :: F.Mail -> [B.MsgArg]
+msgArgMail (F.Send msg _ _ )       = map transMsgArg $ argOfMsg msg
+msgArgMail (F.ReceiveFrom msg _ _) = map transMsgArg $ argOfMsg msg
+msgArgMail _                       = []
+
+-- get msg arg from Guard
+msgArgGuard :: F.Guard -> [B.MsgArg]
+msgArgGuard (F.Guard mail) = msgArgMail mail
+
+
+-- get msg arg from a single Response
+msgArgResp :: F.Response -> [B.MsgArg]
+msgArgResp (F.Response mail) = msgArgMail mail
+msgArgResp _                 = []
+
+
+-- get msg arg from list of Responses
+msgArgResps :: [F.Response] -> [B.MsgArg]
+msgArgResps resps = concat $ map msgArgResp resps
+
+
+-- extract msg arguments from a machine function
+-- removes duplicates
+msgArgMFunction :: F.MachineFunction -> [B.MsgArg]
+msgArgMFunction cases = nub $ concat $ map singleCase cases
+
+  where
+    singleCase :: F.MachineFCase -> [B.MsgArg]
+    singleCase (_, guard, _, resps)
+     = let fromGuards = msgArgGuard guard
+           fromResps  = msgArgResps resps
+       in  fromGuards ++ fromResps
+
+
+-- get the general form of a message in the backend
+getMsgArgs :: F.Ast -> B.MsgArgs
+getMsgArgs fAst = let machines  = F.machines fAst
+                      macFuncts = map F.machineFunction machines
+                      duplArgs  = concat $ map msgArgMFunction macFuncts
+                  in nub duplArgs
+
+
+-----------------------------------------------------------------
+-----------------------------------------------------------------
