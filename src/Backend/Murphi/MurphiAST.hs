@@ -1,5 +1,5 @@
 
-module Backend.Murphi.MurphiAST where
+module MurphiAST where
 
 -- this AST captures the subset of the murphi language
 -- as it is used in the MSI protocol implementations
@@ -228,9 +228,8 @@ data CommonFunctions = FuncParams {
                         -- we assume the field is a set
                         -- one broadcasting function for each pair
                         -- of set of fields and a message
-                        broadcast       :: [ (SetField, Message) ]
+                        broadcast       :: [ (SetField, Message, VCName) ]
                         -- MSI has also a BCastInv procedure
-
                        } deriving(Show,Eq)
 
 type Param           = String

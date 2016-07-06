@@ -61,11 +61,16 @@ instance Cl.MurphiClass CommonFunctions where
 
 
    sendTop = "Procedure Send(mtype: MessageType;\n" ++
-             "               " ++ "src: Node;\n" ++
-             "               " ++ "dst: Node;\n" ++
+             "               " ++ "src: Node;\n"    ++
+             "               " ++ "dst: Node;\n"    ++
+             "               " ++ "vc: VC_Type;\n"  ++
              pushBy 15 (mapconcatln Cl.tomurphi msgArgs) ++ ");"
 
    sendNext = "var\n  msg: Message;\n\nbegin\n"
+
+   sendStandardAssignments = "msg.src = src;\n" ++
+                             "msg.dst = dst;\n" ++
+                             "msg.vc  = vc;\n"
 
    sendEnd = "\nend;\n"
 
@@ -76,6 +81,7 @@ instance Cl.MurphiClass CommonFunctions where
 
    finalSend = sendTop     ++ "\n" ++
                sendNext    ++ "\n" ++
+               pushBy 5 sendStandardAssignments ++ -- contains new line
                pushBy 5 assignments ++ "\n" ++
                pushBy 5 printedNets ++ "\n" ++
                sendEnd
@@ -126,7 +132,7 @@ instance Cl.MurphiClass CommonFunctions where
     "  MultiSetAdd(msg, " ++ net ++ "[dst]);\n"
 
    -----------------------------
-   
+
    -- helper function
    isOrdered :: NetName -> Bool
    isOrdered net = net `elem` orderedNetNames
@@ -140,12 +146,12 @@ instance Cl.MurphiClass CommonFunctions where
    -- murphi cannot handle more generality
 
    -- broadcast for a single set and msg
-   singleBroadcast :: (SetField, Message) -> String
-   singleBroadcast (SetField field elemType, msg)
+   singleBroadcast :: (SetField, Message, VCName) -> String
+   singleBroadcast (SetField field elemType, msg, vc)
      = let setName = fieldName field
            (Message mtype _) = msg
            srcField = Field (Simple "src") Local
-           dstField = Field (Simple "dst") Local
+           dstField = Field (Simple "n") Local
        in  "procedure Cast" ++ fstCap mtype ++ fstCap setName ++
            "(src:Node);\n" ++     -- Node = union of machines,
                                   -- only machines can broadcast msgs
@@ -155,7 +161,7 @@ instance Cl.MurphiClass CommonFunctions where
            "       MultiSetCount(i:" ++ Cl.tomurphi field ++ ", "
            ++ Cl.tomurphi field ++ "[i] = n) != 0 )\n" ++
            "    then\n" ++
-           ( pushBy 6 (Cl.tomurphi (Send msg srcField dstField)) ) ++ "\n" ++
+           ( pushBy 6 (Cl.tomurphi (Send msg srcField dstField vc)) ) ++ "\n" ++
            "    endif;\n" ++
            "  endfor;\n" ++
            "end;\n"
