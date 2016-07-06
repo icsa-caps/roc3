@@ -32,7 +32,7 @@ type AliasName        = String
 type RuleName         = String
 type MachineIndex     = String
 type StartVal         = String
-type MType             = String --mtype in murphi
+type MType            = String --mtype in murphi
 
 
 

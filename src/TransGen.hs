@@ -35,7 +35,12 @@ backSymmetry (F.Nonsymmetric) = B.Nonsymmetric
 getStateName :: F.State -> String
 getStateName (F.State name) = name
 
---------------------------------
+-------------------------------
+
+transState :: F.State -> B.State
+transState = getStateName         -- currently B.State = String
+
+-------------------------------
 
 -- get the vcs of a network
 getChanNet :: F.Network -> [F.VC]
@@ -43,11 +48,6 @@ getChanNet (F.Network order name vcs) = vcs
 
 --------------------------------
 
--- get the names of all the vcs of the model
-getAllVCs :: F.Ast -> [String]
-getAllVCs frontAST = let nets = F.networks frontAST
-                         vcs = concat $ map getChanNet nets
-                     in  map (\(F.VC name) -> name) vcs
 
 ----------------------------------------------------------------
 
@@ -109,36 +109,36 @@ transTypeDecl frontTypeDecl = B.Decl (getTypeDeclName frontTypeDecl)
 --------------------------------
 
 getMachineNames :: F.Ast -> [B.MachineType]
-getMachineNames frontAST = let machinesAllInfo = F.machines frontAST
-                           in  map F.machineType machinesAllInfo
+getMachineNames fAst = let machinesAllInfo = F.machines fAst
+                       in  map F.machineType machinesAllInfo
 
 --------------------------------
 
 
 getVCNames :: F.Ast -> [B.VCName]
-getVCNames frontAST = let nets = F.networks frontAST
-                          vcs  = map ( \(F.Network _ _ vcs) -> vcs ) nets
-                      in  map (\(F.VC name) -> name) $ concat vcs
+getVCNames fAst = let nets = F.networks fAst
+                      vcs  = map ( \(F.Network _ _ vcs) -> vcs ) nets
+                  in  map (\(F.VC name) -> name) $ concat vcs
 
 --------------------------------
 
 getAllNetNames :: F.Ast -> [B.NetName]
-getAllNetNames frontAST = let nets = F.networks frontAST
-                          in  map ( \(F.Network _ name _) -> name ) nets
+getAllNetNames fAst = let nets = F.networks fAst
+                      in  map ( \(F.Network _ name _) -> name ) nets
 
 --------------------------------
 
 getOrdNetNames :: F.Ast -> [B.OrderedNetName]
-getOrdNetNames frontAST = let allNets = F.networks frontAST
-                              onlyOrdered = filter isOrdered allNets
-                          in  map( \(F.Network _ name _) -> name ) onlyOrdered
+getOrdNetNames fAst = let allNets = F.networks fAst
+                          onlyOrdered = filter isOrdered allNets
+                      in  map( \(F.Network _ name _) -> name ) onlyOrdered
 
 --------------------------------
 
 getUnordNetNames :: F.Ast -> [B.UnorderedNetName]
-getUnordNetNames frontAST = let allNets = F.networks frontAST
-                                onlyUnordered = filter (not . isOrdered) allNets
-                            in  map( \(F.Network _ name _) -> name ) onlyUnordered
+getUnordNetNames fAst = let allNets = F.networks fAst
+                            onlyUnordered = filter (not . isOrdered) allNets
+                        in  map( \(F.Network _ name _) -> name ) onlyUnordered
 
 --------------------------------
 
@@ -147,29 +147,41 @@ getUnordNetNames frontAST = let allNets = F.networks frontAST
 -- getting machine info
 
 getMachineSizes :: F.Ast -> [B.Size]
-getMachineSizes frontAST = let machinesAllInfo = F.machines frontAST
-                           in  map F.size machinesAllInfo
+getMachineSizes fAst = let machinesAllInfo = F.machines fAst
+                       in  map F.size machinesAllInfo
 
 --------------------------------
 
 getSymmetries :: F.Ast -> [B.Symmetry]
-getSymmetries frontAST = let machinesAllInfo = F.machines frontAST
-                             frontSymmetries = map F.symmetry machinesAllInfo
-                         in  map backSymmetry frontSymmetries
+getSymmetries fAst = let machinesAllInfo = F.machines fAst
+                         frontSymmetries = map F.symmetry machinesAllInfo
+                     in  map backSymmetry frontSymmetries
 
 --------------------------------
 
 getStartstates :: F.Ast -> [B.State]
-getStartstates frontAST = let machinesAllInfo = F.machines frontAST
-                          in  map (getStateName . F.startstate) machinesAllInfo
+getStartstates fAst = let machinesAllInfo = F.machines fAst
+                      in  map (getStateName . F.startstate) machinesAllInfo
 
 
 
 --------------------------------
 
-
+getMachineFields :: F.Ast -> [[B.TypeDecl]] 
+-- fields are declared as TypeDecl in MurphiAST
+getMachineFields fAst = let machines  = F.machines fAst
+                            fFields   = map F.fields machines
+                            typeDecls = map (map (\(F.Field typeDecl _)
+                                                    -> typeDecl))
+                                            fFields
+                        in  map (map transTypeDecl) typeDecls
 
 --------------------------------
+
+-- we don't include here a function for machine states because we may want
+-- to have either a list with no duplicates in GetTypes or with duplicates,
+-- if any, in MachineFunctions. The latter case is due to the fact that
+-- the transition to another state doesn't depend only on the current state
 
 
 -----------------------------------------------------------------
