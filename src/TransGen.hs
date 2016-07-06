@@ -174,7 +174,84 @@ getStartstates frontAST = let machinesAllInfo = F.machines frontAST
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
--- extracting the msg args
+
+
+---------------------------  Messages ---------------------------
+
+
+-----------------------------------------------------------------
+
+-- get a list of all msgs
+
+-- get msg from mail
+msgFromMail :: F.Mail -> Maybe F.Msg
+msgFromMail (F.Send msg _ _ )        = Just msg
+msgFromMail (F.ReceiveFrom msg _ _ ) = Just msg
+msgFromMail _                        = Nothing
+
+
+-- get msg from Guard
+msgFromGuard :: F.Guard -> Maybe F.Msg
+msgFromGuard (F.Guard mail) = msgFromMail mail
+
+
+-- get msg from Response
+msgFromResp :: F.Response -> Maybe F.Msg
+msgFromResp (F.Response mail) = msgFromMail mail
+msgFromResp _                 = Nothing
+
+-- get msg from list of Responses
+msgsFromResps :: [F.Response] -> [F.Msg]
+msgsFromResps resps = let maybes    = map msgFromResp resps
+                          noNothing = filter (/=Nothing) maybes
+                      in  map fromJust noNothing
+
+-- get msg from machine function
+msgFromMachineF :: F.MachineFunction -> [F.Msg]
+msgFromMachineF machineF = concat $ map singleCase machineF
+  where
+    -- get messages from a single case in the machine function
+    -- i.e. single combination of state and incoming message
+    singleCase :: F.MachineFCase -> [F.Msg]
+    singleCase (state, guard, maybeState, resps)
+      = let guardMsgs = map fromJust $ filter (/=Nothing) $ [msgFromGuard guard]
+            respsMsgs = msgsFromResps resps
+        in  respsMsgs ++ guardMsgs
+
+
+-- get all messages
+
+getFMsgs :: F.Ast -> [F.Msg]
+getFMsgs fAst = let machines   = F.machines fAst
+                    machinesFs = map F.machineFunction machines
+                in  nub $ concat $ map msgFromMachineF machinesFs
+
+
+-----------------------------------------------------------------
+
+--------------------------------
+-------------------------------
+
+-- get all Mtypes
+
+-- extract Mtype from a message
+mtypeFromMsg :: F.Msg -> B.MType
+mtypeFromMsg (F.Msg mtype _) = mtype   -- F.Mtype = B.Mtype = String
+
+-- get all Mtypes
+getMTypes :: F.Ast -> [B.MType]
+getMTypes fAst = let msgs = getFMsgs fAst
+                 in  nub $ map mtypeFromMsg msgs
+
+--------------------------------
+--------------------------------
+
+-- get all msg arguments
+
+-- get arguments of a message
+argOfMsg :: F.Msg -> [F.MsgArg]
+argOfMsg (F.Msg _ args) = args
+
 
 -- transform a msg arg
 transMsgArg :: F.MsgArg -> B.MsgArg
@@ -182,52 +259,16 @@ transMsgArg (F.GuardAssign typeDecl _)  = transTypeDecl typeDecl
 transMsgArg (F.MsgArg typeDecl)         = transTypeDecl typeDecl
 
 
--- get arguments of a message
-argOfMsg :: F.Msg -> [F.MsgArg]
-argOfMsg (F.Msg _ args) = args
-
-
--- get msg args from mail transformed to backend msg args
-msgArgMail :: F.Mail -> [B.MsgArg]
-msgArgMail (F.Send msg _ _ )       = map transMsgArg $ argOfMsg msg
-msgArgMail (F.ReceiveFrom msg _ _) = map transMsgArg $ argOfMsg msg
-msgArgMail _                       = []
-
--- get msg arg from Guard
-msgArgGuard :: F.Guard -> [B.MsgArg]
-msgArgGuard (F.Guard mail) = msgArgMail mail
-
-
--- get msg arg from a single Response
-msgArgResp :: F.Response -> [B.MsgArg]
-msgArgResp (F.Response mail) = msgArgMail mail
-msgArgResp _                 = []
-
-
--- get msg arg from list of Responses
-msgArgResps :: [F.Response] -> [B.MsgArg]
-msgArgResps resps = concat $ map msgArgResp resps
-
-
--- extract msg arguments from a machine function
--- removes duplicates
-msgArgMFunction :: F.MachineFunction -> [B.MsgArg]
-msgArgMFunction cases = nub $ concat $ map singleCase cases
-
-  where
-    singleCase :: F.MachineFCase -> [B.MsgArg]
-    singleCase (_, guard, _, resps)
-     = let fromGuards = msgArgGuard guard
-           fromResps  = msgArgResps resps
-       in  fromGuards ++ fromResps
-
-
 -- get the general form of a message in the backend
-getMsgArgs :: F.Ast -> B.MsgArgs
-getMsgArgs fAst = let machines  = F.machines fAst
-                      macFuncts = map F.machineFunction machines
-                      duplArgs  = concat $ map msgArgMFunction macFuncts
-                  in nub duplArgs
+
+getMsgArgs :: F.Ast -> [B.MsgArg]
+getMsgArgs fAst = let msgs     = getFMsgs fAst
+                      fMsgArgs = concat $ map argOfMsg msgs
+                  in  nub $ map transMsgArg fMsgArgs
+
+
+--------------------------------
+--------------------------------
 
 
 -----------------------------------------------------------------

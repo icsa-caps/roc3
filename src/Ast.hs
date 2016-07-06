@@ -24,20 +24,20 @@ data Ast        = Model {
                           networks :: [ Network ],
                           machines :: [ Machine ]
                         }
-                  deriving(Show)
+                  deriving(Show,Eq)
 
 
 data VC = VC String
-          deriving(Show)
+          deriving(Show,Eq)
 
 data Network = Network Order String [VC]
-               deriving(Show)
+               deriving(Show,Eq)
 
 data Order = Ord | Unord
-             deriving(Show,Enum)
+             deriving(Show,Enum, Eq)
 
 data Symmetry = Symmetric | Nonsymmetric
-                deriving(Show, Enum)
+                deriving(Show, Enum, Eq)
 
 
 data Machine  = Machine {
@@ -48,10 +48,10 @@ data Machine  = Machine {
                             fields :: [Field],
                             machineFunction :: MachineFunction
                         }
-                deriving(Show)
+                deriving(Show,Eq)
 
 data Field = Field TypeDecl (Maybe StartVal)
-             deriving(Show)
+             deriving(Show,Eq)
 
 
 -- Field and MsgArg are both TypeDecl
@@ -62,13 +62,13 @@ data TypeDecl   = Boolean VarName
                 | Vertex MachineType VarName -- TODO: check MachineType is one of the machines
                 | Array (Either Size MachineType) TypeDecl
                 | Set   (Either Size MachineType) TypeDecl
-                  deriving(Show)
+                  deriving(Show,Eq)
 
 type Lo = Int
 type Hi  = Int
 
 data State  = State String
-              deriving(Show)
+              deriving(Show,Eq)
 
 
 -- problem with guard: the constructor allows an arbitrary
@@ -80,24 +80,24 @@ data State  = State String
 -- and throw an informing error if otherwise
 
 data Guard       = Guard Mail     -- extend with arbitrary guards
-                   deriving(Show)
+                   deriving(Show,Eq)
 
 -- infer sender/receiver from current machine
 
-data Mail        = Issue Msg
+data Mail        = Issue Msg       -- why allow args to issues?
                  | Send Msg Dst VC
                  | ReceiveFrom Msg (Maybe Src) (Maybe VC) -- Nothing if we do not care about the vc
                  | Broadcast Src DstSet Msg VC         -- param should be a set
-                   deriving(Show)
+                   deriving(Show,Eq)
 
 
 data Msg         = Msg MType MsgArgs
-                   deriving(Show)
+                   deriving(Show,Eq)
 
 
 data MsgArg      = GuardAssign TypeDecl VarName
                  | MsgArg TypeDecl
-                   deriving(Show)
+                   deriving(Show,Eq)
 
 -- Note: for the first constructor, we either assign a value
 -- to the message argument (if in Send) or we check the argument for a value
@@ -118,19 +118,19 @@ data Response   = Response Mail
                 | Add SetName (Either Param Int)
                 | Del SetName (Either Param Int)
                 | Stall
-                  deriving(Show)
+                  deriving(Show,Eq)
 
 
 data Assignment = Assign Param Param
                 | AssignNum Param IntExp
                 | AssignLocal TypeDecl Param
                 | AssignLocalNum TypeDecl IntExp
-                  deriving(Show)
+                  deriving(Show,Eq)
 
 
 data Param = Node MachineType Index -- for nonsymmetric machines
            | VarOrVal String -- local, global, field, value
-             deriving(Show)
+             deriving(Show,Eq)
 
 -- for transforming the AST:
 -- when we have a Variable VarName, we search the list of fields of the machine
@@ -153,7 +153,7 @@ data IntExp = Sum   IntExp IntExp
             | Group IntExp
             | Const Int
             | IntVar VarName  -- must find if it s local, machine field etc.
-              deriving(Show)
+              deriving(Show,Eq)
 
 
 

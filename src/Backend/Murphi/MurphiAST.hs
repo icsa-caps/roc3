@@ -32,6 +32,8 @@ type AliasName        = String
 type RuleName         = String
 type MachineIndex     = String
 type StartVal         = String
+type MType             = String --mtype in murphi
+
 
 
 -- helper data structures, data types
@@ -237,6 +239,7 @@ type Param           = String
 -----------------------------------------------------------------
 
 -- Machine Functions
+-- for GetMachineFunctions.hs : need to extract local variables
 
 data MachineFunctions = MachineFunctions [ ( MachineType,
                                              Sets,
@@ -258,8 +261,6 @@ data Guard           = Receive MType [(ArgName, (Either Field Val))] (Maybe VCNa
 -- we use field for the values because they may be machine fields or local vars
 -- apart from values
 
-type MType           = String --mtype in murphi
-
 
 data Response        = ToState Machine State
                      | Send Message Src Dst VCName    -- see note below for dst
@@ -279,6 +280,8 @@ type DstSet = Field -- we assume the variable refers to a set
 -----------------------------------------------------------------
 
 -- Rules
+-- for GetRules.hs : need to find self issue rules,
+-- extract guards
 
 -- problem: at murphi, one of the responses in rules can be
 -- "clear <field>" (in MSI it is acks).
