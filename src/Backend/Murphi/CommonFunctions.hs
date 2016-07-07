@@ -8,7 +8,7 @@ module CommonFunctions where
 
 -----------------------------------------------------------------
 
-import  MurphiAST
+import MurphiAST
 import qualified MurphiClass as Cl
 import Data.Char
 import Data.List.Split -- for tokenizing strings
@@ -27,10 +27,9 @@ import TomurphiHelper
 
 
 instance Cl.MurphiClass CommonFunctions where
- tomurphi (FuncParams orderedNetNames sendInfo broadcastInfo  ) =
+ tomurphi (FuncParams orderedNetNames sendInfo broadcastInfo) =
     finalSend      ++ "\n" ++
     finalAdvanceQ  ++ "\n" ++
-    finalBroadcast ++ "\n" ++
     errorFunctions ++ "\n"
 
   where
@@ -137,37 +136,6 @@ instance Cl.MurphiClass CommonFunctions where
    isOrdered :: NetName -> Bool
    isOrdered net = net `elem` orderedNetNames
 
-
-
-   -----------------------------
-
-   -- broadcasting functions
-   -- one broadcasting funtion for each pair of set and msg
-   -- murphi cannot handle more generality
-
-   -- broadcast for a single set and msg
-   singleBroadcast :: (SetField, Message, VCName) -> String
-   singleBroadcast (SetField field elemType, msg, vc)
-     = let setName = fieldName field
-           (Message mtype _) = msg
-           srcField = Field (Simple "src") Local
-           dstField = Field (Simple "n") Local
-       in  "procedure Cast" ++ fstCap mtype ++ fstCap setName ++
-           "(src:Node);\n" ++     -- Node = union of machines,
-                                  -- only machines can broadcast msgs
-           "begin\n" ++
-           "  for n:Node do\n" ++
-           "    if  ( IsMember(n, " ++ Cl.tomurphi elemType ++  ") &\n" ++
-           "       MultiSetCount(i:" ++ Cl.tomurphi field ++ ", "
-           ++ Cl.tomurphi field ++ "[i] = n) != 0 )\n" ++
-           "    then\n" ++
-           ( pushBy 6 (Cl.tomurphi (Send msg srcField dstField vc)) ) ++ "\n" ++
-           "    endif;\n" ++
-           "  endfor;\n" ++
-           "end;\n"
-
-   -- all broadcast functions
-   finalBroadcast = mapconcatln singleBroadcast broadcastInfo
 
    -----------------------------
 

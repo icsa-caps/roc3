@@ -1,6 +1,6 @@
 -----------------------------------------------------------------
 -------- tomurphi implementation for machine functions ----------
------- i.e. adding/removing from set and receive fucntions ------
+-- i.e. adding/removing from set , broadcasting and receive fucntions
 -----------------------------------------------------------------
 
 module MachineFunctions where
@@ -27,8 +27,10 @@ import TomurphiHelper
 
 instance Cl.MurphiClass MachineFunctions where
 
- tomurphi (MachineFunctions machine_Sets_ReceiveFuncion_LocalVars ) =
-   mapconcatln setReceiveSingle machine_Sets_ReceiveFuncion_LocalVars
+ tomurphi (MachineFunctions allInfo ) =
+   mapconcatln setReceiveSingle allInfo      -- each function is implemented
+                                             -- for a single machine
+
 
   where
 
@@ -72,8 +74,50 @@ instance Cl.MurphiClass MachineFunctions where
    finalSetFunctions :: MachineType -> [TypeDecl] -> String
    finalSetFunctions machine sets = mapconcatln (setFunctions machine) sets
 
+   ----------------------------------------------------------
+   ----------------------------------------------------------
+   -- broadcasting functions
+
+   -- we need to know:
+   -- a) the name of the machine that owns the set
+   -- b) we DONT need to know its symmetry;
+   --    we use the formal parameters for indexing
+   -- c) the name of the set
+   -- d) the type of its elements
+   -- e) the vc
+
+   -- broadcasting functions
+   -- one broadcasting funtion for each pair of set and msg
+   -- murphi cannot handle more generality
+
+   -- broadcast for a single set and msg
+   singleBroadcast :: BCastInfo -> String
+   singleBroadcast (BCast machine set elemType msg vc)
+     = let (Message mtype _) = msg
+           srcField = Field (Simple "src") Local
+           dstField = Field (Simple "n") Local
+           thisSet = indexedFormalStr machine ++ "." ++ set
+       in  "procedure Cast" ++ fstCap mtype ++ fstCap set ++
+           "(src:Node; "
+           ++ formalIndexStr machine ++ ":" ++ indexTypeStr machine ++ ");\n" ++
+           "begin\n" ++
+           "  for n:Node do\n" ++
+           "    if  ( IsMember(n, " ++ Cl.tomurphi elemType ++  ") &\n" ++
+           "       MultiSetCount(i:" ++ thisSet ++ ", "
+           ++ thisSet ++ "[i] = n) != 0 )\n" ++
+           "    then\n" ++
+           ( pushBy 6 (Cl.tomurphi (Send msg srcField dstField vc)) ) ++ "\n" ++
+           "    endif;\n" ++
+           "  endfor;\n" ++
+           "end;\n"
+
    -----------------------------
-   -----------------------------
+
+
+
+
+   ----------------------------------------------------------
+   ----------------------------------------------------------
 
    -- Printing responses and guards e.g taking different cases (if-then) for
    -- mtype and responding
@@ -141,14 +185,18 @@ instance Cl.MurphiClass MachineFunctions where
    ----------------------------
 
    -- set + receive functions
-   setReceiveSingle :: ( MachineType, Sets, ReceiveFunction, LocalVariables ) -> String
-   setReceiveSingle (machine, sets, stateGuardsReps, localVariables) =
+   setReceiveSingle :: ( MachineType, Sets, [BCastInfo],
+                         ReceiveFunction, LocalVariables ) -> String
+   setReceiveSingle (machine, sets, bcasts, stateGuardsReps, localVariables) =
      "-- " ++ machine ++ " functions {{{\n" ++
      "-- Add/remove from sets\n" ++
      finalSetFunctions machine sets ++ "\n" ++
      "---------------------------------------------------------\n" ++
+     "-- broadcasting \n" ++
+     mapconcatln singleBroadcast bcasts ++ "\n" ++
      " -- Receive function \n" ++
      finalMachineReceive machine stateGuardsReps localVariables ++
      "\n-- }}}\n"
 
+----------------------------------------------------------------
 ----------------------------------------------------------------

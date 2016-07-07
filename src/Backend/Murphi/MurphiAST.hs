@@ -90,9 +90,11 @@ data Owner = Msg
 data Field = Field Variable Owner
              deriving(Show,Eq)
 
--- for printing broadcasting functions
+-- not used anymore for broadcasting, may be used in responses (who knows)
 data SetField = SetField Field Type   -- Type is the type of the elements
                 deriving(Show,Eq)
+
+
 
 type Src = Field
 type Dst = Field
@@ -242,15 +244,26 @@ type Param           = String
 
 data MachineFunctions = MachineFunctions [ ( MachineType,
                                              Sets,
+                                             [BCastInfo],
                                              ReceiveFunction,
                                              LocalVariables ) ]
                         deriving(Show,Eq)
 
--- we need a pair of add and remove functions for each set field a machine has
-type Sets            = [TypeDecl] -- in MurphiPrint we check TypeDecl is a set
+--------------------------------
+
+-- we need add and remove functions for each set field a machine has
+type Sets     = [TypeDecl] -- when printing we check TypeDecl is a set
+
+type ElemType = Type
+
+-- we have one bcast function for each
+-- pair of msg and the set it is addressed to
+data BCastInfo = BCast MachineType SetName ElemType Message VCName
+                 deriving(Show, Eq)
 
 type ReceiveFunction = [ ( State, [ (Maybe Guard, [Response]) ] ) ]
 
+--------------------------------
 
 data Guard           = Receive MType [(ArgName, (Either Field Val))] (Maybe VCName)
                      | AtState Machine State
