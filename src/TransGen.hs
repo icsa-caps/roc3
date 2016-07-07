@@ -108,12 +108,6 @@ transTypeDecl frontTypeDecl = B.Decl (getTypeDeclName frontTypeDecl)
 
 --------------------------------
 
-getMachineNames :: F.Ast -> [B.MachineType]
-getMachineNames fAst = let machinesAllInfo = F.machines fAst
-                       in  map F.machineType machinesAllInfo
-
---------------------------------
-
 
 getVCNames :: F.Ast -> [B.VCName]
 getVCNames fAst = let nets = F.networks fAst
@@ -142,9 +136,36 @@ getUnordNetNames fAst = let allNets = F.networks fAst
 
 --------------------------------
 
-----------------------------------------------------------------
-----------------------------------------------------------------
--- getting machine info
+getNetsVCs :: F.Ast -> [(B.NetName, [B.VCName])]
+getNetsVCs fAst = let nets     = F.networks fAst
+                      vcNames  = map vcsFromNet nets
+                      netNames = map (\(F.Network _ name _) -> name)
+                                     nets
+                  in  zip netNames vcNames
+  where
+    vcsFromNet :: F.Network -> [B.VCName]
+    vcsFromNet (F.Network _ _ vcs)
+      = map (\(F.VC name) -> name) vcs
+
+--------------------------------
+
+
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+
+---------------------------- Machines ---------------------------
+
+
+-----------------------------------------------------------------
+
+
+--------------------------------
+
+getMachineNames :: F.Ast -> [B.MachineType]
+getMachineNames fAst = let machinesAllInfo = F.machines fAst
+                       in  map F.machineType machinesAllInfo
+
+--------------------------------
 
 getMachineSizes :: F.Ast -> [B.Size]
 getMachineSizes fAst = let machinesAllInfo = F.machines fAst
@@ -167,7 +188,7 @@ getStartstates fAst = let machinesAllInfo = F.machines fAst
 
 --------------------------------
 
-getMachineFields :: F.Ast -> [[B.TypeDecl]] 
+getMachineFields :: F.Ast -> [[B.TypeDecl]]
 -- fields are declared as TypeDecl in MurphiAST
 getMachineFields fAst = let machines  = F.machines fAst
                             fFields   = map F.fields machines

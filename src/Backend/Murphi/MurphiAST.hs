@@ -1,5 +1,5 @@
 
-module MurphiAST where
+module Backend.Murphi.MurphiAST where
 
 -- this AST captures the subset of the murphi language
 -- as it is used in the MSI protocol implementations
@@ -223,10 +223,10 @@ netName (Right (UnorderedNet name _)) = name
 -----------------------------------------------------------------
 
 -- Common Functions
-data CommonFunctions = FuncParams {
+data CommonFunctions = CommonFunctions {
                         -- need one advanceQ for each ordered net!
                         advanceQ        :: [OrderedNetName],
-                        send            :: ( MsgArgs, [(NetName,[VCName])] ),
+                        send            :: ( MsgArgs, [(NetName,[VCName])] )
                        } deriving(Show,Eq)
 
 type Param           = String

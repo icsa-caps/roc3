@@ -15,7 +15,7 @@ import Data.List  -- for nub
 --                       } deriving(Show,Eq)
 
 getCommonFunctions :: F.Ast -> B.CommonFunctions
-getCommonFunctions fAst = B.CommonFunctions advanceQ send broadcast
+getCommonFunctions fAst = B.CommonFunctions advanceQ send
   where
     advanceQ = getOrdNetNames fAst
 
