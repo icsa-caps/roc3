@@ -168,11 +168,13 @@ instance Cl.MurphiClass (Maybe Field) where
 
 
 instance Cl.MurphiClass Guard where
-  tomurphi (Receive mtype [] vc)      =  printMType mtype ++ printMsgVC vc
-  tomurphi (Receive mtype argVals vc) = let temp = map printArgCond argVals
-                                            argConds = concatWith " & " temp
-                                        in  printMType mtype ++ " & " ++
-                                            argConds ++ printMsgVC vc
+  tomurphi (Receive mtype [] src vc)      =  printMType mtype ++ printMsgVC vc
+                                             ++ printMsgSrc src
+  tomurphi (Receive mtype argVals src vc) = let temp = map printArgCond argVals
+                                                argConds = concatWith " & " temp
+                                            in  printMType mtype ++ " & " ++
+                                                argConds ++ printMsgVC vc
+                                                ++ printMsgSrc src
 
   tomurphi (AtState machine state)
     = indexedMachineGen machine ++ ".state = " ++ state
@@ -187,6 +189,10 @@ printMType mtype = "msg.mtype = " ++ mtype
 printMsgVC :: Maybe VCName -> String
 printMsgVc (Nothing) = ""
 printMsgVC (Just vc) = " & msg.vc = " ++ vc
+
+printMsgSrc :: Maybe Field -> String
+printMsgSrc (Nothing) = ""
+printMsgSrc (Just src) = "& msg.src = " ++ Cl.tomurphi src
 
 printArgCond :: (ArgName, (Either Field Val)) -> String
 printArgCond (arg, (Right const)) = "msg." ++ arg ++ "=" ++ const

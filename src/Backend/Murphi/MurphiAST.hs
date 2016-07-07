@@ -1,5 +1,5 @@
 
-module Backend.Murphi.MurphiAST where
+module MurphiAST where
 
 -- this AST captures the subset of the murphi language
 -- as it is used in the MSI protocol implementations
@@ -260,7 +260,7 @@ type ReceiveFunction = [ ( State, [ (Maybe Guard, [Response]) ] ) ]
 
 --------------------------------
 
-data Guard           = Receive MType [(ArgName, (Either Field Val))] (Maybe VCName)
+data Guard           = Receive MType [(ArgName, (Either Field Val))] (Maybe Src) (Maybe VCName)
                      | AtState Machine State
                        deriving(Show,Eq)
 
