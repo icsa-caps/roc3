@@ -80,15 +80,8 @@ data State  = State String
 -- that any mails used as guards are receives
 -- and throw an informing error if otherwise
 
-data Guard       = Guard Mail     -- extend with arbitrary guards
-                   deriving(Show,Eq)
-
--- infer sender/receiver from current machine
-
-data Mail        = Issue Msg       -- why allow args to issues?
-                 | Send Msg Dst VC
-                 | ReceiveFrom Msg (Maybe Src) (Maybe VC) -- Nothing if we do not care about the vc
-                 | Broadcast Src DstSet Msg VC
+data Guard       = ReceiveFrom Msg (Maybe Src) (Maybe VC) -- Nothing if we do not care about the vc     -- extend with arbitrary guards
+                 | Issue String
                    deriving(Show,Eq)
 
 
@@ -113,9 +106,10 @@ data MsgArg      = GuardAssign TypeDecl VarName
 -- you are not allowed to fire a rule on demand
 -- e.g. in a function body
 
-data Response   = Response Mail
+data Response   = Send Msg Dst VC
+                | Broadcast Src DstSet Msg VC
                 | Update Assignment
-                | SelfIssue String -- will be ignored in the Target AST see mi.c3
+                | EmptyResp String  -- e.g. "hit". Ignore in target AST
                 | Add SetName (Either Param Int)
                 | Del SetName (Either Param Int)
                 | Stall

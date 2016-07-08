@@ -161,16 +161,9 @@ State_Guard     : '(' iden ',' Guard ')' '{' Responses '}'              { (State
                 | '(' iden ',' Guard ',' iden ')' '{' Responses '}'     { (State $2, $4, Just (State $6), $9) }
 
 
-Guard           : Mail                                                  { Guard $1 }
-
-
-Mail            : Issue '(' Msg ')'                                         { Issue $3 }
-                | broadcast '(' Param ',' Param ',' Msg ')' '@' VC     { Broadcast $3 $5 $7 ( $10) }
-                | '*' Msg                                                   { Issue $2 }
-                | Param '!' Msg '@' VC                                 { Send $3 $1 ($5) }
-                | Param '?' Msg '@' VC                                 { ReceiveFrom $3 (Just $1) (Just $5) }
-                | Param '?' Msg                                             { ReceiveFrom $3 (Just $1) (Nothing) }
-
+Guard           : Param '?' Msg '@' VC                                 { ReceiveFrom $3 (Just $1) (Just $5) }
+                | Param '?' Msg                                        { ReceiveFrom $3 (Just $1) (Nothing) }
+                | '*' iden                                             { Issue $2 }
 
 
 Msg             : iden                                              { Msg $1 []}
@@ -192,14 +185,15 @@ Responses       : {-- empty --}                                    { [] }
 Response1       : Response ';'                                     { $1 }
 
 
-Response        : Mail                                             { Response $1 }
-                | Assignment                                       { Update $1 }
-                | iden                                             { SelfIssue $1 }
-                | iden '.' add '(' Param ')'                       { Add $1 (Left $5)}
-                | iden '.' del '(' Param ')'                       { Del $1 (Left $5) }
-                | iden '.' add '(' num ')'                         { Add $1 (Right $5) }
-                | iden '.' del '(' num ')'                         { Del $1 (Right $5) }
-                | stall                                            { Stall }
+Response        : broadcast '(' Param ',' Param ',' Msg ')' '@' VC     { Broadcast $3 $5 $7 ( $10) }
+                | Param '!' Msg '@' VC                                 { Send $3 $1 ($5) }
+                | Assignment                                           { Update $1 }
+                | iden                                                 { EmptyResp $1 }
+                | iden '.' add '(' Param ')'                           { Add $1 (Left $5)}
+                | iden '.' del '(' Param ')'                           { Del $1 (Left $5) }
+                | iden '.' add '(' num ')'                             { Add $1 (Right $5) }
+                | iden '.' del '(' num ')'                             { Del $1 (Right $5) }
+                | stall                                                { Stall }
 
 
 Assignment      : Param    '=' Param                               { Assign $1 $3 }
