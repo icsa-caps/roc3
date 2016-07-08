@@ -213,7 +213,7 @@ Param           : iden '[' num ']'                              { Node $1 $3 }
 
 
 IntExp          : IntExp '+' IntExp                             { Sum $1 $3 }
-                | '-' IntExp                                    { Minus $2 }
+                | IntExp '-' IntExp                             { Minus $1 $3 }
                 | '(' IntExp ')'                                { Group $2 }
                 | IntExp '*' IntExp                             { Times $1 $3 }
                 | IntExp '/' IntExp                             { Div $1 $3 }

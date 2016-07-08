@@ -4,6 +4,7 @@ module Ast where
 -- type synonyms
 type Fields          = [Field]
 type MachineType     = String
+type Name            = String
 type Size            = Int
 type Dst             = Param
 type Src             = Param
@@ -18,19 +19,19 @@ type MachineFCase    = ( State, Guard,  Maybe State, [Response] )
 type MachineFunction = [MachineFCase]
 
 
-data Ast        = Model {
-                          -- globals  :: [ TypeDecl], not suppported in backend
-                          -- we can add it back easily in the front-end
-                          networks :: [ Network ],
-                          machines :: [ Machine ]
-                        }
-                  deriving(Show,Eq)
+data Ast = Model {
+                   -- globals  :: [ TypeDecl], not suppported in backend
+                   -- we can add it back easily in the front-end
+                   networks :: [ Network ],
+                   machines :: [ Machine ]
+                 }
+                 deriving(Show,Eq)
 
 
 data VC = VC String
           deriving(Show,Eq)
 
-data Network = Network Order String [VC]
+data Network = Network Order Name [VC]
                deriving(Show,Eq)
 
 data Order = Ord | Unord
@@ -87,7 +88,7 @@ data Guard       = Guard Mail     -- extend with arbitrary guards
 data Mail        = Issue Msg       -- why allow args to issues?
                  | Send Msg Dst VC
                  | ReceiveFrom Msg (Maybe Src) (Maybe VC) -- Nothing if we do not care about the vc
-                 | Broadcast Src DstSet Msg VC         -- param should be a set
+                 | Broadcast Src DstSet Msg VC
                    deriving(Show,Eq)
 
 
