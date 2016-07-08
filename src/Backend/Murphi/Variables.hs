@@ -47,8 +47,7 @@ instance Cl.MurphiClass Variables where
    combineArrayCount :: OrderedNetName -> String
    combineArrayCount net = formatOrd net ++ "\n" ++ counts net
 
-   finalOrd = let  ordNetNames = map netName $ map (Left) ordNets
-              in   mapconcatln combineArrayCount ordNetNames
+   finalOrd = mapconcatln combineArrayCount ordNets
 
    -----------------------------
 
@@ -56,8 +55,8 @@ instance Cl.MurphiClass Variables where
    formatUnord :: UnorderedNetName -> String
    formatUnord net = net ++ ": array [Node] of multiset [NET_MAX] of Message;"
 
-   finalUnord = let unordNetNames = map netName $ map (Right) unordNets
-                in  mapconcatln formatUnord unordNetNames
+   finalUnord = mapconcatln formatUnord unordNets
 
 
+----------------------------------------------------------------
 ----------------------------------------------------------------

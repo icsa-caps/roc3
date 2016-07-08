@@ -1,5 +1,5 @@
 
-module MurphiAST where
+module Backend.Murphi.MurphiAST where
 
 -- this AST captures the subset of the murphi language
 -- as it is used in the MSI protocol implementations
@@ -204,8 +204,8 @@ data Types  = Types
 
 data Variables      = Variables {
                                   machines :: [MachineType],
-                                  orderedNets :: [OrderedNet],
-                                  unorderedNets :: [UnorderedNet]
+                                  orderedNets :: [OrderedNetName],
+                                  unorderedNets :: [UnorderedNetName]
                                  }
                                  deriving(Show,Eq)
 
