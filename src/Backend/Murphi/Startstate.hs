@@ -69,51 +69,55 @@ instance Cl.MurphiClass Startstate where
    initField machine (field, val)
      = let (Decl name _) = field
            thisField =  indexedFormalStr machine ++ "." ++ name
-       in  case val of (Just value) ->  setValue machine (field, (Just value))
-                       (Nothing)    -> "undefine " ++ thisField ++ ";"
+       in  case val of
+            (Just value) ->  setValue machine (field, (Just value))
+            (Nothing)    -> "undefine " ++ thisField ++ ";"
 
    -----------------------------
 
    -- intialise a field. Particular care is taken with arrays
    setValue :: MachineType -> FieldStart -> String
    setValue machine ( (Decl name decltype) , (Just value))
-     = case decltype of (Array _ _) -> initialiseArray machine ( (Decl name decltype), (Just value ))
-                        (Set _ _)   -> error "can't initialise a set!"
-                        (_)         -> indexedFormalStr machine ++ "." ++ name
-                                        ++ " := " ++ value ++ ";"
+     = case decltype of
+            (Array _ _) -> initialiseArray machine ( (Decl name decltype), (Just value ))
+            (Set _ _)   -> error "can't initialise a set!"
+            (_)         -> indexedFormalStr machine ++ "." ++ name
+                            ++ " := " ++ value ++ ";"
 
    -----------------------------
 
    initialiseArray :: MachineType -> FieldStart -> String
    initialiseArray machine ((Decl name decltype), Just (value))
      = let alias = indexedFormalStr machine ++ "." ++ name ++ "[index0]"
-       in  case decltype of (Array indexType innerType) -> "for index0:" ++
-                                                             complexIndexType indexType ++
-                                                             "do\n" ++
-                                                              pushBy 2 (ith_intialisation
-                                                                           alias
-                                                                           1
-                                                                           innerType
-                                                                           value)
+       in  case decltype of
+           (Array indexType innerType) -> "for index0:" ++
+                                           complexIndexType indexType ++
+                                            "do\n" ++
+                                            pushBy 2 (ith_intialisation
+                                                                        alias
+                                                                        1
+                                                                        innerType
+                                                                         value)
 
-                            (_)                         -> "error"
+                            (_)        -> error "initialiseArray used on other type"
    -----------------------------
    -- initialises an array at i-th depth. Needed for arrays of arrays,
    -- because we need to use different indices
    ith_intialisation :: String -> Int -> Type -> Value -> String
    ith_intialisation name depth decltype value
-    = case decltype of (Array indexType innerType) -> "for index" ++ show depth ++
-                                                  ":" ++ complexIndexType indexType
-                                                  ++ "do\n" ++
-                                                  pushBy 2 ( ith_intialisation
-                                                             (name ++ "[index]"
-                                                               ++ show depth)
-                                                             (depth+1)
-                                                             innerType
-                                                             value )
+    = case decltype of
+          (Array indexType innerType) -> "for index" ++ show depth ++
+                                          ":" ++ complexIndexType indexType
+                                           ++ "do\n" ++
+                                           pushBy 2 ( ith_intialisation
+                                                      (name ++ "[index]"
+                                                        ++ show depth)
+                                                      (depth+1)
+                                                      innerType
+                                                      value )
 
    -- bottom of recursion
-                       (_)                         -> name ++ " := " ++ value ++ ";\n"
+                                 _    -> name ++ " := " ++ value ++ ";\n"
 
    ------ helper function
    complexIndexType :: (Either Size MachineType) -> String
