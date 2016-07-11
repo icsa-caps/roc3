@@ -17,6 +17,7 @@ type Index           = Int
 type StartVal        = String
 type MachineFCase    = ( State, Guard,  Maybe State, [Response] )
 type MachineFunction = [MachineFCase]
+type ArrayName       = String
 
 
 data Ast = Model {
@@ -35,18 +36,18 @@ data Network = Network Order Name [VC]
                deriving(Show,Eq)
 
 data Order = Ord | Unord
-             deriving(Show,Enum, Eq)
+             deriving(Show,Enum,Eq)
 
 data Symmetry = Symmetric | Nonsymmetric
-                deriving(Show, Enum, Eq)
+                deriving(Show,Enum,Eq)
 
 
 data Machine  = Machine {
-                            symmetry :: Symmetry,
-                            machineType :: String,
-                            size :: Int,
-                            startstate :: State,
-                            fields :: [Field],
+                            symmetry        :: Symmetry,
+                            machineType     :: String,
+                            size            :: Int,
+                            startstate      :: State,
+                            fields          :: [Field],
                             machineFunction :: MachineFunction
                         }
                 deriving(Show,Eq)
@@ -123,9 +124,10 @@ data Assignment = Assign Param Param
                   deriving(Show,Eq)
 
 
-data Param = Node MachineType Index -- for nonsymmetric machines
-           | VarOrVal String -- local, global, field, value
-             deriving(Show,Eq)
+data Param      = ArrayElem ArrayName Index
+                | NonSymInst MachineType Index -- for nonsymmetric machines
+                | VarOrVal String -- local, global, field, value
+                  deriving(Show,Eq)
 
 -- for transforming the AST:
 -- when we have a Variable VarName, we search the list of fields of the machine

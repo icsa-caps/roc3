@@ -93,12 +93,75 @@ getType (F.Set (Right machine) otherDecl)
 
 --------------------------------
 
+arrayOrMachine :: [F.MachineType] -> [F.MachineType] -> F.Param -> F.Param
+arrayOrMachine syms nonsyms (ArrayElem name index)
+    | name `elem` syms      = error "trying to index symmetric machine"
+    | name `elem` nonsyms   = NonSymInst name index -- instance of nonsym
+    | otherwise             = ArrayElem name index  -- indeed array elem
+
+--------------------------------
+
 -- getting from the fronend type declaration to the backend type declaration
 transTypeDecl :: F.TypeDecl -> B.TypeDecl
 transTypeDecl frontTypeDecl = B.Decl (getTypeDeclName frontTypeDecl)
                                      (getType frontTypeDecl)
 
 --------------------------------
+
+findLocal :: [F.Response] -> B.LocalVariables    -- LocalVariables = [TypeDecl]
+findLocal resps =
+    let maybes = map findLocalSingle resps
+        noNothing = filter (/=Nothing) maybes
+    in  nub $ map (fromJust) noNothing
+
+    where
+        findLocalSingle :: F.Response -> Maybe B.TypeDecl
+        findLocalSingle (AssignLocal typeDecl _)
+           = Just $ transTypeDecl typeDecl
+        findLocalSingle (AssignLocalNum typeDecl _)
+           = Just $ transTypeDecl typeDecl
+        findLocalSingle _
+           = Nothing
+
+
+--------------------------------
+
+
+transVar :: F.MachineType -> [F.Fields]  -- the machine and its fields
+            -> [B.MsgArg]                -- standard form of msg in Murphi
+            -> B.LocalVariables
+            -> F.Param -> B.Field
+transVar machine machineFields stdMsgArgs locals (VarOrVal var)
+
+  = let fieldsNames  = map (\(Field typeDecl _) -> getTypeDeclName typeDecl)
+                           machineFields
+
+        msgArgsNames = map (\(Decl name _) -> name)
+                           stdMsgArgs
+
+        localNames   = map (\(Decl name _) -> name)
+                           locals
+
+    in if var `elem` fieldsNames
+            then (Field (Simple var) (Owner (AnyType machine)))
+       else
+         if var `elem` msgArgsNames
+             then (Field (Simple var) (Owner Msg))
+         else
+            if var `elem` localNames
+                then (Field (Simple var) (Local))
+            else
+                (Field (Simple var) (Global)) -- it's a constant
+
+
+
+
+
+transResponse :: F.Response -> B.Response
+transResponse resp =
+
+  where
+
 --------------------------------
 
 ----------------------------------------------------------------

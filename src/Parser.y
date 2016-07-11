@@ -202,7 +202,7 @@ Assignment      : Param    '=' Param                               { Assign $1 $
                 | TypeDecl '=' IntExp                              { AssignLocalNum $1 $3 }
 
 
-Param           : iden '[' num ']'                              { Node $1 $3 }
+Param           : iden '[' num ']'                              { ArrayElem $1 $3 }
                 | iden                                          { VarOrVal $1 }
 
 
