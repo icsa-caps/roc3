@@ -187,7 +187,7 @@ Response1       : Response ';'                                     { $1 }
 
 Response        : broadcast '(' Param ',' Param ',' Msg ')' '@' VC     { Broadcast $3 $5 $7 ( $10) }
                 | Param '!' Msg '@' VC                                 { Send $3 $1 ($5) }
-                | Assignment                                           { Update $1 }
+                | Assignment                                           { $1 }
                 | iden                                                 { EmptyResp $1 }
                 | iden '.' add '(' Param ')'                           { Add $1 (Left $5)}
                 | iden '.' del '(' Param ')'                           { Del $1 (Left $5) }
