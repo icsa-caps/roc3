@@ -1,5 +1,5 @@
 
-module MurphiAST where
+module Backend.Murphi.MurphiAST where
 
 -- this AST captures the subset of the murphi language
 -- as it is used in the MSI protocol implementations
@@ -46,7 +46,8 @@ type VCNets = [ (VCName, Network) ]
 -- we declare a constant equal to the size
 -- of a machine. So we can refer to that.
 
-data Machine = Sym MachineType
+data Machine = AnyType MachineType  -- don't know/ don't care about symmetry
+             | Sym MachineType
              | Nonsym MachineType NonsymMIndex
              | Synonym String
                deriving(Show,Eq)
@@ -102,8 +103,8 @@ type Dst = Field
 
 data Variable = Simple VarName
               | ArrayElem ArrayName Index
-              | MachineArray Machine
-              | MachineIndex Machine
+              | MachineArray Machine -- machine array indexed by std index
+              | MachineIndex Machine -- the std machine index.
                 deriving(Show,Eq)
 
 

@@ -109,15 +109,11 @@ data MsgArg      = GuardAssign TypeDecl VarName
 
 data Response   = Send Msg Dst VC
                 | Broadcast Src DstSet Msg VC
-                | Update Assignment
                 | EmptyResp String  -- e.g. "hit". Ignore in target AST
                 | Add SetName (Either Param Int)
                 | Del SetName (Either Param Int)
                 | Stall
-                  deriving(Show,Eq)
-
-
-data Assignment = Assign Param Param
+                | Assign Param Param
                 | AssignNum Param IntExp
                 | AssignLocal TypeDecl Param
                 | AssignLocalNum TypeDecl IntExp

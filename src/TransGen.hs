@@ -94,10 +94,10 @@ getType (F.Set (Right machine) otherDecl)
 --------------------------------
 
 arrayOrMachine :: [F.MachineType] -> [F.MachineType] -> F.Param -> F.Param
-arrayOrMachine syms nonsyms (ArrayElem name index)
+arrayOrMachine syms nonsyms (F.ArrayElem name index)
     | name `elem` syms      = error "trying to index symmetric machine"
-    | name `elem` nonsyms   = NonSymInst name index -- instance of nonsym
-    | otherwise             = ArrayElem name index  -- indeed array elem
+    | name `elem` nonsyms   = F.NonSymInst name index -- instance of nonsym
+    | otherwise             = F.ArrayElem name index  -- indeed array elem
 
 --------------------------------
 
@@ -110,57 +110,76 @@ transTypeDecl frontTypeDecl = B.Decl (getTypeDeclName frontTypeDecl)
 
 findLocal :: [F.Response] -> B.LocalVariables    -- LocalVariables = [TypeDecl]
 findLocal resps =
-    let maybes = map findLocalSingle resps
+    let maybes    = map findLocalSingle resps
         noNothing = filter (/=Nothing) maybes
     in  nub $ map (fromJust) noNothing
 
     where
         findLocalSingle :: F.Response -> Maybe B.TypeDecl
-        findLocalSingle (AssignLocal typeDecl _)
+        findLocalSingle (F.AssignLocal typeDecl _)
            = Just $ transTypeDecl typeDecl
-        findLocalSingle (AssignLocalNum typeDecl _)
+        findLocalSingle (F.AssignLocalNum typeDecl _)
            = Just $ transTypeDecl typeDecl
         findLocalSingle _
            = Nothing
 
 
 --------------------------------
+-- given an F.Param (variable, array element, constant) and the
+-- necessary context, get the equivalent in Murphi
 
-
-transVar :: F.MachineType -> [F.Fields]  -- the machine and its fields
+transVar :: F.MachineType -> [F.Field]  -- the machine and its fields
             -> [B.MsgArg]                -- standard form of msg in Murphi
             -> B.LocalVariables
             -> F.Param -> B.Field
-transVar machine machineFields stdMsgArgs locals (VarOrVal var)
 
-  = let fieldsNames  = map (\(Field typeDecl _) -> getTypeDeclName typeDecl)
+transVar _ _ _ _ (F.NonSymInst _ _) = error ("can't use tranVar on instances" ++
+                                          "of nonsymmetric machines")
+
+transVar machine machineFields stdMsgArgs locals param
+
+  = let fieldsNames  = map (\(F.Field typeDecl _) -> getTypeDeclName typeDecl)
                            machineFields
 
-        msgArgsNames = map (\(Decl name _) -> name)
+        msgArgsNames = map (\(B.Decl name _) -> name)
                            stdMsgArgs
 
-        localNames   = map (\(Decl name _) -> name)
+        localNames   = map (\(B.Decl name _) -> name)
                            locals
 
-    in if var `elem` fieldsNames
-            then (Field (Simple var) (Owner (AnyType machine)))
-       else
-         if var `elem` msgArgsNames
-             then (Field (Simple var) (Owner Msg))
-         else
-            if var `elem` localNames
-                then (Field (Simple var) (Local))
-            else
-                (Field (Simple var) (Global)) -- it's a constant
+        var = varFromParam param
+        name = varName param
 
+    in if name `elem` fieldsNames             -- machine field
+            then (B.Field var (B.Owner (B.AnyType machine)))
+       else
+         if name `elem` msgArgsNames          -- message argument
+             then (B.Field var B.Msg)
+         else
+            if name `elem` localNames         -- local variable
+                then (B.Field var B.Local)
+            else
+                (B.Field var B.Global) -- it's a constant
+
+   where
+       varFromParam :: F.Param -> B.Variable
+       varFromParam (F.ArrayElem arrayName index) = B.ArrayElem arrayName index
+       varFromParam (F.VarOrVal iden) = B.Simple iden
+
+       -- the identifier for an array, a variable or a constant
+       varName :: F.Param -> String
+       varName (F.ArrayElem arrayName _) = arrayName
+       varName (F.VarOrVal iden)         = iden
+
+-- transform a parameter that refers to an instance of a nonsymmetric machine
+nonSymInst :: F.Param -> B.Machine
+nonSymInst (F.NonSymInst machine index) = B.Nonsym machine (B.Specific index)
 
 
 
 
 transResponse :: F.Response -> B.Response
-transResponse resp =
-
-  where
+transResponse resp = undefined
 
 --------------------------------
 
