@@ -9,8 +9,6 @@ module Rules where
 import  MurphiAST
 import qualified MurphiClass as Cl
 import Data.Char
-import Data.List.Split -- for tokenizing strings
-                       -- splitOn is used in pushBy
 
 -- general helper functions
 import GenHelper
@@ -56,11 +54,13 @@ instance Cl.MurphiClass Rules where
 
    -- a single unordered net receive rule
    singleUnordNet :: ReceiveUnordNet -> String
-   singleUnordNet (ReceiveUnordNet ruleName netName vcs machines)
-     = let disjunctVCs = disjunction $ map ("msg.vc = " ++ ) vcs
-           allIsMember  = map (isMember "n") machines
-           allProcess  = map processMessage machines
+   singleUnordNet (ReceiveUnordNet netName vcs machines)
+     = let disjunctVCs   = disjunction $ map ("msg.vc = " ++ ) vcs
+           allIsMember   = map (isMember "n") machines
+           allProcess    = map processMessage machines
            casesMachines = printIfElse allIsMember allProcess
+           ruleName      = netName ++ "Receive"
+
        in  "ruleset n:Node do\n" ++
            "  choose midx:" ++ netName ++ "[n] do\n" ++
            "    alias chan:net[n]\n" ++
@@ -101,11 +101,13 @@ instance Cl.MurphiClass Rules where
 
    -- a single ordered net receive rule
    singleOrdNet :: ReceiveOrdNet -> String
-   singleOrdNet (ReceiveOrdNet ruleName netName vcs machines)
-     = let disjunctVCs = disjunction $ map ("msg.vc = " ++ ) vcs
-           allIsMember  = map (isMember "n") machines
-           allDeQ  = map (deQ netName) machines
+   singleOrdNet (ReceiveOrdNet netName vcs machines)
+     = let disjunctVCs   = disjunction $ map ("msg.vc = " ++ ) vcs
+           allIsMember   = map (isMember "n") machines
+           allDeQ        = map (deQ netName) machines
            casesMachines = printIfElse allIsMember allDeQ
+           ruleName      = netName ++ "Receive"
+
        in  "ruleset n:Node do\n" ++
            "  choose midx:" ++ netName ++ "[n] do\n" ++
            "    alias chan:net[n]\n" ++
@@ -138,3 +140,18 @@ instance Cl.MurphiClass Rules where
    -----------------------------
 
 ----------------------------------------------------------------
+----------------------------------------------------------------
+
+instance Cl.MurphiClass SelfIssueRule where
+  tomurphi (SelfIssueRule rulename localVars guard responses)
+    = "rule \"" ++ rulename ++ "\"\n" ++
+      pushBy 2 (Cl.tomurphi guard) ++ "\n" ++
+      "=>\n" ++
+      pushBy 2 (Cl.tomurphi localVars) ++
+      "Begin\n" ++
+      pushBy 2 (mapconcatln Cl.tomurphi responses) ++ "\n" ++
+      "endrule;"
+
+
+-----------------------------------------------------------------
+-----------------------------------------------------------------

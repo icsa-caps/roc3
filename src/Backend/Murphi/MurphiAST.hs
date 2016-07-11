@@ -1,5 +1,5 @@
 
-module Backend.Murphi.MurphiAST where
+module MurphiAST where
 
 -- this AST captures the subset of the murphi language
 -- as it is used in the MSI protocol implementations
@@ -170,7 +170,6 @@ data Program = Program Constants
 
 -- Constants
 
-
 data Constants = Constants {
                              machineSizesC :: [(MachineType,Size)],
                              vcs           :: [VCName]
@@ -181,6 +180,7 @@ data Constants = Constants {
 -----------------------------------------------------------------
 
 -- Types
+
 data Types  = Types
              {
                 machinesSym :: [(MachineType, Size, Symmetry)], -- we need the size
@@ -211,6 +211,7 @@ data Variables      = Variables {
 
 data OrderedNet     = OrderedNet Name Size
                       deriving(Show,Eq)
+
 data UnorderedNet   = UnorderedNet Name Size
                       deriving(Show,Eq)
 
@@ -223,6 +224,7 @@ netName (Right (UnorderedNet name _)) = name
 -----------------------------------------------------------------
 
 -- Common Functions
+
 data CommonFunctions = CommonFunctions {
                         -- need one advanceQ for each ordered net!
                         advanceQ        :: [OrderedNetName],
@@ -300,24 +302,26 @@ data Rules = Rules SelfIssueRules
                    ReceiveUnordNets
              deriving(Show,Eq)
 
-type SelfIssueRules = [( MachineType, [SelfIssueRule] )]
-type ReceiveOrdNets = [ReceiveOrdNet]
+type SelfIssueRules   = [( MachineType, [SelfIssueRule] )]
+type ReceiveOrdNets   = [ReceiveOrdNet]
 type ReceiveUnordNets = [ReceiveUnordNet]
 
 
 
 -- the guard should (mostly) be AtStateAlias "node" <state>
-data SelfIssueRule    = SelfIssueRule RuleName Guard [Response]  -- Guard is a function of
-                        deriving(Show,Eq)                  -- the guard in the relevant
-                                                        -- part of the front-end
+-- self-issue rules are part of the machine description
+-- the rulename is the self-issued msg i.e. what follows *
+data SelfIssueRule    = SelfIssueRule RuleName LocalVariables Guard [Response]
+                        deriving(Show,Eq)
+
 
 -- we need a list of all the machines in the receive rules, because we
 -- have IsMember calls for each of them
 -- to check that the message is accepted by the machine it is sent to
-data ReceiveOrdNet    = ReceiveOrdNet RuleName NetName [VCName] [MachineType]
+data ReceiveOrdNet    = ReceiveOrdNet NetName [VCName] [MachineType]
                         deriving(Show,Eq)
 
-data ReceiveUnordNet  = ReceiveUnordNet RuleName NetName [VCName] [MachineType]
+data ReceiveUnordNet  = ReceiveUnordNet NetName [VCName] [MachineType]
                         deriving(Show,Eq)
 
 
