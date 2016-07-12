@@ -96,8 +96,52 @@ getMsgArgs fAst = let msgs     = getFMsgs fAst
                   in  nub $ map transMsgArg fMsgArgs
 
 
+-- get just the names of msg args
+getMsgArgsNames :: F.Ast -> [String]
+getMsgArgsNames fAst = map (\(B.Decl name _) -> name) $ getMsgArgs fAst
+
+
 --------------------------------
 --------------------------------
+
+transMsg :: F.MachineType -> [F.Field]  -- the machine and its fields
+            -> [B.MsgArg]                -- standard form of msg args in Murphi
+            -> B.LocalVariables
+            -> F.Msg -> B.Message
+transMsg machine machineFields stdArgs locals (F.Msg mtype args)
+    = let
+            -- get names of the std args
+            msgArgsNames = map (\(B.Decl name _) -> name) stdArgs
+
+            -- transform front args to B.Fields, paired
+            -- with the respective formal param
+            formalsArgs  = map getArg args
+
+            -- look up the name of each formal argument in the previous list.
+            backArgs     = map ((flip lookup) formalsArgs) msgArgsNames
+
+      in    B.Message mtype backArgs
+
+  where
+      -- get the argument in the backend, with the name of the formal parameter
+      -- it corresponds to
+      getArg :: F.MsgArg -> (String, B.Field)
+      getArg (F.MsgArg typeDecl)
+        = let name = getTypeDeclName typeDecl
+              -- if we use the same name with msg arg
+              -- it'll be a simple var
+              -- (not instance of nonsymmetric machine
+              --  nor array element)
+              arg = B.Field (B.Simple name) B.Msg
+              formal = name
+          in  (formal, arg)
+
+      getArg (F.GuardAssign decl param)
+        = let formal = getTypeDeclName decl
+              -- see TransGen
+              field = transVar machine machineFields stdArgs locals param
+          in  (formal, field)
+
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
