@@ -79,7 +79,9 @@ instance Cl.MurphiClass Startstate where
    setValue :: MachineType -> FieldStart -> String
    setValue machine ( (Decl name decltype) , (Just value))
      = case decltype of
-            (Array _ _) -> initialiseArray machine ( (Decl name decltype), (Just value ))
+                           -- remove let
+            (Array _ _) -> let decl = (Decl name decltype)
+                           in  initialiseArray machine ( decl, (Just value ))
             (Set _ _)   -> error "can't initialise a set!"
             (_)         -> indexedFormalStr machine ++ "." ++ name
                             ++ " := " ++ value ++ ";"
@@ -88,18 +90,18 @@ instance Cl.MurphiClass Startstate where
 
    initialiseArray :: MachineType -> FieldStart -> String
    initialiseArray machine ((Decl name decltype), Just (value))
-     = let alias = indexedFormalStr machine ++ "." ++ name ++ "[index0]"
-       in  case decltype of
-           (Array indexType innerType) -> "for index0:" ++
-                                           complexIndexType indexType ++
-                                            "do\n" ++
-                                            pushBy 2 (ith_intialisation
-                                                                        alias
-                                                                        1
-                                                                        innerType
-                                                                         value)
+     = case decltype of
+           (Array indexType innerType) -> let alias = indexedFormalStr machine ++ "." ++ name ++ "[index0]"
+                                          in  "for index0:" ++
+                                               complexIndexType indexType ++
+                                               "do\n" ++
+                                               (pushBy 2 (ith_intialisation
+                                                          alias
+                                                          1
+                                                          innerType
+                                                          value))
 
-                            (_)        -> error "initialiseArray used on other type"
+           _                           -> error "initialiseArray used on other type"
    -----------------------------
    -- initialises an array at i-th depth. Needed for arrays of arrays,
    -- because we need to use different indices
@@ -117,7 +119,7 @@ instance Cl.MurphiClass Startstate where
                                                       value )
 
    -- bottom of recursion
-                                 _    -> name ++ " := " ++ value ++ ";\n"
+          _                           -> name ++ " := " ++ value ++ ";\n"
 
    ------ helper function
    complexIndexType :: (Either Size MachineType) -> String
