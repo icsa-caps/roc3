@@ -174,7 +174,7 @@ MsgArgs         : MsgArg                                           { [$1] }
                 | MsgArgs ',' MsgArg                               { $3 : $1 }
 
 
-MsgArg          : TypeDecl '=' iden                                { GuardAssign $1 $3 }
+MsgArg          : TypeDecl '=' Param                                { GuardAssign $1 $3 }
                 | TypeDecl                                         { MsgArg $1 }
 
 

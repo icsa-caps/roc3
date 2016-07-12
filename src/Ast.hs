@@ -90,7 +90,7 @@ data Msg         = Msg MType MsgArgs
                    deriving(Show,Eq)
 
 
-data MsgArg      = GuardAssign TypeDecl VarName
+data MsgArg      = GuardAssign TypeDecl Param
                  | MsgArg TypeDecl
                    deriving(Show,Eq)
 
