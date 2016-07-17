@@ -42,6 +42,7 @@ import GenHelper
 
 instance Cl.MurphiClass Machine where
   tomurphi :: Machine -> String
+  tomurphi (AnyType machine)         = error "called Cl.tomurphi on AnyType machine"
   tomurphi (Sym machineType)         = machineType
   tomurphi (Nonsym machineType num)  = machineType ++ show num
   tomurphi (Synonym var)             = var
@@ -84,7 +85,7 @@ instance Cl.MurphiClass Type where
 -----------------------------------------------------------------
 
 
--- responses (in receive functions)
+-- responses (in receive functions and self-issued rules)
 
 instance Cl.MurphiClass Response where
 
@@ -99,6 +100,23 @@ instance Cl.MurphiClass Response where
       "     " ++ Cl.tomurphi dst ++ ",\n" ++
       "     " ++ vc         ++ ",\n" ++
       pushBy 5 (mapconcatlnComma Cl.tomurphi params) ++ ");"
+
+
+ -- the broadcasting function we'll use in murphi depends on
+ -- mtype and the set we are broadcasting to
+ -- the only arguments are
+ -- the index of the machine which owns the set
+ -- the src
+ -- and the vc
+ tomurphi (Broadcast (Message mtype params) src dstSet vc)
+   = let   -- get the owner of the set and its name
+          (Field (Simple setName) (Owner machine) ) = dstSet
+          indexedMac = indexedMachineGen machine -- picks the correct index
+                                                 -- for nonsym machines
+
+     in  "Cast" ++ fstCap mtype ++ fstCap setName ++
+         "(" ++ Cl.tomurphi src ++ "," ++ machineIndex ++ "," ++ vc ++ ");"
+
 
 
  tomurphi (Assign var value)    = Cl.tomurphi var ++ " := "
@@ -204,6 +222,7 @@ printArgCond (arg, (Left field))  = "msg." ++ arg ++ "=" ++ Cl.tomurphi field
 
 
 -- print declarations of local variables
+-- used in self-issued rules and machine receive functions
 instance Cl.MurphiClass LocalVariables where
   tomurphi [] = ""
   tomurphi localVariables = "var\n" ++
@@ -212,17 +231,6 @@ instance Cl.MurphiClass LocalVariables where
 
 ----------------------------------------------------------------
 
-
-instance Cl.MurphiClass SelfIssueRule where
-  tomurphi (SelfIssueRule rulename guard responses)
-    = "rule \"" ++ rulename ++ "\"\n" ++
-      pushBy 2 (Cl.tomurphi guard) ++ "\n" ++
-      "=>\n" ++
-      pushBy 2 (mapconcatln Cl.tomurphi responses) ++ "\n" ++
-      "endrule;"
-
-
------------------------------------------------------------------
 
 instance Cl.MurphiClass IntExp where
   tomurphi (Sum exp1 exp2)    = Cl.tomurphi exp1 ++ " + " ++ Cl.tomurphi exp2

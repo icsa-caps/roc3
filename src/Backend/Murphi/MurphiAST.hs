@@ -1,5 +1,5 @@
 
-module Backend.Murphi.MurphiAST where
+module MurphiAST where
 
 -- this AST captures the subset of the murphi language
 -- as it is used in the MSI protocol implementations
@@ -23,8 +23,6 @@ type MachineType      = String
 type Rec              = String
 type StateName        = String
 type SetName          = String
-type MsgArg           = TypeDecl
-type MsgArgs          = [MsgArg]
 type VarName          = String
 type ArrayName        = String
 type Index            = Int
@@ -46,7 +44,7 @@ type VCNets = [ (VCName, Network) ]
 -- we declare a constant equal to the size
 -- of a machine. So we can refer to that.
 
-data Machine = AnyType MachineType  -- don't know/ don't care about symmetry
+data Machine = AnyType MachineType  -- don't know/don't care about symmetry
              | Sym MachineType
              | Nonsym MachineType NonsymMIndex
              | Synonym String
@@ -73,11 +71,21 @@ data Symmetry = Symmetric | Nonsymmetric
 
 -----------------------------------------------------------------
 
+-- only for declaring msg args; not used when sending or brodacasting messages.
+-- see below for these
+type MsgArg           = TypeDecl
+type MsgArgs          = [MsgArg]
+
+
+
+
 -- only for Send and Broadcast
 data Message = Message MType [ Maybe Field ] -- for Owner see bellow
                deriving(Show,Eq)
 -- The list of Message arguments has fields, instead of variables
 -- with the owner set to Msg, in order to print them like "msg." ++ fieldName
+-- if we use machine fields, local vars or constants the owner
+-- is set accordingly
 
 data Owner = Msg
            | Global
@@ -104,7 +112,7 @@ type Dst = Field
 data Variable = Simple VarName
               | ArrayElem ArrayName Index
               | MachineArray Machine -- machine array indexed by std index
-              | MachineIndex Machine -- the std machine index.
+              | MachineIndex Machine Index -- instance of nonsym machine
                 deriving(Show,Eq)
 
 
@@ -124,9 +132,9 @@ data Type = Boolean
           | Integer Lo Hi
           | Enum [Val]
           | Node MachineType -- printed in Types as machine index type
-          | Array (Either Size MachineType) Type -- if Machine, indexed by the
-                                                 -- machine index, scalarset or enum
-          | Set (Either Size MachineType) Type -- Left machine means the size
+          | Array (Either Size MachineType) Type  -- if Machine, indexed by the
+                                                  -- machine index, scalarset or enum
+          | Set (Either Size MachineType) Type    -- Left machine means the size
             deriving(Show,Eq)                     -- of the set = #machines
 
 
@@ -256,7 +264,7 @@ type ElemType = Type
 
 -- we have one bcast function for each
 -- pair of msg and the set it is addressed to
-data BCastInfo = BCast MachineType SetName ElemType Message VCName
+data BCastInfo = BCast MachineType SetName ElemType Message
                  deriving(Show, Eq)
 
 type ReceiveFunction = [ ( State, [ (Maybe Guard, [Response]) ] ) ]
@@ -274,7 +282,7 @@ data Guard           = Receive MType [(ArgName, (Either Field Val))] (Maybe Src)
 
 data Response        = ToState Machine State
                      | Send Message Src Dst VCName    -- see note below for dst
-                     | Broadcast Message DstSet
+                     | Broadcast Message Src DstSet VCName
                      | Assign Field Field
                      | AssignInt Field IntExp
                      | Add Owner SetName Field  -- the owner of the set is the machine
