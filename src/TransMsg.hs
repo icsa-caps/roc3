@@ -10,8 +10,11 @@ import qualified Ast as F
 import qualified Backend.Murphi.MurphiAST as B
 import TransGen
 
+
 -----------------------------------------------------------------
 -----------------------------------------------------------------
+
+-- functions for messages
 
 -- get a list of all msgs
 

@@ -8,7 +8,7 @@ type Name            = String
 type Size            = Int
 type Dst             = Param
 type Src             = Param
-type DstSet          = Param
+type DstSet          = Param    -- it's a simple identifier
 type MType           = String
 type MsgArgs         = [MsgArg]
 type SetName         = String
@@ -90,14 +90,15 @@ data Msg         = Msg MType MsgArgs
                    deriving(Show,Eq)
 
 
-data MsgArg      = GuardAssign TypeDecl Param
+data MsgArg      = GuardAssign TypeDecl Param  -- see note below
                  | MsgArg TypeDecl
                    deriving(Show,Eq)
 
 -- Note: for the first constructor, we either assign a value
 -- to the message argument (if in Send) or we check the argument for a value
 -- (in Receive). When transforming the AST we figure out which of the two.
--- the second constructor is used when we want neither of the above.
+-- the second constructor is used when sending/broadcasting a message and
+-- the argument of the message has the same name with the formal parameter
 
 
 -- Response has a similar problem with Guard:
@@ -145,7 +146,7 @@ data IntExp = Sum   IntExp IntExp
             | Div   IntExp IntExp
             | Group IntExp
             | Const Int
-            | IntVar VarName  -- must find if it s local, machine field etc.
+            | IntVar Param  -- must find if it s local, machine field etc.
               deriving(Show,Eq)
 
 

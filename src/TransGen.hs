@@ -11,6 +11,7 @@ import Data.List  -- for nub
 import qualified Ast as F
 import qualified Backend.Murphi.MurphiAST as B
 
+
 -----------------------------------------------------------------
 -----------------------------------------------------------------
 
@@ -34,6 +35,11 @@ backSymmetry (F.Nonsymmetric) = B.Nonsymmetric
 
 getStateName :: F.State -> String
 getStateName (F.State name) = name
+
+-------------------------------
+
+getVCName :: F.VC -> String
+getVCName (F.VC name) = name
 
 -------------------------------
 
@@ -127,14 +133,17 @@ findLocal resps =
 --------------------------------
 -- given an F.Param (variable, array element, constant) and the
 -- necessary context, get the equivalent in Murphi
+-- essentially we use the context to determine the ownership of variables
+-- if the F.Param is the instance of a non-symmetric machine,
+-- we must use transNonSymInst. So we take cases
 
 transVar :: F.MachineType -> [F.Field]  -- the machine and its fields
             -> [B.MsgArg]                -- standard form of msg in Murphi
             -> B.LocalVariables
             -> F.Param -> B.Field
 
-transVar _ _ _ _ (F.NonSymInst _ _) = error ("can't use tranVar on instances" ++
-                                          "of nonsymmetric machines")
+transVar _ _ _ _ (F.NonSymInst machine index)
+   = B.Field (B.MachineIndex machine index) B.Global
 
 transVar machine machineFields stdMsgArgs locals param
 
@@ -159,34 +168,23 @@ transVar machine machineFields stdMsgArgs locals param
             if name `elem` localNames         -- local variable
                 then (B.Field var B.Local)
             else
-                (B.Field var B.Global) -- it's a constant
+                (B.Field var B.Global) -- constant, instance of machine
 
    where
        varFromParam :: F.Param -> B.Variable
        varFromParam (F.ArrayElem arrayName index) = B.ArrayElem arrayName index
-       varFromParam (F.VarOrVal iden) = B.Simple iden
+       varFromParam (F.VarOrVal iden)             = B.Simple iden
+       varFromParam (F.NonSymInst machine index)  = B.MachineIndex machine index
 
-       -- the identifier for an array, a variable or a constant
+       -- the identifier for an array, a variable, a constant or an instance of
+       -- a machine
        varName :: F.Param -> String
-       varName (F.ArrayElem arrayName _) = arrayName
-       varName (F.VarOrVal iden)         = iden
-
--- transform a parameter that refers to an instance of a nonsymmetric machine
-nonSymInst :: F.Param -> B.Machine
-nonSymInst (F.NonSymInst machine index) = B.Nonsym machine (B.Specific index)
+       varName (F.ArrayElem arrayName _)     = arrayName
+       varName (F.VarOrVal iden)             = iden
+       varName (F.NonSymInst machine index)  = machine
 
 
 
-
-transResponse :: F.Response -> B.Response
-transResponse resp = undefined
-
---------------------------------
-
-----------------------------------------------------------------
-----------------------------------------------------------------
-
--- Getting names and sizes (non machine specific)
 
 --------------------------------
 

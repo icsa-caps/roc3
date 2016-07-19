@@ -174,7 +174,7 @@ MsgArgs         : MsgArg                                           { [$1] }
                 | MsgArgs ',' MsgArg                               { $3 : $1 }
 
 
-MsgArg          : TypeDecl '=' Param                                { GuardAssign $1 $3 }
+MsgArg          : TypeDecl '=' Param                               { GuardAssign $1 $3 }
                 | TypeDecl                                         { MsgArg $1 }
 
 
@@ -212,7 +212,7 @@ IntExp          : IntExp '+' IntExp                             { Sum $1 $3 }
                 | IntExp '*' IntExp                             { Times $1 $3 }
                 | IntExp '/' IntExp                             { Div $1 $3 }
                 | num                                           { Const $1 }
-                | iden                                          { IntVar $1 }
+                | Param                                          { IntVar $1 }
 
 
 {
