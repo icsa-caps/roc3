@@ -77,44 +77,30 @@ instance Cl.MurphiClass MachineFunctions where
    ----------------------------------------------------------
    ----------------------------------------------------------
    -- broadcasting functions
-
-   -- we need to know:
-   -- a) the name of the machine that owns the set
-   -- b) we DONT need to know its symmetry;
-   --    we use the formal parameters for indexing
-   -- c) the name of the set
-   -- d) the type of its elements
-   -- e) the vc
-
-   -- broadcasting functions
    -- one broadcasting funtion for each pair of set and msg
    -- murphi cannot handle more generality
 
    -- broadcast for a single set and msg
    singleBroadcast :: BCastInfo -> String
-   singleBroadcast (BCast machine set elemType msg vc)
+   singleBroadcast (BCast machine set elemType msg)
      = let (Message mtype _) = msg
            srcField = Field (Simple "src") Local
            dstField = Field (Simple "n") Local
            thisSet = indexedFormalStr machine ++ "." ++ set
        in  "procedure Cast" ++ fstCap mtype ++ fstCap set ++
            "(src:Node; "
-           ++ formalIndexStr machine ++ ":" ++ indexTypeStr machine ++ ");\n" ++
+           ++ formalIndexStr machine ++ ":" ++ indexTypeStr machine ++ "; " ++
+           "vc:VC_Type" ++ ");\n" ++
            "begin\n" ++
            "  for n:Node do\n" ++
            "    if  ( IsMember(n, " ++ Cl.tomurphi elemType ++  ") &\n" ++
            "       MultiSetCount(i:" ++ thisSet ++ ", "
            ++ thisSet ++ "[i] = n) != 0 )\n" ++
            "    then\n" ++
-           ( pushBy 6 (Cl.tomurphi (Send msg srcField dstField vc)) ) ++ "\n" ++
+           ( pushBy 6 (Cl.tomurphi (Send msg srcField dstField "vc")) ) ++ "\n" ++
            "    endif;\n" ++
            "  endfor;\n" ++
            "end;\n"
-
-   -----------------------------
-
-
-
 
    ----------------------------------------------------------
    ----------------------------------------------------------
