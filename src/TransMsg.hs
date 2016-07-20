@@ -92,16 +92,15 @@ transMsgArg (F.MsgArg typeDecl)         = transTypeDecl typeDecl
 
 
 -- get the general form of a message in the backend
-
-getMsgArgs :: F.Ast -> [B.MsgArg]
-getMsgArgs fAst = let msgs     = getFMsgs fAst
+stdMsgArgs :: F.Ast -> [B.MsgArg]
+stdMsgArgs fAst = let msgs     = getFMsgs fAst
                       fMsgArgs = concat $ map argOfMsg msgs
                   in  nub $ map transMsgArg fMsgArgs
 
 
 -- get just the names of msg args
 getMsgArgsNames :: F.Ast -> [String]
-getMsgArgsNames fAst = map (\(B.Decl name _) -> name) $ getMsgArgs fAst
+getMsgArgsNames fAst = map (\(B.Decl name _) -> name) $ stdMsgArgs fAst
 
 
 --------------------------------

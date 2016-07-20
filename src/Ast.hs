@@ -73,20 +73,13 @@ data State  = State String
               deriving(Show,Eq)
 
 
--- problem with guard: the constructor allows an arbitrary
--- mail to be a guard, while it is only incoming messages
--- (i.e. receives) that can act as guards.
--- possible fix: keep the front-end AST as it is,
--- but check when transforming it to the target AST
--- that any mails used as guards are receives
--- and throw an informing error if otherwise
 
 data Guard       = ReceiveFrom Msg (Maybe Src) (Maybe VC) -- Nothing if we do not care about the vc     -- extend with arbitrary guards
                  | Issue String
                    deriving(Show,Eq)
 
 
-data Msg         = Msg MType MsgArgs
+data Msg         = Msg MType [MsgArg]
                    deriving(Show,Eq)
 
 
@@ -94,11 +87,15 @@ data MsgArg      = GuardAssign TypeDecl Param  -- see note below
                  | MsgArg TypeDecl
                    deriving(Show,Eq)
 
+
 -- Note: for the first constructor, we either assign a value
--- to the message argument (if in Send) or we check the argument for a value
--- (in Receive). When transforming the AST we figure out which of the two.
+-- to the message argument (if in Send/Broadcast)
+-- or we check the argument for a value (in Receive).
+-- When transforming the AST we figure out which of the two.
 -- the second constructor is used when sending/broadcasting a message and
--- the argument of the message has the same name with the formal parameter
+-- the argument of the message has the same name with the formal parameter,
+-- or when receiving a message and we don't check the message arguments
+
 
 
 -- Response has a similar problem with Guard:

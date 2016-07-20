@@ -1,5 +1,5 @@
 
-module MurphiAST where
+module Backend.Murphi.MurphiAST where
 
 -- this AST captures the subset of the murphi language
 -- as it is used in the MSI protocol implementations
@@ -88,7 +88,7 @@ data Message = Message MType [ Maybe Field ] -- for Owner see bellow
 -- is set accordingly
 
 data Owner = Msg
-           | Global
+           | Global           -- don't add "<smth>." in front (nums, consts)
            | Owner Machine    -- use indexedMachine when printing
            | Local            -- need to add declaration
            | ThisNode
@@ -111,8 +111,8 @@ type Dst = Field
 
 data Variable = Simple VarName
               | ArrayElem ArrayName Index
-              | MachineArray Machine -- machine array indexed by std index
-              | MachineIndex Machine Index -- instance of nonsym machine
+              | MachineArray MachineType -- machine array indexed by std index
+              | MachineIndex MachineType Index -- instance of nonsym machine
                 deriving(Show,Eq)
 
 
@@ -271,13 +271,16 @@ type ReceiveFunction = [ ( State, [ (Maybe Guard, [Response]) ] ) ]
 
 --------------------------------
 
-data Guard           = Receive MType [(ArgName, (Either Field Val))] (Maybe Src) (Maybe VCName)
+data Guard           = Receive MType [(ArgName, Field)]
+                               (Maybe Src) (Maybe VCName)
                      | AtState Machine State
+                     | Guard :&: Guard
                        deriving(Show,Eq)
 
 -- Note on Guard, Receive: the list is the value each msg arg must have (if any)
 -- we use field for the values because they may be machine fields or local vars
--- apart from values
+-- in addition to constants. We don't mention any arguments for which we don't test
+-- their values at the frontEnd (see GuardAssign constructor at front end)
 
 
 data Response        = ToState Machine State

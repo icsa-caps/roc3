@@ -54,7 +54,45 @@ getChanNet (F.Network order name vcs) = vcs
 
 --------------------------------
 
+getVCNames :: F.Ast -> [B.VCName]
+getVCNames fAst = let nets = F.networks fAst
+                      vcs  = map ( \(F.Network _ _ vcs) -> vcs ) nets
+                  in  map (\(F.VC name) -> name) $ concat vcs
 
+--------------------------------
+
+getAllNetNames :: F.Ast -> [B.NetName]
+getAllNetNames fAst = let nets = F.networks fAst
+                      in  map ( \(F.Network _ name _) -> name ) nets
+
+--------------------------------
+
+getOrdNetNames :: F.Ast -> [B.OrderedNetName]
+getOrdNetNames fAst = let allNets = F.networks fAst
+                          onlyOrdered = filter isOrdered allNets
+                      in  map( \(F.Network _ name _) -> name ) onlyOrdered
+
+--------------------------------
+
+getUnordNetNames :: F.Ast -> [B.UnorderedNetName]
+getUnordNetNames fAst = let allNets = F.networks fAst
+                            onlyUnordered = filter (not . isOrdered) allNets
+                        in  map( \(F.Network _ name _) -> name ) onlyUnordered
+
+--------------------------------
+
+getNetsVCs :: F.Ast -> [(B.NetName, [B.VCName])]
+getNetsVCs fAst = let nets     = F.networks fAst
+                      vcNames  = map vcsFromNet nets
+                      netNames = map (\(F.Network _ name _) -> name)
+                                     nets
+                  in  zip netNames vcNames
+  where
+    vcsFromNet :: F.Network -> [B.VCName]
+    vcsFromNet (F.Network _ _ vcs)
+      = map (\(F.VC name) -> name) vcs
+
+--------------------------------
 ----------------------------------------------------------------
 
 -- functions for low-level constructs (e.g. responses, type declarations etc.)
@@ -137,7 +175,7 @@ findLocal resps =
 -- if the F.Param is the instance of a non-symmetric machine,
 -- we must use transNonSymInst. So we take cases
 
-transVar :: F.MachineType -> [F.Field]  -- the machine and its fields
+transVar :: F.MachineType -> [F.Field]   -- the machine and its fields
             -> [B.MsgArg]                -- standard form of msg in Murphi
             -> B.LocalVariables
             -> F.Param -> B.Field
@@ -189,45 +227,7 @@ transVar machine machineFields stdMsgArgs locals param
 --------------------------------
 
 
-getVCNames :: F.Ast -> [B.VCName]
-getVCNames fAst = let nets = F.networks fAst
-                      vcs  = map ( \(F.Network _ _ vcs) -> vcs ) nets
-                  in  map (\(F.VC name) -> name) $ concat vcs
 
---------------------------------
-
-getAllNetNames :: F.Ast -> [B.NetName]
-getAllNetNames fAst = let nets = F.networks fAst
-                      in  map ( \(F.Network _ name _) -> name ) nets
-
---------------------------------
-
-getOrdNetNames :: F.Ast -> [B.OrderedNetName]
-getOrdNetNames fAst = let allNets = F.networks fAst
-                          onlyOrdered = filter isOrdered allNets
-                      in  map( \(F.Network _ name _) -> name ) onlyOrdered
-
---------------------------------
-
-getUnordNetNames :: F.Ast -> [B.UnorderedNetName]
-getUnordNetNames fAst = let allNets = F.networks fAst
-                            onlyUnordered = filter (not . isOrdered) allNets
-                        in  map( \(F.Network _ name _) -> name ) onlyUnordered
-
---------------------------------
-
-getNetsVCs :: F.Ast -> [(B.NetName, [B.VCName])]
-getNetsVCs fAst = let nets     = F.networks fAst
-                      vcNames  = map vcsFromNet nets
-                      netNames = map (\(F.Network _ name _) -> name)
-                                     nets
-                  in  zip netNames vcNames
-  where
-    vcsFromNet :: F.Network -> [B.VCName]
-    vcsFromNet (F.Network _ _ vcs)
-      = map (\(F.VC name) -> name) vcs
-
---------------------------------
 
 
 -----------------------------------------------------------------
@@ -263,8 +263,6 @@ getSymmetries fAst = let machinesAllInfo = F.machines fAst
 getStartstates :: F.Ast -> [B.State]
 getStartstates fAst = let machinesAllInfo = F.machines fAst
                       in  map (getStateName . F.startstate) machinesAllInfo
-
-
 
 --------------------------------
 
