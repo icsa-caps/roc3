@@ -27,7 +27,7 @@ getTypes fAst = B.Types machinesSym msgType msgArgs machineStates
   where
 
     msgType = getMTypes fAst
-    msgArgs = getMsgArgs fAst
+    msgArgs = stdMsgArgs fAst
 
     machines    = getMachineNames fAst
     sizes       = getMachineSizes fAst

@@ -19,6 +19,6 @@ getCommonFunctions fAst = B.CommonFunctions advanceQ send
   where
     advanceQ = getOrdNetNames fAst
 
-    msgArgs = getMsgArgs fAst
+    msgArgs = stdMsgArgs fAst
     netVCs = getNetsVCs fAst
     send = (msgArgs, netVCs)
