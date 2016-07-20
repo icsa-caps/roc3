@@ -38,9 +38,10 @@ instance Cl.MurphiClass Rules where
      = "-- " ++ machine ++ " self-issued rules\n"++
        "ruleset"++ formalIndexStr machine ++ ":" ++ indexTypeStr machine
        ++  " do\n" ++
-       "  alias node:" ++ indexedFormalStr machine ++ " do\n\n" ++
+       -- for the time being, we won't use the alias
+       --"  alias node:" ++ indexedFormalStr machine ++ " do\n\n" ++
        pushBy 4 (mapconcatln Cl.tomurphi rules) ++ "\n" ++
-       "  endalias;\n" ++
+       --"  endalias;\n" ++
        "endruleset;\n"
 
    -- self-issued rules for all machines
