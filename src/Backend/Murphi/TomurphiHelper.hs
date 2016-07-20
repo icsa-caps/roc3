@@ -111,11 +111,10 @@ instance Cl.MurphiClass Response where
  tomurphi (Broadcast (Message mtype params) src dstSet vc)
    = let   -- get the owner of the set and its name
           (Field (Simple setName) (Owner machine) ) = dstSet
-          indexedMac = indexedMachineGen machine -- picks the correct index
-                                                 -- for nonsym machines
+          index = generalIndex machine
 
      in  "Cast" ++ fstCap mtype ++ fstCap setName ++
-         "(" ++ Cl.tomurphi src ++ "," ++ machineIndex ++ "," ++ vc ++ ");"
+         "(" ++ Cl.tomurphi src ++ "," ++ index ++ "," ++ vc ++ ");"
 
 
 
@@ -160,10 +159,10 @@ instance Cl.MurphiClass Owner where
 
 
 instance Cl.MurphiClass Variable where
- tomurphi (Simple varName) = varName
- tomurphi (ArrayElem arrayName index) = arrayName ++ "[" ++ show index ++ "]"
- tomurphi (MachineArray machine) = indexedMachineGen machine
- tomurphi (MachineIndex machine) = generalIndex machine
+ tomurphi (Simple varName)             = varName
+ tomurphi (ArrayElem arrayName index)  = arrayName ++ "[" ++ show index ++ "]"
+ tomurphi (MachineArray machine)       = indexedFormalStr machine
+ tomurphi (MachineIndex machine index) = toMachineArrayStr machine
 
 
 ----------------------------------------------------------------
@@ -186,13 +185,13 @@ instance Cl.MurphiClass (Maybe Field) where
 
 
 instance Cl.MurphiClass Guard where
-  tomurphi (Receive mtype [] src vc)      =  printMType mtype ++ printMsgVC vc
-                                             ++ printMsgSrc src
+  tomurphi (Receive mtype [] src vc)      =  guardMType mtype ++ guardMsgVC vc
+                                             ++ guardMsgSrc src
   tomurphi (Receive mtype argVals src vc) = let temp = map printArgCond argVals
                                                 argConds = concatWith " & " temp
-                                            in  printMType mtype ++ " & " ++
-                                                argConds ++ printMsgVC vc
-                                                ++ printMsgSrc src
+                                            in  guardMType mtype ++ " & " ++
+                                                argConds ++ guardMsgVC vc
+                                                ++ guardMsgSrc src
 
   tomurphi (AtState machine state)
     = indexedMachineGen machine ++ ".state = " ++ state
@@ -201,16 +200,16 @@ instance Cl.MurphiClass Guard where
 -- helper functions for this section
 -- (didnt work in where clause)
 
-printMType :: MType -> String
-printMType mtype = "msg.mtype = " ++ mtype
+guardMType :: MType -> String
+guardMType mtype = "msg.mtype = " ++ mtype
 
-printMsgVC :: Maybe VCName -> String
-printMsgVc (Nothing) = ""
-printMsgVC (Just vc) = " & msg.vc = " ++ vc
+guardMsgVC :: Maybe VCName -> String
+guardMsgVC (Nothing) = ""
+guardMsgVC (Just vc) = " & msg.vc = " ++ vc
 
-printMsgSrc :: Maybe Field -> String
-printMsgSrc (Nothing) = ""
-printMsgSrc (Just src) = "& msg.src = " ++ Cl.tomurphi src
+guardMsgSrc :: Maybe Field -> String
+guardMsgSrc (Nothing) = ""
+guardMsgSrc (Just src) = "& msg.src = " ++ Cl.tomurphi src
 
 printArgCond :: (ArgName, (Either Field Val)) -> String
 printArgCond (arg, (Right const)) = "msg." ++ arg ++ "=" ++ const

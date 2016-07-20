@@ -91,6 +91,7 @@ printElsif (cond:conditions) (body:bodies)  = "elsif " ++ cond ++ " then\n  " ++
 
 
 getName :: Machine -> String
+getName (AnyType name)   = name
 getName (Sym name)       = name
 getName (Nonsym name _)  = name
 
@@ -152,7 +153,8 @@ machineSize machine = machineSizeStr $ getName machine
 -- index variable used as a formal parameter in functions, loops etc.
 -- the latter is global; it is the value of a enum
 generalIndex :: Machine -> String
-generalIndex (Sym name)           = name ++ "IndexVar"           -- fst letter
+generalIndex (AnyType name)    = name ++ "IndexVar"
+generalIndex (Sym name)        = name ++ "IndexVar"           -- fst letter
 generalIndex (Nonsym name index)
    = case index of (Specific num) -> name ++ show num
                    (Arbitrary)    -> name ++ "IndexVar"
@@ -209,7 +211,7 @@ getMsgParams (Message _ params) = params
 variableName :: Variable -> String
 variableName (Simple varName)         = varName
 variableName (ArrayElem arrayName _)  = arrayName
-variableName (MachineArray machine)   = getName machine
+variableName (MachineArray machine)   = machine
 
 fieldName :: Field -> String
 fieldName (Field variable owner) = variableName variable
