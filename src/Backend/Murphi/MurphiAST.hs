@@ -1,5 +1,5 @@
 
-module Backend.Murphi.MurphiAST where
+module MurphiAST where
 
 -- this AST captures the subset of the murphi language
 -- as it is used in the MSI protocol implementations
@@ -28,7 +28,6 @@ type ArrayName        = String
 type Index            = Int
 type AliasName        = String
 type RuleName         = String
-type MachineIndex     = String
 type StartVal         = String
 type MType            = String --mtype in murphi
 
@@ -95,9 +94,22 @@ data Owner = Msg
              deriving(Show,Eq)
 
 
--- change fields to account for elements of arrays i.e. spesific machines
 data Field = Field Variable Owner
+           | JustIndex MachineType (Maybe Int)
              deriving(Show,Eq)
+
+-- Note: SimpleIndex is used when we want to print the index of a machine
+-- instead of the array <machine name>State indexed.
+-- This is the case for Send, Broadcast, addToSet, removeFromSet and AdvanceQ.
+-- All these procedures in murphi take as argument the index of a machine.
+-- In the translator, all these will take as arguments a Field
+-- that corresponds to an indexed machine with constructor Field,
+-- because this makes the translation easier. Then locally, at the
+-- tomurphi implementation of each, we will transform that Field to SimpleIndex
+-- if it is a machine.
+-- The integer argument to the constructor is for nonsymetric machines.
+
+
 
 -- not used anymore for broadcasting, may be used in responses (who knows)
 data SetField = SetField Field Type   -- Type is the type of the elements
@@ -264,7 +276,7 @@ type ElemType = Type
 
 -- we have one bcast function for each
 -- pair of msg and the set it is addressed to
-data BCastInfo = BCast MachineType SetName ElemType Message
+data BCastInfo = BCast MachineType SetName ElemType MType [Maybe MsgArg]
                  deriving(Show, Eq)
 
 type ReceiveFunction = [ ( State, [ (Maybe Guard, [Response]) ] ) ]

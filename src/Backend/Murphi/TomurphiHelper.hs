@@ -96,10 +96,17 @@ instance Cl.MurphiClass Response where
 
  -- Message :: Message MsgType [Maybe Field], src, dst :: Field
  tomurphi (Send (Message mtype params) src dst vc)
-    = "Send(" ++ Cl.tomurphi src ++ ",\n" ++
-      "     " ++ Cl.tomurphi dst ++ ",\n" ++
-      "     " ++ vc         ++ ",\n" ++
-      pushBy 5 (mapconcatlnComma Cl.tomurphi params) ++ ");"
+    = let
+          -- if src and dst are explicit machines and not variables for machines,
+          -- we need to print only the index of this machine,
+          -- not the array indexed
+          src1 = onlyIndex src
+          dst1 = onlyIndex dst
+      in
+          "Send(" ++ Cl.tomurphi src1 ++ ",\n" ++
+          "     " ++ Cl.tomurphi dst1 ++ ",\n" ++
+          "     " ++ vc         ++ ",\n" ++
+          pushBy 5 (mapconcatlnComma Cl.tomurphi params) ++ ");"
 
 
  -- the broadcasting function we'll use in murphi depends on
@@ -109,12 +116,18 @@ instance Cl.MurphiClass Response where
  -- the src
  -- and the vc
  tomurphi (Broadcast (Message mtype params) src dstSet vc)
-   = let   -- get the owner of the set and its name
+   = let
+          -- get the owner of the set and its name
           (Field (Simple setName) (Owner machine) ) = dstSet
           index = generalIndex machine
 
+          -- if src is an explicit machine and not a variable for machine,
+          -- we need to print only the index of this machine,
+          -- not the array indexed
+          src1 = onlyIndex src
+
      in  "Cast" ++ fstCap mtype ++ fstCap setName ++
-         "(" ++ Cl.tomurphi src ++ "," ++ index ++ "," ++ vc ++ ");"
+         "(" ++ Cl.tomurphi src1 ++ "," ++ index ++ "," ++ vc ++ ");"
 
 
 
@@ -127,12 +140,24 @@ instance Cl.MurphiClass Response where
 
  -- elem :: Field
  tomurphi (Add (Owner machine) setName elem)
-   = "AddTo" ++ indexedMachineGen machine ++ fstCap setName ++ "List(" ++
-     Cl.tomurphi elem ++ ", " ++ generalIndex machine ++ ");"
+   = let
+         -- if elem is an explicit machine and not a variable for machine,
+         -- we need to print only the index of this machine,
+         -- not the array indexed
+         elem1 = onlyIndex elem
+     in
+         "AddTo" ++ (fstCap.machineName) machine ++ fstCap setName ++ "List(" ++
+         Cl.tomurphi elem1 ++ ", " ++ generalIndex machine ++ ");"
 
  tomurphi (Del (Owner machine) setName elem)
-   = "RemoveFrom" ++ indexedMachineGen machine ++ fstCap setName ++ "List(" ++
-     Cl.tomurphi elem ++ ", " ++ generalIndex machine ++ ");"
+   = let
+         -- if elem is an explicit machine and not a variable for machine,
+         -- we need to print only the index of this machine,
+         -- not the array indexed
+         elem1 = onlyIndex elem
+     in
+         "RemoveFrom" ++ (fstCap.machineName) machine ++ fstCap setName ++ "List(" ++
+         Cl.tomurphi elem1 ++ ", " ++ generalIndex machine ++ ");"
 
  tomurphi (Stall) = "return false;" -- message is not processed
 
@@ -141,7 +166,10 @@ instance Cl.MurphiClass Response where
 
 
 instance Cl.MurphiClass Field where
- tomurphi (Field variable owner) = Cl.tomurphi owner ++ Cl.tomurphi variable
+ tomurphi (Field variable owner)          = Cl.tomurphi owner ++
+                                            Cl.tomurphi variable
+ tomurphi (JustIndex machine Nothing)     = formalIndexStr machine
+ tomurphi (JustIndex machine (Just num))  = machine ++ show num
 
 
 -----------------------------------------------------------------

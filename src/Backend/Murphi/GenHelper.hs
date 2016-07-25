@@ -90,10 +90,10 @@ printElsif (cond:conditions) (body:bodies)  = "elsif " ++ cond ++ " then\n  " ++
 -- and another taking a machine (Machine)
 
 
-getName :: Machine -> String
-getName (AnyType name)   = name
-getName (Sym name)       = name
-getName (Nonsym name _)  = name
+machineName :: Machine -> String
+machineName (AnyType name)   = name
+machineName (Sym name)       = name
+machineName (Nonsym name _)  = name
 
 --------------------------------
 
@@ -102,7 +102,7 @@ toMachineArrayStr :: MachineType -> String
 toMachineArrayStr machine = machine ++ "s"
 
 toMachineArray :: Machine -> String
-toMachineArray = toMachineArrayStr . getName
+toMachineArray = toMachineArrayStr . machineName
 
 --------------------------------
 
@@ -111,7 +111,7 @@ toMachineStateStr :: MachineType -> String
 toMachineStateStr machine = machine ++ "State"
 
 toMachineState :: Machine -> String
-toMachineState = toMachineStateStr . getName
+toMachineState = toMachineStateStr . machineName
 
 --------------------------------
 
@@ -121,7 +121,7 @@ formalIndexStr :: MachineType -> String
 formalIndexStr machine = machine ++ "IndexVar"
 
 formalIndex :: Machine -> String
-formalIndex = formalIndexStr . getName
+formalIndex = formalIndexStr . machineName
 
 -- refering to machine indexed in a
 indexedFormalStr :: MachineType -> String
@@ -137,16 +137,16 @@ indexTypeStr :: MachineType -> String
 indexTypeStr machine = machine ++ "IndexType"
 
 indexType :: Machine -> String
-indexType = indexTypeStr . getName
+indexType = indexTypeStr . machineName
 
 --------------------------------
 
 -- constant holding the size of this machine
 machineSizeStr :: MachineType -> String
-machineSizeStr machineName = machineName ++ "Size"
+machineSizeStr machine = machine ++ "Size"
 
 machineSize :: Machine -> String
-machineSize machine = machineSizeStr $ getName machine
+machineSize machine = machineSizeStr $ machineName machine
 
 --------------------------------
 
@@ -173,7 +173,22 @@ indexedMachineGen machine = toMachineArray machine ++
 indexedByNode :: Machine -> String
 indexedByNode machine = toMachineArray machine ++ "[node]"
 
+--------------------------------
 
+-- if this field is a machine index,
+-- hold the same info in the constructor  JustInde,
+-- so that just the relevant index is printed,
+-- and not the array corresponding to the machine indexed
+onlyIndex :: Field -> Field
+onlyIndex (Field (MachineArray machine) Global)
+    = JustIndex machine Nothing -- we don't know index of nonsym
+
+onlyIndex (Field (MachineIndex machine index) Global )
+    = JustIndex machine (Just index)
+
+onlyIndex other = other     -- don't alter other Field
+
+--------------------------------
 
 ----------------------------------------------------------------
 ----------------------------------------------------------------
