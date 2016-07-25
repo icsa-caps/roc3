@@ -78,19 +78,29 @@ instance Cl.MurphiClass MachineFunctions where
    ----------------------------------------------------------
    -- broadcasting functions
    -- one broadcasting funtion for each pair of set and msg
-   -- murphi cannot handle more generality
+   -- murphi cannot handle more generality:
+   -- composite types can't be arguments of functions or procedures
+
+
 
    -- broadcast for a single set and msg
    singleBroadcast :: BCastInfo -> String
-   singleBroadcast (BCast machine set elemType msg)
-     = let (Message mtype _) = msg
-           srcField = Field (Simple "src") Local
-           dstField = Field (Simple "n") Local
-           thisSet = indexedFormalStr machine ++ "." ++ set
-       in  "procedure Cast" ++ fstCap mtype ++ fstCap set ++
-           "(src:Node; "
-           ++ formalIndexStr machine ++ ":" ++ indexTypeStr machine ++ "; " ++
-           "vc:VC_Type" ++ ");\n" ++
+   singleBroadcast (BCast machine set elemType mtype msgArgs)
+     = let
+           srcField      = Field (Simple "src") Local
+           dstField      = Field (Simple "n") Local
+           thisSet       = indexedFormalStr machine ++ "." ++ set
+           functionName  = "procedure Cast" ++ fstCap mtype ++ fstCap set
+           spaceNum      = length functionName + 1 -- 1 for (
+           argsForSend   = map sendArg msgArgs -- MsgArg -> Field for Send in loop
+           msg           = Message mtype argsForSend
+       in
+           functionName ++
+           "(src:Node;\n" ++
+            pushBy spaceNum (formalIndexStr machine ++ ":"
+                   ++ indexTypeStr machine ++ "; ") ++
+            pushBy spaceNum (declareArgs msgArgs) ++
+            pushBy spaceNum "vc:VC_Type" ++ ");\n" ++
            "begin\n" ++
            "  for n:Node do\n" ++
            "    if  ( IsMember(n, " ++ Cl.tomurphi elemType ++  ") &\n" ++
@@ -101,6 +111,30 @@ instance Cl.MurphiClass MachineFunctions where
            "    endif;\n" ++
            "  endfor;\n" ++
            "end;\n"
+       where
+           declareArgs = mapconcatln declareArg
+
+           declareArg :: Maybe MsgArg -> String
+           declareArg Nothing = ""
+           declareArg (Just arg) = Cl.tomurphi arg -- prints type decl
+
+
+           -- we must transform the MsgArg to Field for
+           -- the Send in the loop
+           -- MsgArg :: TypeDecl
+           -- Note: the argument to a function in  Murphi can't be
+           -- set or array, because only simple (not composite) types can
+           -- be passed as arguments to functions.
+           sendArg :: Maybe MsgArg -> Maybe Field
+           sendArg Nothing
+             = Nothing
+           sendArg (Just (Decl _ (Set _ _)))
+             = error "murphi can't take a composite type (here set) as argument"
+           sendArg (Just (Decl _ (Array _ _ )))
+             = error "murphi can't take a composite type (here array) as argument"
+           sendArg (Just (Decl name _))
+              = Just $ Field (Simple name) Global -- passed/argument
+
 
    ----------------------------------------------------------
    ----------------------------------------------------------
