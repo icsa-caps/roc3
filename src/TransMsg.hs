@@ -113,14 +113,14 @@ transMsg :: F.MachineType -> [F.Field]  -- the machine and its fields
 transMsg machine machineFields stdArgs locals (F.Msg mtype args)
     = let
             -- get names of the std args
-            msgArgsNames = map (\(B.Decl name _) -> name) stdArgs
+            stdArgsNames = map (\(B.Decl name _) -> name) stdArgs
 
             -- transform front args to B.Fields, paired
             -- with the respective formal param
-            formalsArgs  = map getArg args
+            withformalsArgs  = map getArg args
 
-            -- look up the name of each formal argument in the previous list.
-            backArgs     = map ((flip lookup) formalsArgs) msgArgsNames
+            -- look up the name of each std argument in the previous list.
+            backArgs     = map ((flip lookup) withformalsArgs) stdArgsNames
 
       in    B.Message mtype backArgs
 
