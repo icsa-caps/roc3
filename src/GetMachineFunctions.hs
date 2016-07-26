@@ -27,7 +27,10 @@ import TransResponse
 
 
 getMachineFunctions :: F.Ast -> B.MachineFunctions
-getMachineFunctions fAst = undefined
+getMachineFunctions fAst
+  = let
+      stdArgs = stdMsgArgs fAst
+      in undefined
 
 
 -----------------------------------------------------------------
@@ -42,20 +45,81 @@ singleMFunction stdArgs (F.Machine _ machine _ _ fields mFunction)
    = let
          sets = findSets fields
 
-     in undefined
+         allFrontResps    = concat $ map ( \ (_,_,_,resps) -> resps )
+                                         mFunction
+         locals           = findLocal allFrontResps
 
+         groupedReactions = groupSameStart mFunction
+         receiveFunction  = map (receiveInst machine fields stdArgs locals)
+                                groupedReactions
 
-   -- can use findLocal on [F.Response]
+         bcasts            = undefined
+
+     in (machine, sets, bcasts, receiveFunction, locals)
+
 
 -----------------------------------------------------------------
 
 -- write a method for finding pairs of messages and sets for which we need
 -- a broadcast procedure
 
+-- we must also find the arguments of the broadcasted message
+
+-- BCastInfo =
+-- BCast MachineType SetName ElemType MType [Maybe MsgArg]
+
+isBCast :: F.Response -> Bool
+isBCast (F.Broadcast _ _ _ _ ) = True
+isBCast _                      = False
 
 
+-- we assume the response is a BCast
+bCastMtype :: F.Response -> B.MType
+bCastMtype (F.Broadcast _ _ msg _) = mtypeFromMsg msg
+bCastMType _   = error "used bCast on response that is not a broadcast"
 
---------------------------------
+bCastSetName :: F.Response -> B.SetName
+bCastSetName (F.Broadcast _ dstSet _ _)  = varName dstSet
+bCastSetName _   = error "used bCast on response that is not a broadcast"
+
+bCastElemType :: F.Fields -> F.SetName -> B.ElemType
+bCastElemType fields name
+  = let
+        typeDecls    = map ( \(F.Field typeDecl _) -> typeDecl)
+                        fields
+        names        = map getTypeDeclName typeDecls
+
+        namesTypes   = zip names typeDecls
+
+        thisTypeDecl = let typeDecl = lookup name namesTypes
+                       in if typeDecl == Nothing then
+                             (error ("didn't declare the set" ++ name ++
+                                   "in the fields of the machine." ++ name ++
+                                   "is used in a broadcast"))
+                          else fromJust $ typeDecl
+
+        (B.Decl _ elemType) = transTypeDecl thisTypeDecl
+
+    in  elemType
+
+bCastMsgArgs :: [B.MsgArg] ->    -- std msg args
+                F.Response -> [Maybe B.MsgArg]
+
+bCastMsgArgs stdArgs (F.Broadcast _ _ msg _)
+  = let
+        -- get the arguments of the broadcast
+        args       = argOfMsg msg
+
+        -- take only the formal parameters
+        formalArgs = map formalMsgArg args
+    in
+        -- look up each argument in the formal parameters
+        -- this message has. We want Nothing in the place of
+        -- non-existent arguments and Just the formal parameter
+        -- if the message has it
+        map (flip lookup (zip formalArgs formalArgs)) stdArgs
+
+----------------------------------------------------------------
 
 -- find the machine fields that are sets
 
@@ -110,14 +174,14 @@ groupSameStart cases
 
 
 -- we transform all the reactions with the same starting state
-sameStartSt :: F.MachineType -> [F.Field]  -- the machine and its fields
+receiveInst :: F.MachineType -> [F.Field]  -- the machine and its fields
             -> [B.MsgArg]                  -- standard form of msg in Murphi
             -> B.LocalVariables
             ------------------------
             -> (F.State, [(F.Guard, Maybe F.State, F.Responses)])
             -> B.Reaction
 
-sameStartSt machine machineFields stdArgs locals (fState, withoutStart)
+receiveInst machine machineFields stdArgs locals (fState, withoutStart)
    = let
          -- get the responses and the guards of each machineFCase
          guardsResps = map singleGuard withoutStart
@@ -152,17 +216,6 @@ sameStartSt machine machineFields stdArgs locals (fState, withoutStart)
            in  (bGuard, bResps)
 
 ----------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
 
 
 -----------------------------------------------------------------
