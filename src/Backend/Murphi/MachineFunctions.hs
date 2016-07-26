@@ -126,13 +126,13 @@ instance Cl.MurphiClass MachineFunctions where
            -- set or array, because only simple (not composite) types can
            -- be passed as arguments to functions.
            sendArg :: Maybe MsgArg -> Maybe Field
-           sendArg Nothing
-             = Nothing
+           sendArg Nothing      -- "undefined". The general form of msgargs
+             = Nothing          -- is passed at the translation
            sendArg (Just (Decl _ (Set _ _)))
              = error "murphi can't take a composite type (here set) as argument"
            sendArg (Just (Decl _ (Array _ _ )))
              = error "murphi can't take a composite type (here array) as argument"
-           sendArg (Just (Decl name _))
+           sendArg (Just (Decl name _)) -- we don't care about the type
               = Just $ Field (Simple name) Global -- passed/argument
 
 
