@@ -30,7 +30,9 @@ getMachineFunctions :: F.Ast -> B.MachineFunctions
 getMachineFunctions fAst
   = let
       stdArgs = stdMsgArgs fAst
-      in undefined
+      machines = F.machines fAst
+
+      in B.MachineFunctions $ map (singleMFunction stdArgs) machines
 
 
 -----------------------------------------------------------------
@@ -53,9 +55,21 @@ singleMFunction stdArgs (F.Machine _ machine _ _ fields mFunction)
          receiveFunction  = map (receiveInst machine fields stdArgs locals)
                                 groupedReactions
 
-         bcasts            = undefined
 
-     in (machine, sets, bcasts, receiveFunction, locals)
+
+         bcasts         = filter isBCast allFrontResps
+         bcastMtypes    = map bCastMtype bcasts
+         castWithMType  = zip bcastMtypes bcasts
+         noDupls        = map snd $
+                           nubBy ( \(mtype1,_) -> \(mtype2,_)
+                                     -> mtype1 == mtype2 )
+                                 castWithMType
+
+         bcastinfo      = map (finalBCast machine fields stdArgs)
+                              noDupls
+
+     in
+         (machine, sets, bcastinfo, receiveFunction, locals)
 
 
 -----------------------------------------------------------------
@@ -67,6 +81,23 @@ singleMFunction stdArgs (F.Machine _ machine _ _ fields mFunction)
 
 -- BCastInfo =
 -- BCast MachineType SetName ElemType MType [Maybe MsgArg]
+
+
+
+-- This function puts together all the functions defined below
+-- to construct a B.BCastInfo
+-- we assume the response is a F.Broadcast
+finalBCast :: F.MachineType -> F.Fields -> [B.MsgArg] -> -- std msg args
+              F.Response -> B.BCastInfo
+
+finalBCast machine fields stdArgs resp
+  = let
+        mtype    = bCastMtype resp
+        setName  = bCastSetName resp
+        elemType = bCastElemType fields setName
+        msgArgs  = bCastMsgArgs stdArgs resp
+    in
+        B.BCast machine setName elemType mtype msgArgs
 
 isBCast :: F.Response -> Bool
 isBCast (F.Broadcast _ _ _ _ ) = True
