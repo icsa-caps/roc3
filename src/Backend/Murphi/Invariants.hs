@@ -16,15 +16,15 @@ import Data.List.Split -- for tokenizing strings
 import GenHelper
 
 -- helper tomurphi implementations
-import tomurphiHelper
+import TomurphiHelper
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
 
 
 instance Cl.MurphiClass Invariants where
- tomurphi = "-- haven't completed the invariants part yet.\n" ++
-            "-- for the time being we need to do it by hand\n\n"
+ tomurphi _ = "-- haven't completed the invariants part yet.\n" ++
+              "-- for the time being we need to do it by hand\n\n"
 
 
  -----------------------------------------------------------------

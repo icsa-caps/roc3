@@ -30,6 +30,8 @@ type AliasName        = String
 type RuleName         = String
 type StartVal         = String
 type MType            = String --mtype in murphi
+type Responses        = [Response]
+
 
 
 
@@ -279,7 +281,9 @@ type ElemType = Type
 data BCastInfo = BCast MachineType SetName ElemType MType [Maybe MsgArg]
                  deriving(Show, Eq)
 
-type ReceiveFunction = [ ( State, [ (Maybe Guard, [Response]) ] ) ]
+type ReceiveFunction = [ Reaction ]
+
+type Reaction =( State, [ (Maybe Guard, [Response]) ] )
 
 --------------------------------
 

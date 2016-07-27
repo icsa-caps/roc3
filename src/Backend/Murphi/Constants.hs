@@ -6,7 +6,7 @@ module Constants where
 
 -----------------------------------------------------------------
 
-import  MurphiAST
+import  MurphiAST 
 import qualified MurphiClass as Cl
 import Data.Char
 import Data.List.Split -- for tokenizing strings
@@ -16,7 +16,7 @@ import Data.List.Split -- for tokenizing strings
 import GenHelper
 
 -- helper tomurphi implementations
-import tomurphiHelper
+import TomurphiHelper
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------

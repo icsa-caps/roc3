@@ -1,6 +1,6 @@
 -----------------------------------------------------------------
 --------- tomurphi implementation for common functions ----------
---- i.e. send, broadcasting, advancing ordered buffers ----------
+---------- i.e. send and advancing ordered buffers --------------
 ---------------------  and error functions  ---------------------
 -----------------------------------------------------------------
 
@@ -27,7 +27,7 @@ import TomurphiHelper
 
 
 instance Cl.MurphiClass CommonFunctions where
- tomurphi (FuncParams orderedNetNames sendInfo broadcastInfo) =
+ tomurphi (CommonFunctions orderedNetNames sendInfo) =
     finalSend      ++ "\n" ++
     finalAdvanceQ  ++ "\n" ++
     errorFunctions ++ "\n"

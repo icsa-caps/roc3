@@ -21,7 +21,7 @@ import Data.List.Split -- for tokenizing strings
 import GenHelper
 
 -- helper tomurphi implementations
-import tomurphiHelper
+import TomurphiHelper
 
 
 -- tomurphi implementations of each part of a muprhi program
