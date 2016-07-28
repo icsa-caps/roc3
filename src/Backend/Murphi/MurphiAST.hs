@@ -1,11 +1,15 @@
-
-module MurphiAST where
+-----------------------------------------------------------------
 
 -- this AST captures the subset of the murphi language
 -- as it is used in the MSI protocol implementations
 -- (at a first stage the MI implementation).
 -- It is strongly based on the outline used in the above implementations
 
+-----------------------------------------------------------------
+
+module MurphiAST where
+
+-----------------------------------------------------------------
 
 -- simple type synonyms
 type Size             = Int
@@ -307,6 +311,7 @@ data Response        = ToState Machine State
                      | Add Owner SetName Field  -- the owner of the set is the machine
                      | Del Owner SetName Field  -- in question. Owner here is  for the elem
                      | Stall
+                     | EmptyResp String --e.g. hit. corresponds to F.EmptyResp
                        deriving(Show,Eq)
 
 type Elem = Field

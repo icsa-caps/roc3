@@ -177,6 +177,8 @@ transResponse machine machineFields stdArgs locals resp
                                                                  locals
                                                                  intExp
                                             in  B.AssignInt field bExp
+
+      F.EmptyResp str                   ->  B.EmptyResp str
 --------------------------------
 
 ----------------------------------------------------------------

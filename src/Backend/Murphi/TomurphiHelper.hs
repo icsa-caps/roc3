@@ -161,6 +161,9 @@ instance Cl.MurphiClass Response where
 
  tomurphi (Stall) = "return false;" -- message is not processed
 
+ tomurphi (EmptyResp str) = "-- " ++ str -- e.g. "hit". Strings that don't
+                                         -- mean anything in murphi
+
 
 -----------------------------------------------------------------
 
