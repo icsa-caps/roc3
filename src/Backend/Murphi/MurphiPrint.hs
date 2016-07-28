@@ -9,19 +9,10 @@
 
 
 
-module MurphiPrint where
+module Backend.Murphi.MurphiPrint where
 
 import  MurphiAST
 import qualified MurphiClass as Cl
-import Data.Char
-import Data.List.Split -- for tokenizing strings
-                       -- splitOn is used in pushBy
-
--- general helper functions
-import GenHelper
-
--- helper tomurphi implementations
-import TomurphiHelper
 
 
 -- tomurphi implementations of each part of a muprhi program
@@ -43,10 +34,9 @@ import Invariants
 
 
 
-instance Cl.MurphiClass Program where
-
- --tomurphi :: Program -> String
- tomurphi (Program constants
+-- top printing method for murphi
+tomurphiTop :: Program -> String
+tomurphiTop (Program constants
                    types
                    variables
                    commonFunctions
