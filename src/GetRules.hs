@@ -3,7 +3,7 @@ module GetRules(getRules) where
 ------------------------------------------------------------------
 
 import qualified Ast as F
-import qualified Backend.Murphi.MurphiAST as B
+import qualified MurphiAST as B
 import TransGen
 import TransResponse
 import TransMsg

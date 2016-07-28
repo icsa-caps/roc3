@@ -2,8 +2,8 @@ module GetInvariants where
 
 -----------------------------------------------------------------
 
-import qualified Ast as Front
-import qualified Backend.Murphi.MurphiAST as Back
+import qualified Ast as F
+import qualified MurphiAST as B
 import TransGen
 
 -----------------------------------------------------------------

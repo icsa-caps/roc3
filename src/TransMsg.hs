@@ -7,7 +7,7 @@ module TransMsg where
 import Data.Maybe -- for fromJust
 import Data.List  -- for nub
 import qualified Ast as F
-import qualified Backend.Murphi.MurphiAST as B
+import qualified MurphiAST as B
 import TransGen
 
 
@@ -85,17 +85,17 @@ argOfMsg :: F.Msg -> [F.MsgArg]
 argOfMsg (F.Msg _ args) = args
 
 
--- transform a msg arg
-transMsgArg :: F.MsgArg -> B.MsgArg
-transMsgArg (F.GuardAssign typeDecl _)  = transTypeDecl typeDecl
-transMsgArg (F.MsgArg typeDecl)         = transTypeDecl typeDecl
+-- get the name of the formal parameter of a message
+formalMsgArg :: F.MsgArg -> B.MsgArg
+formalMsgArg (F.GuardAssign typeDecl _)  = transTypeDecl typeDecl
+formalMsgArg (F.MsgArg typeDecl)         = transTypeDecl typeDecl
 
 
 -- get the general form of a message in the backend
 stdMsgArgs :: F.Ast -> [B.MsgArg]
 stdMsgArgs fAst = let msgs     = getFMsgs fAst
                       fMsgArgs = concat $ map argOfMsg msgs
-                  in  nub $ map transMsgArg fMsgArgs
+                  in  nub $ map formalMsgArg fMsgArgs
 
 
 -- get just the names of msg args

@@ -8,7 +8,7 @@ module GetMachineFunctions where
 -----------------------------------------------------------------
 
 import qualified Ast as F
-import qualified Backend.Murphi.MurphiAST as B
+import qualified MurphiAST as B
 import Data.Maybe -- for fromJust
 import Data.List  -- for nub
 import TransGen
@@ -155,6 +155,7 @@ bCastMsgArgs stdArgs (F.Broadcast _ _ msg _)
 -- find the machine fields that are sets
 
 findSets :: [F.Field] -> [B.TypeDecl]
+findSets [] = []
 findSets ( (F.Field typeDecl _ ):rest )
    = case typeDecl of
        F.Set _ _ -> transTypeDecl typeDecl : findSets rest

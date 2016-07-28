@@ -6,7 +6,7 @@ module TransGuard where
 -----------------------------------------------------------------
 
 import qualified Ast as F
-import qualified Backend.Murphi.MurphiAST as B
+import qualified MurphiAST as B
 import Data.Maybe -- for fromJust
 import TransGen
 import TransMsg
@@ -18,6 +18,11 @@ transReceiveMsg :: F.MachineType -> [F.Field]  -- the machine and its fields
                    -> [B.MsgArg]               -- standard form of msg in Murphi
                    -> B.LocalVariables
                    -> F.Guard -> B.Guard
+                   
+transReceiveMsg machine machineFields stdArgs locals (F.Issue _)
+    = error ("Shouldn't use transReceiveMsg on F.Issue guard.\n" ++
+            "F.Issue are rules, they are not part of the receive function")
+
 transReceiveMsg machine machineFields stdArgs locals (F.ReceiveFrom msg src vc)
     = B.Receive mtype (guardMsgArgs msg) (transMaybeSrc src) (transMaybeVC vc)
 

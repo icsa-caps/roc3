@@ -18,10 +18,11 @@ type StartVal        = String
 type MachineFCase    = ( State, Guard,  Maybe State, [Response] )
 type MachineFunction = [MachineFCase]
 type ArrayName       = String
+type Responses       = [Response]
 
 
 data Ast = Model {
-                   -- globals  :: [ TypeDecl], not suppported in backend
+                   -- globals  :: [TypeDecl], not suppported in backend
                    -- we can add it back easily in the front-end
                    networks :: [ Network ],
                    machines :: [ Machine ]

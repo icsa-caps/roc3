@@ -9,7 +9,7 @@ module TransGen where
 import Data.Maybe -- for fromJust
 import Data.List  -- for nub
 import qualified Ast as F
-import qualified Backend.Murphi.MurphiAST as B
+import qualified MurphiAST as B
 
 
 -----------------------------------------------------------------
@@ -208,26 +208,23 @@ transVar machine machineFields stdMsgArgs locals param
             else
                 (B.Field var B.Global) -- constant, instance of machine
 
-   where
-       varFromParam :: F.Param -> B.Variable
-       varFromParam (F.ArrayElem arrayName index) = B.ArrayElem arrayName index
-       varFromParam (F.VarOrVal iden)             = B.Simple iden
-       varFromParam (F.NonSymInst machine index)  = B.MachineIndex machine index
-
-       -- the identifier for an array, a variable, a constant or an instance of
-       -- a machine
-       varName :: F.Param -> String
-       varName (F.ArrayElem arrayName _)     = arrayName
-       varName (F.VarOrVal iden)             = iden
-       varName (F.NonSymInst machine index)  = machine
-
-
-
 
 --------------------------------
 
+varFromParam :: F.Param -> B.Variable
+varFromParam (F.ArrayElem arrayName index) = B.ArrayElem arrayName index
+varFromParam (F.VarOrVal iden)             = B.Simple iden
+varFromParam (F.NonSymInst machine index)  = B.MachineIndex machine index
+
+-- the identifier for an array, a variable, a constant or an instance of
+-- a machine
+varName :: F.Param -> String
+varName (F.ArrayElem arrayName _)     = arrayName
+varName (F.VarOrVal iden)             = iden
+varName (F.NonSymInst machine index)  = machine
 
 
+--------------------------------
 
 
 -----------------------------------------------------------------

@@ -3,8 +3,9 @@ module GetCommonFunctions(getCommonFunctions) where
 -----------------------------------------------------------------
 
 import TransGen
+import TransMsg
 import qualified Ast as F
-import qualified Backend.Murphi.MurphiAST as B
+import qualified MurphiAST as B
 import Data.List  -- for nub
 
 -----------------------------------------------------------------
