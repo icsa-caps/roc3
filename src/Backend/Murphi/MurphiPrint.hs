@@ -45,14 +45,30 @@ tomurphiTop (Program constants
                    startstate
                    invariants )
 
-    = "-- Constants {{{\n"          ++ Cl.tomurphi constants         ++ "-- }}}" ++
-      "-- Types {{{\n"              ++ Cl.tomurphi types             ++ "-- }}}" ++
-      "-- Variables {{{\n"          ++ Cl.tomurphi variables         ++ "-- }}}" ++
-      "-- Common Functions {{{\n"   ++ Cl.tomurphi commonFunctions   ++ "-- }}}" ++
-      "-- Machine Functions {{{\n"  ++ Cl.tomurphi machineFunctions  ++ "-- }}}" ++
-      "-- Rules {{{\n"              ++ Cl.tomurphi rules             ++ "-- }}}" ++
-      "-- Startstate {{{\n"         ++ Cl.tomurphi startstate        ++ "-- }}}" ++
-      "-- Invariants {{{\n"         ++ Cl.tomurphi invariants        ++ "-- }}}"
+    = "\n-- Constants {{{\n"
+          ++ Cl.tomurphi constants
+          ++ "\n-- }}}\n" ++
+      "\n-- Types {{{\n"
+          ++ Cl.tomurphi types
+          ++ "\n-- }}}\n" ++
+      "\n-- Variables {{{\n"
+          ++ Cl.tomurphi variables
+          ++ "\n-- }}}\n" ++
+      "\n-- Common Functions {{{\n"
+          ++ Cl.tomurphi commonFunctions
+          ++ "\n-- }}}\n" ++
+      "\n-- Machine Functions {{{\n"
+          ++ Cl.tomurphi machineFunctions
+          ++ "\n-- }}}\n" ++
+      "\n-- Rules {{{\n"
+          ++ Cl.tomurphi rules
+          ++ "\n-- }}}\n" ++
+      "\n-- Startstate {{{\n"
+          ++ Cl.tomurphi startstate
+          ++ "\n-- }}}\n" ++
+      "\n-- Invariants {{{\n"
+          ++ Cl.tomurphi invariants
+          ++ "\n-- }}}\n"
 
 
 -----------------------------------------------------------------
