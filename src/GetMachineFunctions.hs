@@ -51,7 +51,11 @@ singleMFunction stdArgs (F.Machine _ machine _ _ fields mFunction)
                                          mFunction
          locals           = findLocal allFrontResps
 
-         groupedReactions = groupSameStart mFunction
+         -- remove instances of the machine functions with self issued
+         -- messages. These belong to B.Rules not to the machine function
+         noSelfIssued     = filter (not.isSelfIssued) mFunction
+
+         groupedReactions = groupSameStart noSelfIssued
          receiveFunction  = map (receiveInst machine fields stdArgs locals)
                                 groupedReactions
 

@@ -272,12 +272,31 @@ getMachineFields fAst = let machines  = F.machines fAst
                                             fFields
                         in  map (map transTypeDecl) typeDecls
 
+
+
+
 --------------------------------
+----------------------------------------------------------------
 
 -- we don't include here a function for machine states because we may want
 -- to have either a list with no duplicates in GetTypes or with duplicates,
 -- if any, in MachineFunctions. The latter case is due to the fact that
 -- the transition to another state doesn't depend only on the current state
+
+
+----------------------------------------------------------------
+
+-- MachineFCase is an instance of the receive function
+-- i.e. a combination of state and guard with a bunch
+-- of responses. It can be a single self-issued rule if
+-- the guard is a self-issued message
+
+isSelfIssued :: F.MachineFCase -> Bool
+isSelfIssued (stateInit, guard, stateAfter, resps)
+ = case guard of
+      F.Issue _ -> True
+      _         -> False
+
 
 
 -----------------------------------------------------------------

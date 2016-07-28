@@ -67,18 +67,6 @@ getUnordVCs fAst = let allNets    = F.networks fAst
                    in  map (\(F.Network _ name vcs) -> (name, map getVCName vcs))
                            unordered
 
-----------------------------------------------------------------
-
--- MachineFCase is an instance of the receive function
--- i.e. a combination of state and guard with a bunch
--- of responses. It can be a single self-issued rule if
--- the guard is a self-issued message
-
-isSelfIssued :: F.MachineFCase -> Bool
-isSelfIssued (stateInit, guard, stateAfter, resps)
- = case guard of
-      F.Issue _ -> True
-      _         -> False
 
 ----------------------------------------------------------------
 
