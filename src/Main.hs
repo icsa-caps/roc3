@@ -2,9 +2,16 @@ module Main where
 
 import System.Environment
 import Parser
+import TransMurphi
+import Backend.Murphi.MurphiPrint
+
 
 main :: IO ()
 main = do
         args <- getArgs
         fileContents <- readFile $ (args !! 0)
-        putStrLn (show $ parseAst fileContents)
+        --putStrLn (show $ parseAst fileContents)
+        let fAst      = parseAst fileContents
+            bAst      = transform fAst
+            murphiSrc = tomurphiTop bAst
+        writeFile "murphiSrc.m" murphiSrc
