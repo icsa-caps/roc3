@@ -100,6 +100,8 @@ instance Cl.MurphiClass CommonFunctions where
 
 
    printAddNetRest [net] [cond] = " else\n  " ++ addToNet net ++ "\n endif;"
+   printAddNetRest [] _         = ""  -- when there is a single net
+                                      -- we don't need else stmt in murphi
    printAddNetRest (net : nets) (cond : conds)
      = " elsif " ++ cond ++ " then\n  " ++ addToNet net ++"\n" ++ printAddNetRest nets conds
 
