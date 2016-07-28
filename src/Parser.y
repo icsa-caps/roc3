@@ -114,7 +114,7 @@ Nonsym          : machine iden '{' Startstate Fields States_Guards '}'          
 Sym             : machine iden ':' Range '{' Startstate Fields States_Guards '}'               { Machine Symmetric $2 $4 $6 $7 $8 }
 
 
-Startstate      : startstate ':' iden                               { State $3 }
+Startstate      : startstate ':' iden ';'                           { State $3 }
 
 
 
@@ -212,7 +212,7 @@ IntExp          : IntExp '+' IntExp                             { Sum $1 $3 }
                 | IntExp '*' IntExp                             { Times $1 $3 }
                 | IntExp '/' IntExp                             { Div $1 $3 }
                 | num                                           { Const $1 }
-                | Param                                          { IntVar $1 }
+                | Param                                         { IntVar $1 }
 
 
 {
