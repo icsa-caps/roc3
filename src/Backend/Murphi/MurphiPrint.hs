@@ -45,30 +45,30 @@ tomurphiTop (Program constants
                    startstate
                    invariants )
 
-    = "\n-- Constants {{{\n"
+    = "\n-- Constants {{{\n\n"
           ++ Cl.tomurphi constants
-          ++ "\n-- }}}\n" ++
-      "\n-- Types {{{\n"
+          ++ "\n\n-- }}}\n" ++
+      "\n-- Types {{{\n\n"
           ++ Cl.tomurphi types
-          ++ "\n-- }}}\n" ++
-      "\n-- Variables {{{\n"
+          ++ "\n\n-- }}}\n" ++
+      "\n-- Variables {{{\n\n"
           ++ Cl.tomurphi variables
-          ++ "\n-- }}}\n" ++
-      "\n-- Common Functions {{{\n"
+          ++ "\n\n-- }}}\n" ++
+      "\n-- Common Functions {{{\n\n"
           ++ Cl.tomurphi commonFunctions
-          ++ "\n-- }}}\n" ++
-      "\n-- Machine Functions {{{\n"
+          ++ "\n\n-- }}}\n" ++
+      "\n-- Machine Functions {{{\n\n"
           ++ Cl.tomurphi machineFunctions
-          ++ "\n-- }}}\n" ++
-      "\n-- Rules {{{\n"
+          ++ "\n\n-- }}}\n" ++
+      "\n-- Rules {{{\n\n"
           ++ Cl.tomurphi rules
-          ++ "\n-- }}}\n" ++
-      "\n-- Startstate {{{\n"
+          ++ "\n\n-- }}}\n" ++
+      "\n-- Startstate {{{\n\n"
           ++ Cl.tomurphi startstate
-          ++ "\n-- }}}\n" ++
-      "\n-- Invariants {{{\n"
+          ++ "\n-- }}}\n" ++       -- we don't need two \n at startstate
+      "\n-- Invariants {{{\n\n"
           ++ Cl.tomurphi invariants
-          ++ "\n-- }}}\n"
+          ++ "\n\n-- }}}\n"
 
 
 -----------------------------------------------------------------
