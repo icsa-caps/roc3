@@ -23,7 +23,7 @@ import TomurphiHelper
 instance Cl.MurphiClass Rules where
  tomurphi (Rules selfIssued receiveOrdNets receiveUnordNets)
    = finalSelfIssued ++
-     "-- ordered networks receive rules" ++
+     "-- ordered networks receive rules\n\n" ++
      finalReceiveOrdNets ++
      "-- unordered networks receive rules" ++
      finalReceiveUnordNets
@@ -69,7 +69,7 @@ instance Cl.MurphiClass Rules where
 
             "       rule " ++ ruleName ++ "\n" ++
             pushBy 10 (disjunctVCs)    ++ "\n" ++
-                    "=>\n" ++
+            "       =>\n" ++
             pushBy 10 casesMachines    ++ "\n" ++
             "       endrule;\n\n" ++
 
@@ -91,9 +91,12 @@ instance Cl.MurphiClass Rules where
    isMember alias machine = "IsMember(" ++ alias ++ ", " ++ machine ++ ")"
 
    processMessage :: MachineName -> String
-   processMessage machine = "if " ++ machine ++ "Receive(msg,n) then \n" ++
-                             "  MultisetRemove(midx, chan);\n" ++
-                             "endif;\n"
+   processMessage machine = "if " ++ machine ++ "Receive(msg,n) then\n" ++
+                            "  MultisetRemove(midx, chan);\n" ++
+                            "endif;" -- see note below
+
+   -- Note: for some reason, the if-else is printed correctly only
+   -- if we include these spaces that seem to have no place there
    -----------
 
 

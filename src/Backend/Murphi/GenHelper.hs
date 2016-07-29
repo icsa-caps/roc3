@@ -68,16 +68,18 @@ disjunction = concatWith " | "
 
 -- printing if-elsif-else-statements
 printIfElse :: [String] -> [String] -> String
-printIfElse (cond:conditions) (bod:bodies) = "if " ++ cond ++ " then\n  " ++
-                                             bod ++ "\n\n" ++
+printIfElse (cond:conditions) (body:bodies) = "if " ++ cond ++ " then\n" ++
+                                             (pushBy 2 body) ++ "\n" ++
                                              printElsif conditions bodies
 
 
 -- printing elsif to else statements
 printElsif :: [String] -> [String] -> String
-printElsif [cond] [body]                   = "else\n  " ++ body ++ "endif;"
-printElsif (cond:conditions) (body:bodies)  = "elsif " ++ cond ++ " then\n  " ++
-                                             body ++ "\n\n" ++
+printElsif [cond] [body]                    = "else\n" ++ (pushBy 2 body)
+                                              ++ "\n" ++ "endif;\n"
+printElsif [] _                             = "endif;\n"
+printElsif (cond:conditions) (body:bodies)  = "elsif " ++ cond ++ " then\n" ++
+                                             (pushBy 2 body) ++ "\n" ++
                                              printElsif conditions bodies
 
 
