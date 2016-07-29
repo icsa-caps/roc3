@@ -27,7 +27,7 @@ instance Cl.MurphiClass Types where
                   "-- for indexing\n"   ++ finalIndexVars  ++ "\n"
                                         ++ finalNodes      ++ "\n" ++
                   "--------------------\n\n"
-                  
+
                                         ++ vcType          ++ "\n" ++
                   "-- Message Type\n"   ++ finalMsgType    ++ "\n" ++
                   "-- Message\n"        ++ message         ++ "\n" ++
@@ -93,7 +93,9 @@ instance Cl.MurphiClass Types where
     message      = "Message:\n" ++
                    "  record\n" ++
                    "    mtype : MessageType;\n" ++
-                   "    src : Node\n" ++
+                   "    src : Node;\n" ++
+                   "    dst : Node;\n" ++
+                   "    vc   : VC_Type;\n" ++
                    (pushBy 4 finalMsgArgs) ++ "\n" ++
                    "end;\n"
 
