@@ -30,31 +30,58 @@ type Value = String
 
 instance Cl.MurphiClass Startstate where
  tomurphi (Startstate machines orderedNets unorderedNets)
-        = "-- initialise machines\n"           ++
-          machinesInit      ++ "\n"             ++
-          "-- initialise unordered networks\n" ++
-          unorderedNetInit ++ "\n"             ++
-          "-- initialise ordered networks\n"   ++
-          orderedNetInit   ++ "\n"
+        = let
+              machinesInit
+                = "-- initialise machines\n\n" ++
+                  mapconcatln initMachine machines
+                  ++ "\n-------------------------------\n\n"
+
+              -- unordered networks
+              -- we simply have to undefine all unordered nets
+              unorderedNetInit = if unorderedNets == [] then ""
+                                 else
+                                      "-- initialise unordered networks\n" ++
+                                      mapconcatln (\net ->
+                                                     "undefine " ++ net ++ ";")
+                                                  unorderedNets
+                                      ++ "\n"
+                                      ++ "\n-------------------------------\n\n"
+
+
+              -- ordered nets
+              -- intialise all unordered nets
+              -- undefine the networks and set the counts to 0
+              orderedNetInit = if orderedNets == [] then ""
+                               else
+                                    "-- initialise ordered networks\n"   ++
+                                    undefineOrderedNets orderedNets ++ "\n\n" ++
+                                    "-- set counts to zero\n" ++
+                                    allZeroCounts orderedNets ++ "\n"
+                                    ++ "\n-------------------------------\n\n"
+          in
+              -- all new lines are inside the variables
+              machinesInit     ++
+              unorderedNetInit ++
+              orderedNetInit
 
   where
    -----------------------------
    -----------------------------
-   -- initialise all machines
-   machinesInit = mapconcatln initMachine machines
 
-
-
-   -----------------------------
    -- initialise all fields of all ocurences of a machine
    initMachine :: ( MachineType, State, [FieldStart] ) -> String
    initMachine (machine, startstate, fields)
-     = "-- " ++ machine ++ " initialisation\n" ++
-       "for " ++ formalIndexStr machine ++ ":" ++
-       indexTypeStr machine ++ " do\n" ++
-       "  " ++ initState machine startstate ++ "\n" ++
-       pushBy 2 (initFields machine fields) ++ "\n" ++
-       "endfor;\n"
+     = let
+           fieldsInitialisation =
+             if fields == [] then ""
+             else (pushBy 2 (initFields machine fields) ++ "\n")
+       in
+           "-- " ++ machine ++ " initialisation\n" ++
+           "for " ++ formalIndexStr machine ++ ":" ++
+           indexTypeStr machine ++ " do\n" ++
+           "  " ++ initState machine startstate ++ "\n" ++
+           fieldsInitialisation ++
+           "endfor;\n"
 
    -----------------------------
 
@@ -131,26 +158,12 @@ instance Cl.MurphiClass Startstate where
    -- initialise a machine state
    initState :: MachineType -> State -> String
    initState machine state = indexedFormalStr machine ++
-                             ".state := " ++ state ++ ";\n"
+                             ".state := " ++ state ++ ";"
 
    -----------------------------
    -----------------------------
 
-   -- unordered networks
 
-   -- we simply have to undefine all unordered nets
-   unorderedNetInit = mapconcatln (\net -> "undefine " ++ net ++ ";")
-                                  unorderedNets
-
-   -----------------------------
-   -----------------------------
-
-   -- ordered nets
-
-   -- intialise all unordered nets
-   -- undefine the networks and set the counts to 0
-   orderedNetInit = undefineOrderedNets orderedNets ++ "\n\n" ++
-                    allZeroCounts orderedNets ++ "\n"
 
 
    -----------------------------
