@@ -25,7 +25,9 @@ instance Cl.MurphiClass Types where
 
  tomurphi types = "type\n" ++
                   "-- for indexing\n"   ++ finalIndexVars  ++ "\n"
-                                        ++ finalNodes      ++ "\n"
+                                        ++ finalNodes      ++ "\n" ++
+                  "--------------------\n\n"
+                  
                                         ++ vcType          ++ "\n" ++
                   "-- Message Type\n"   ++ finalMsgType    ++ "\n" ++
                   "-- Message\n"        ++ message         ++ "\n" ++
@@ -50,7 +52,8 @@ instance Cl.MurphiClass Types where
     -- for symmetric machines, print scalarsets
     machineScalarset :: MachineType -> String
     machineScalarset (machine)
-      = decl (indexTypeStr machine) "scalarset(" ++ machineSizeStr machine ++ ")"
+      = decl (indexTypeStr machine)
+             ("scalarset(" ++ machineSizeStr machine ++ ")")
 
     -- for non-symmetric machines, print enums
     -- the values are <machine name><num>

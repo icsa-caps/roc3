@@ -45,30 +45,49 @@ tomurphiTop (Program constants
                    startstate
                    invariants )
 
-    = "\n-- Constants {{{\n\n"
-          ++ Cl.tomurphi constants
-          ++ "\n\n-- }}}\n" ++
-      "\n-- Types {{{\n\n"
+    = separatingLine ++
+     "-- Constants {{{\n"
+         ++ separatingLine
+         ++ Cl.tomurphi constants
+         ++ "\n\n-- }}}\n\n"
+         ++ separatingLine ++
+      "-- Types {{{\n"
+          ++ separatingLine
           ++ Cl.tomurphi types
-          ++ "\n\n-- }}}\n" ++
-      "\n-- Variables {{{\n\n"
+          ++ "\n\n-- }}}\n\n"
+          ++ separatingLine ++
+      "-- Variables {{{\n"
+          ++ separatingLine
           ++ Cl.tomurphi variables
-          ++ "\n\n-- }}}\n" ++
-      "\n-- Common Functions {{{\n\n"
+          ++ "\n\n-- }}}\n\n"
+          ++ separatingLine ++
+      "-- Common Functions {{{\n"
+          ++ separatingLine
           ++ Cl.tomurphi commonFunctions
-          ++ "\n\n-- }}}\n" ++
-      "\n-- Machine Functions {{{\n\n"
+          ++ "\n\n-- }}}\n\n"
+          ++ separatingLine ++
+      "-- Machine Functions {{{\n"
+          ++ separatingLine ++ "\n"
           ++ Cl.tomurphi machineFunctions
-          ++ "\n\n-- }}}\n" ++
-      "\n-- Rules {{{\n\n"
+          ++ "\n\n-- }}}\n\n"
+          ++ separatingLine ++
+      "-- Rules {{{\n"
+          ++ separatingLine
           ++ Cl.tomurphi rules
-          ++ "\n\n-- }}}\n" ++
-      "\n-- Startstate {{{\n\n"
+          ++ "\n\n-- }}}\n\n"
+          ++ separatingLine ++
+      "-- Startstate {{{\n"
+          ++ separatingLine
           ++ Cl.tomurphi startstate
-          ++ "\n-- }}}\n" ++       -- we don't need two \n at startstate
-      "\n-- Invariants {{{\n\n"
+          ++ "\n-- }}}\n\n" -- we don't need two \n at startstate
+          ++ separatingLine ++
+      "-- Invariants {{{\n"
+          ++ separatingLine
           ++ Cl.tomurphi invariants
-          ++ "\n\n-- }}}\n"
+          ++ "\n\n-- }}}\n\n"
 
-
+      where
+         separatingLine
+           = "----------------------------------------" ++ -- 40 -
+             "--------------------------------------\n"    -- another 40 -
 -----------------------------------------------------------------

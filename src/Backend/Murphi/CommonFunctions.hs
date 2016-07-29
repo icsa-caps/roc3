@@ -74,36 +74,26 @@ instance Cl.MurphiClass CommonFunctions where
    sendEnd = "\nend;\n"
 
    msgFieldAssign :: MsgArg -> String
-   msgFieldAssign (Decl argname argtype) = "msg." ++ argname ++ ":= " ++ argname
+   msgFieldAssign (Decl argname argtype) = "msg." ++ argname ++ ":= "
+                                            ++ argname ++ ";"
 
    assignments = mapconcatln msgFieldAssign msgArgs
 
    finalSend = sendTop     ++ "\n" ++
                sendNext    ++ "\n" ++
                pushBy 5 sendStandardAssignments ++ -- contains new line
-               pushBy 5 assignments ++ "\n" ++
-               pushBy 5 printedNets ++ "\n" ++
-               sendEnd
+               assignments ++ "\n" ++ -- don't need pushBy, don't know why
+               pushBy 5 printedNets ++ "\n" 
+               ++ sendEnd
 
    -----------------------------
    nets = map fst netVCs
    vcs  = map snd netVCs
 
-   -- all the if-then clauses for checking for each network if the msg is in
-   -- one of the VCs of that network
-   printedNets = printAddNet nets vcConds
+   -- top level. vcConds and addToNet defined below
+   printedNets = let addToNets = map addToNet nets
+                 in  printIfElse vcConds addToNets
 
-
-   -- adding msg to Network
-   printAddNet (net:nets) (cond:conds) =
-    " if " ++ cond ++ " then\n  " ++ addToNet net ++ "\n" ++ printAddNetRest nets conds
-
-
-   printAddNetRest [net] [cond] = " else\n  " ++ addToNet net ++ "\n endif;"
-   printAddNetRest [] _         = ""  -- when there is a single net
-                                      -- we don't need else stmt in murphi
-   printAddNetRest (net : nets) (cond : conds)
-     = " elsif " ++ cond ++ " then\n  " ++ addToNet net ++"\n" ++ printAddNetRest nets conds
 
 
    -- list of conditions for adding a msg to a net
@@ -130,7 +120,7 @@ instance Cl.MurphiClass CommonFunctions where
    addUnord net =
     "Assert (MultiSetCount(i:" ++ net ++ "[dst], true) < NET_MAX)" ++
     "\"Too many messages\";\n" ++
-    "  MultiSetAdd(msg, " ++ net ++ "[dst]);\n"
+    "MultiSetAdd(msg, " ++ net ++ "[dst]);\n"
 
    -----------------------------
 

@@ -6,7 +6,7 @@ module Constants where
 
 -----------------------------------------------------------------
 
-import  MurphiAST 
+import  MurphiAST
 import qualified MurphiClass as Cl
 import Data.Char
 import Data.List.Split -- for tokenizing strings
@@ -25,7 +25,8 @@ import TomurphiHelper
 
 instance Cl.MurphiClass Constants where
 
- tomurphi (Constants machineSizes vcs) = "const\nMachine Sizes\n" ++ machinesSizes
+ tomurphi (Constants machineSizes vcs) = "const\n\n" ++
+                                         "Machine Sizes\n" ++ machinesSizes
                                         ++ "\n\n"
                                         ++ "Network parameters\n" ++ netParams
                                         ++ "NET_MAX: " ++ show netMax
@@ -34,7 +35,8 @@ instance Cl.MurphiClass Constants where
     onlyMachines   = map fst machineSizes
     onlySizes      = map snd machineSizes
     sizeNames      = map (machineSizeStr) onlyMachines
-    machinesSizes  = mapconcatln declGen (zip sizeNames  onlySizes)
+    machinesSizes  = let decls = map declGen (zip sizeNames  onlySizes)
+                     in concatWith "" decls -- each decl ends with '\n'
 
     ---- <machineName>Size : <num>;
     --------------------------------

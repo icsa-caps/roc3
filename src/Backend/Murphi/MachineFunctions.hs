@@ -208,13 +208,14 @@ instance Cl.MurphiClass MachineFunctions where
    setReceiveSingle :: ( MachineType, Sets, [BCastInfo],
                          ReceiveFunction, LocalVariables ) -> String
    setReceiveSingle (machine, sets, bcasts, stateGuardsReps, localVariables) =
-     "-- " ++ machine ++ " functions {{{\n" ++
+     "-- " ++ machine ++ " functions {{{\n\n" ++
      "-- Add/remove from sets\n" ++
      finalSetFunctions machine sets ++ "\n" ++
-     "---------------------------------------------------------\n" ++
+     "---------------------------------------------------------\n\n" ++
      "-- broadcasting \n" ++
      mapconcatln singleBroadcast bcasts ++ "\n" ++
-     " -- Receive function \n" ++
+     "---------------------------------------------------------\n\n" ++
+     "-- Receive function \n" ++
      finalMachineReceive machine stateGuardsReps localVariables ++
      "\n-- }}}\n"
 
