@@ -22,7 +22,7 @@ networks: ordered net1{c1}, unordered net2{c1,c2};
 
 machine Cache:[4] {
 
-   startstate: I			// the starting state is I
+   startstate: I;			// the starting state is I
 
   // self-issued msgs are "Rules"
   // not in the "Cache functions" part
@@ -46,7 +46,7 @@ machine Cache:[4] {
   }
 
   (M, Dir[0]?Fwd_GetM<cache mod=src1, node direct=dir>, I) {   // we can infer which variables
-   	 src1!Data@c1;  				                   // are msg args see note in the end
+   	 src1!Data@c1;  				                 // are msg args see note in the end
   }
 
 }
@@ -54,7 +54,7 @@ machine Cache:[4] {
 machine Dir {	               // because it has size 1, it will be
  		                    // parsed as nonsymmetric
 
-startstate: I 
+startstate: I; 
 	
  int[1..10] nums,      		 // initial value undefined
 
@@ -69,7 +69,8 @@ startstate: I
 
  set:5 boolean other; 	      
 
-  (I, src?GetM, IM) {   
+  (I, src?GetM, IM) {
+	working[1] = true;   
     	owner = src;
 	modifiers.add(src);	     
 	src!Data@c1;
