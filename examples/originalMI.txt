@@ -1,13 +1,11 @@
-global : int[0..1] smth;
-
-channels: ch1;
-
-networks: unordered net1{ch1};
+networks: unordered {ch1};
 
 machine Cache:[4] {
 
+startstate: I;
+
 	(I, *Read_Write, IM) {
-		Dir[0]!GetM;
+		Dir[0]!GetM@ch1;
 	}
 
 	(IM, *Read_Write) {
@@ -15,26 +13,29 @@ machine Cache:[4] {
 	}
 
 	(IM, src?Data, M) {
-		dir[0]!Ack;
+		dir[0]!Ack@ch1;
 	}
 
 	(M, *Read_Write) {
   		hit;
 	}
 
-	(M, src?Fwd<cache dst>, I) {
-		dst!Data;
+	(M, src?Fwd<Cache toSend = dst>, I) {
+		dst!Data@ch1;
 	}
 
 }
 
-machine Dir:[1] {
+machine Dir {
 
-	Cache owner;
+startstate: I;
+
+Cache owner;
+
 
 	(I, src?GetM, IM) {
 		owner = src;
-		src!Data;
+		src!Data@ch1;
 	}
 
 	(IM, src?GetM){
@@ -45,8 +46,11 @@ machine Dir:[1] {
 	}
 
 	(M, src?GetM, IM) {
-		owner! Fwd<cache src>;
+		owner!Fwd<Cache toSend = src>@ch1;
 		owner = src;
 	}
 
 }
+
+
+
