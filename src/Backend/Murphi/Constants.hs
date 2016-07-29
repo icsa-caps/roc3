@@ -26,10 +26,10 @@ import TomurphiHelper
 instance Cl.MurphiClass Constants where
 
  tomurphi (Constants machineSizes vcs) = "const\n\n" ++
-                                         "Machine Sizes\n" ++ machinesSizes
+                                         "-- Machine Sizes\n" ++ machinesSizes
                                         ++ "\n\n"
-                                        ++ "Network parameters\n" ++ netParams
-                                        ++ "NET_MAX: " ++ show netMax
+                                        ++ "-- Network parameters\n" ++ netParams
+                                        ++ "NET_MAX: " ++ show netMax ++ ";"
   where
 
     onlyMachines   = map fst machineSizes

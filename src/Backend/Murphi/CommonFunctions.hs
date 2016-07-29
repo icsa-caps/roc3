@@ -59,17 +59,23 @@ instance Cl.MurphiClass CommonFunctions where
 
 
 
-   sendTop = "Procedure Send(mtype: MessageType;\n" ++
-             "               " ++ "src: Node;\n"    ++
-             "               " ++ "dst: Node;\n"    ++
-             "               " ++ "vc: VC_Type;\n"  ++
-             pushBy 15 (mapconcatln Cl.tomurphi msgArgs) ++ ");"
+   sendTop = let
+                 otherMsgArgs = let decls = (mapconcatln Cl.tomurphi msgArgs)
+                                in init decls -- we remove the last ";"
+                 vcDecl = if otherMsgArgs == [] then "vc: VC_Type\n"
+                          else "vc: VC_Type;\n"
+             in
+                 "Procedure Send(mtype: MessageType;\n" ++
+                 "               " ++ "src: Node;\n"    ++
+                 "               " ++ "dst: Node;\n"    ++
+                 "               " ++ vcDecl  ++
+                 pushBy 15 otherMsgArgs ++ ");"
 
    sendNext = "var\n  msg: Message;\n\nbegin\n"
 
-   sendStandardAssignments = "msg.src = src;\n" ++
-                             "msg.dst = dst;\n" ++
-                             "msg.vc  = vc;\n"
+   sendStandardAssignments = "msg.src := src;\n" ++
+                             "msg.dst := dst;\n" ++
+                             "msg.vc  := vc;\n"
 
    sendEnd = "\nend;\n"
 
@@ -83,7 +89,7 @@ instance Cl.MurphiClass CommonFunctions where
                sendNext    ++ "\n" ++
                pushBy 5 sendStandardAssignments ++ -- contains new line
                assignments ++ "\n" ++ -- don't need pushBy, don't know why
-               pushBy 5 printedNets ++ "\n" 
+               pushBy 5 printedNets ++ "\n"
                ++ sendEnd
 
    -----------------------------
@@ -111,7 +117,7 @@ instance Cl.MurphiClass CommonFunctions where
    -- adding a msg to an ordered net
    addOrd net = let count = countName net
                 in  "Assert("++ count ++ "[dst] < NET_MAX)" ++
-                    " \"Too many msgs on " ++ net ++ "Q\";\n" ++
+                    "  \"Too many msgs on " ++ net ++ "Q\";\n" ++
                     "  " ++ net ++ "[dst][" ++ count ++ "[dst]] := msg;\n" ++
                     "  " ++ count ++ "[dst] := " ++ count ++ "[dst] + 1;\n"
 
@@ -119,7 +125,7 @@ instance Cl.MurphiClass CommonFunctions where
    -- adding a msg to an unordered net
    addUnord net =
     "Assert (MultiSetCount(i:" ++ net ++ "[dst], true) < NET_MAX)" ++
-    "\"Too many messages\";\n" ++
+    " \"Too many messages\";\n" ++
     "MultiSetAdd(msg, " ++ net ++ "[dst]);\n"
 
    -----------------------------
