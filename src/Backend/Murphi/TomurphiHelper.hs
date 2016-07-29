@@ -244,7 +244,7 @@ guardMsgVC (Just vc) = " & msg.vc = " ++ vc
 
 guardMsgSrc :: Maybe Field -> String
 guardMsgSrc (Nothing) = ""
-guardMsgSrc (Just src) = "& msg.src = " ++ Cl.tomurphi src
+guardMsgSrc (Just src) = " & msg.src = " ++ Cl.tomurphi src
 
 printArgCond :: (ArgName, Field) -> String
 printArgCond (arg, field)  = "msg." ++ arg ++ "=" ++ Cl.tomurphi field
