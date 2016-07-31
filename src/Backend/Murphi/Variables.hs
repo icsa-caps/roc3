@@ -24,7 +24,8 @@ import TomurphiHelper
 
 instance Cl.MurphiClass Variables where
 
- tomurphi variables = "-- machines\n"       ++ finalMachines ++ "\n" ++
+ tomurphi variables = "var\n\n" ++
+                      "-- machines\n"       ++ finalMachines ++ "\n" ++
                       "-- ordered Nets\n"   ++ finalOrd      ++ "\n" ++
                       "-- unordered Nets\n" ++ finalUnord    ++ "\n"
   where

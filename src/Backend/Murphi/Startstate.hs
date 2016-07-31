@@ -60,6 +60,7 @@ instance Cl.MurphiClass Startstate where
                                     ++ "\n-------------------------------\n\n"
           in
               -- all new lines are inside the variables
+              "startstate\n\n" ++
               machinesInit     ++
               unorderedNetInit ++
               orderedNetInit
