@@ -91,7 +91,7 @@ instance Cl.MurphiClass Response where
 
  -- state :: String
  tomurphi (ToState machine state) = indexedMachineGen machine ++
-                                    ".state = " ++ state ++ ";"
+                                    ".state := " ++ state ++ ";"
 
 
  -- Message :: Message MsgType [Maybe Field], src, dst :: Field
