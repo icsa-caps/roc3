@@ -29,6 +29,8 @@ getRules fAst =  B.Rules selfIssueRules receiveOrdNets receiveUnordNets
   where
       machines = getMachineNames fAst
 
+      nonsyms  = getNonsyms fAst
+
       ordNets = getOrdVCs fAst
       receiveOrdNets = map (\(netName, vcs) ->
                              B.ReceiveOrdNet netName vcs machines)
@@ -42,7 +44,7 @@ getRules fAst =  B.Rules selfIssueRules receiveOrdNets receiveUnordNets
 
       selfIssueRules = let machineInfo = findSelfIssued fAst
                            stdArgs     = stdMsgArgs fAst
-                       in  allSelfIssued machineInfo stdArgs
+                       in  allSelfIssued machineInfo stdArgs nonsyms
 
 
 
@@ -90,8 +92,9 @@ findSelfIssued fAst
 
 singleSelfIssued :: F.MachineType -> [F.Field]   -- the machine and its fields
                     -> [B.MsgArg]                -- standard form of msg in Murphi
+                    -> [F.MachineType]           -- list of nonsymmetric machines
                     -> F.MachineFCase -> B.SelfIssueRule
-singleSelfIssued machine machineFields stdArgs
+singleSelfIssued machine machineFields stdArgs nonsyms
                 (state1, selfIssueMsg, state2, fResps)
 
       = B.SelfIssueRule rulename localVars bGuard bResps
@@ -105,7 +108,7 @@ singleSelfIssued machine machineFields stdArgs
                   else let stateName = transState machine $ fromJust state2
                        in  [B.ToState (B.AnyType machine) stateName]
 
-    bResps = map (transResponse machine machineFields stdArgs localVars) fResps
+    bResps = map (transResponse machine machineFields stdArgs nonsyms localVars) fResps
              ++ changeState
 
     bGuard = guardState machine state1
@@ -114,23 +117,25 @@ singleSelfIssued machine machineFields stdArgs
 
 singleMachineSelfIssued :: F.MachineType -> [F.Field] ->
                            [B.MsgArg] ->      -- standard form of msg in Murphi
+                           [F.MachineType] -> -- list of nonsymmetric machines
                            [F.MachineFCase] -> (B.MachineType,[B.SelfIssueRule])
 
-singleMachineSelfIssued machine fields stdArgs functionCases
- = let rules = map (singleSelfIssued machine fields stdArgs) functionCases
+singleMachineSelfIssued machine fields stdArgs nonsyms functionCases
+ = let rules = map (singleSelfIssued machine fields stdArgs nonsyms) functionCases
    in  (machine,rules)
 
 
 allSelfIssued :: [ ( F.MachineType, [F.Field], [F.MachineFCase] ) ] ->
                  [B.MsgArg] ->      -- standard form of msg in Murphi
+                 [F.MachineType] -> -- list of nonsymmetric machines
                  [(B.MachineType,[B.SelfIssueRule])]
 
-allSelfIssued allMachinesInfo stdArgs = map forTriplet allMachinesInfo
+allSelfIssued allMachinesInfo stdArgs nonsyms = map forTriplet allMachinesInfo
     where
         forTriplet :: ( F.MachineType, [F.Field], [F.MachineFCase] ) ->
                       (B.MachineType,[B.SelfIssueRule])
         forTriplet (machine, fields, rulesToBe)
-          = singleMachineSelfIssued machine fields stdArgs rulesToBe
+          = singleMachineSelfIssued machine fields stdArgs nonsyms rulesToBe
 
 
 ------------------------------------------------------------------

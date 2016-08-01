@@ -92,9 +92,10 @@ formalMsgArg (F.MsgArg typeDecl)         = transTypeDecl typeDecl
 
 
 -- get the general form of a message in the backend
+-- src should also be a msg arg
 stdMsgArgs :: F.Ast -> [B.MsgArg]
 stdMsgArgs fAst = let msgs     = getFMsgs fAst
-                      fMsgArgs = concat $ map argOfMsg msgs
+                      fMsgArgs = (concat $ map argOfMsg msgs)
                   in  nub $ map formalMsgArg fMsgArgs
 
 
@@ -107,10 +108,11 @@ getMsgArgsNames fAst = map (\(B.Decl name _) -> name) $ stdMsgArgs fAst
 --------------------------------
 
 transMsg :: F.MachineType -> [F.Field]  -- the machine and its fields
-            -> [B.MsgArg]                -- standard form of msg args in Murphi
+            -> [B.MsgArg]               -- standard form of msg args in Murphi
+            -> [F.MachineType]          -- non symmetric machines
             -> B.LocalVariables
             -> F.Msg -> B.Message
-transMsg machine machineFields stdArgs locals (F.Msg mtype args)
+transMsg machine machineFields stdArgs nonsyms locals (F.Msg mtype args)
     = let
             -- get names of the std args
             stdArgsNames = map (\(B.Decl name _) -> name) stdArgs
@@ -141,7 +143,7 @@ transMsg machine machineFields stdArgs locals (F.Msg mtype args)
       getArg (F.GuardAssign decl param)
         = let formal = getTypeDeclName decl
               -- see TransGen
-              field = transVar machine machineFields stdArgs locals param
+              field = transVar machine machineFields stdArgs nonsyms locals param
           in  (formal, field)
 
 

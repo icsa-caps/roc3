@@ -141,14 +141,6 @@ getType (F.Set (Right machine) otherDecl)
 
 --------------------------------
 
-arrayOrMachine :: [F.MachineType] -> [F.MachineType] -> F.Param -> F.Param
-arrayOrMachine syms nonsyms (F.ArrayElem name index)
-    | name `elem` syms      = error "trying to index symmetric machine"
-    | name `elem` nonsyms   = F.NonSymInst name index -- instance of nonsym
-    | otherwise             = F.ArrayElem name index  -- indeed array elem
-
---------------------------------
-
 -- getting from the fronend type declaration to the backend type declaration
 transTypeDecl :: F.TypeDecl -> B.TypeDecl
 transTypeDecl frontTypeDecl = B.Decl (getTypeDeclName frontTypeDecl)
@@ -181,13 +173,14 @@ findLocal resps =
 
 transVar :: F.MachineType -> [F.Field]   -- the machine and its fields
             -> [B.MsgArg]                -- standard form of msg in Murphi
+            -> [F.MachineType]           -- non symmetric machines
             -> B.LocalVariables
             -> F.Param -> B.Field
 
-transVar _ _ _ _ (F.NonSymInst machine index)
-   = B.Field (B.MachineIndex machine index) B.Global
+transVar _ _ _ _ _ (F.NonSymInst machine index) -- redundant
+   = B.Field (B.NonsymIndex machine index) B.Global
 
-transVar machine machineFields stdMsgArgs locals param
+transVar machine machineFields stdMsgArgs nonsyms locals param
 
   = let fieldsNames  = map (\(F.Field typeDecl _) -> getTypeDeclName typeDecl)
                            machineFields
@@ -200,8 +193,12 @@ transVar machine machineFields stdMsgArgs locals param
         localNames   = map (\(B.Decl name _) -> name)
                            locals
 
-        var = varFromParam param
         name = varName param
+
+        finalParam = if name `elem` nonsyms then machineFromArray param
+                     else param
+
+        var = varFromParam finalParam
 
     in if name `elem` fieldsNames             -- machine field
             then (B.Field var (B.Owner (B.AnyType machine)))
@@ -217,10 +214,21 @@ transVar machine machineFields stdMsgArgs locals param
 
 --------------------------------
 
+-- the parser by default parses expressions <identifier> [<num>]
+-- as arrays. But they may refer to an instance of a non-symmetric machine
+machineFromArray :: F.Param -> F.Param
+machineFromArray (F.ArrayElem name index) = F.NonSymInst name index
+
+isArray :: F.Param -> Bool
+isArray (F.ArrayElem _ _) = True
+isArray _               = False
+
+--------------------------------
+
 varFromParam :: F.Param -> B.Variable
 varFromParam (F.ArrayElem arrayName index) = B.ArrayElem arrayName index
 varFromParam (F.VarOrVal iden)             = B.Simple iden
-varFromParam (F.NonSymInst machine index)  = B.MachineIndex machine index
+varFromParam (F.NonSymInst machine index)  = B.NonsymIndex machine index
 
 -- the identifier for an array, a variable, a constant or an instance of
 -- a machine
@@ -247,6 +255,20 @@ varName (F.NonSymInst machine index)  = machine
 getMachineNames :: F.Ast -> [B.MachineType]
 getMachineNames fAst = let machinesAllInfo = F.machines fAst
                        in  map F.machineType machinesAllInfo
+
+--------------------------------
+
+-- returns the list of nonsymmetric machines.
+-- we need it to transform array elements to
+-- instances of machines when needed
+getNonsyms :: F.Ast -> [F.MachineType]
+getNonsyms fAst = let machinesAllInfo = F.machines fAst
+                      allMachines   = map F.machineType machinesAllInfo
+                      allSymmetries = map F.symmetry machinesAllInfo
+                      pairs         = zip allMachines allSymmetries
+
+                  in map fst $ filter ( \(m,sym) -> sym == F.Nonsymmetric )
+                                      pairs
 
 --------------------------------
 

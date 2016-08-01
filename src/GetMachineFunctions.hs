@@ -32,19 +32,21 @@ getMachineFunctions fAst
   = let
       stdArgs = stdMsgArgs fAst
       machines = F.machines fAst
+      nonsyms  = getNonsyms fAst
 
-      in B.MachineFunctions $ map (singleMFunction stdArgs) machines
+      in B.MachineFunctions $ map (singleMFunction stdArgs nonsyms) machines
 
 
 -----------------------------------------------------------------
 
 singleMFunction :: [B.MsgArg] ->   -- standard msg arguments format
+                   [F.MachineType] -> -- nonsymmetric machines
                     F.Machine -> (B.MachineType, B.Sets, [B.BCastInfo],
                                   B.ReceiveFunction, B.LocalVariables)
                                   -- mfunction :: [( State, Guard,  Maybe State, [Response] )]
                                   -- backend equivalent in B.ReceiveFunction is List of
                                   -- ( State, [ (Maybe Guard, [Response])
-singleMFunction stdArgs (F.Machine _ machine _ _ fields mFunction)
+singleMFunction stdArgs nonsyms (F.Machine _ machine _ _ fields mFunction)
    = let
          sets = findSets fields
 
@@ -57,7 +59,7 @@ singleMFunction stdArgs (F.Machine _ machine _ _ fields mFunction)
          noSelfIssued     = filter (not.isSelfIssued) mFunction
 
          groupedReactions = groupSameStart noSelfIssued
-         receiveFunction  = map (receiveInst machine fields stdArgs locals)
+         receiveFunction  = map (receiveInst machine fields stdArgs nonsyms locals)
                                 groupedReactions
 
 
@@ -213,12 +215,13 @@ groupSameStart cases
 -- we transform all the reactions with the same starting state
 receiveInst :: F.MachineType -> [F.Field]  -- the machine and its fields
             -> [B.MsgArg]                  -- standard form of msg in Murphi
+            -> [F.MachineType]             -- non symmetric machines
             -> B.LocalVariables
             ------------------------
             -> (F.State, [(F.Guard, Maybe F.State, F.Responses)])
             -> B.Reaction
 
-receiveInst machine machineFields stdArgs locals (fState, withoutStart)
+receiveInst machine machineFields stdArgs nonsyms locals (fState, withoutStart)
    = let
          -- get the responses and the guards of each machineFCase
          guardsResps = map singleGuard withoutStart
@@ -235,6 +238,7 @@ receiveInst machine machineFields stdArgs locals (fState, withoutStart)
                bGuard = Just $ transReceiveMsg machine
                                                machineFields
                                                stdArgs
+                                               nonsyms
                                                locals
                                                fGuard
                -- go to next state
@@ -245,6 +249,7 @@ receiveInst machine machineFields stdArgs locals (fState, withoutStart)
                bResps = map (transResponse machine
                                            machineFields
                                            stdArgs
+                                           nonsyms
                                            locals)
                             fResps
 

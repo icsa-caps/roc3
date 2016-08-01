@@ -16,14 +16,15 @@ import TransMsg
 
 transReceiveMsg :: F.MachineType -> [F.Field]  -- the machine and its fields
                    -> [B.MsgArg]               -- standard form of msg in Murphi
+                   -> [F.MachineType]          -- non symmetric machines
                    -> B.LocalVariables
                    -> F.Guard -> B.Guard
 
-transReceiveMsg machine machineFields stdArgs locals (F.Issue _)
+transReceiveMsg machine machineFields stdArgs nonsyms locals (F.Issue _)
     = error ("Shouldn't use transReceiveMsg on F.Issue guard.\n" ++
             "F.Issue are rules, they are not part of the receive function")
 
-transReceiveMsg machine machineFields stdArgs locals (F.ReceiveFrom msg src vc)
+transReceiveMsg machine machineFields stdArgs nonsyms locals (F.ReceiveFrom msg src vc)
     = B.Receive mtype (guardMsgArgs msg) (transMaybeSrc src) (transMaybeVC vc)
 
     where
@@ -34,6 +35,7 @@ transReceiveMsg machine machineFields stdArgs locals (F.ReceiveFrom msg src vc)
         transMaybeSrc (Just src) = Just $ transVar machine
                                                    machineFields
                                                    stdArgs
+                                                   nonsyms
                                                    locals
                                                    src
 
@@ -52,6 +54,7 @@ transReceiveMsg machine machineFields stdArgs locals (F.ReceiveFrom msg src vc)
                   = let testVal  = transVar machine
                                            machineFields
                                            stdArgs
+                                           nonsyms
                                            locals
                                            param
                         argName  = getTypeDeclName typeDecl
