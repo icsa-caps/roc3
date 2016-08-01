@@ -11,6 +11,7 @@ import qualified Ast as F
 import qualified MurphiAST as B
 import Data.Maybe -- for fromJust
 import Data.List  -- for nub
+import Data.Char
 import TransGen
 import TransMsg
 import TransGuard
@@ -221,7 +222,7 @@ receiveInst machine machineFields stdArgs locals (fState, withoutStart)
    = let
          -- get the responses and the guards of each machineFCase
          guardsResps = map singleGuard withoutStart
-         startState = transState fState
+         startState = transState machine fState
 
      in
         (startState, guardsResps)
@@ -239,7 +240,7 @@ receiveInst machine machineFields stdArgs locals (fState, withoutStart)
                -- go to next state
                bNextSt = if fNextSt == Nothing then []
                          else [B.ToState (B.AnyType machine)
-                                         (transState $ fromJust fNextSt)]
+                                         (transState machine $ fromJust fNextSt)]
 
                bResps = map (transResponse machine
                                            machineFields

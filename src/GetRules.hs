@@ -102,8 +102,8 @@ singleSelfIssued machine machineFields stdArgs
     localVars = findLocal fResps -- use also in transResponse
 
     changeState = if state2 == Nothing then []
-                  else let name = getStateName $ fromJust state2
-                       in  [B.ToState (B.AnyType machine) name]
+                  else let stateName = transState machine $ fromJust state2
+                       in  [B.ToState (B.AnyType machine) stateName]
 
     bResps = map (transResponse machine machineFields stdArgs localVars) fResps
              ++ changeState

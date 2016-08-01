@@ -18,7 +18,7 @@ transReceiveMsg :: F.MachineType -> [F.Field]  -- the machine and its fields
                    -> [B.MsgArg]               -- standard form of msg in Murphi
                    -> B.LocalVariables
                    -> F.Guard -> B.Guard
-                   
+
 transReceiveMsg machine machineFields stdArgs locals (F.Issue _)
     = error ("Shouldn't use transReceiveMsg on F.Issue guard.\n" ++
             "F.Issue are rules, they are not part of the receive function")
@@ -64,7 +64,7 @@ transReceiveMsg machine machineFields stdArgs locals (F.ReceiveFrom msg src vc)
 -- a guard with a state at the Backend
 
 guardState :: F.MachineType -> F.State -> B.Guard
-guardState machine state = let stateName  = getStateName state
+guardState machine state = let stateName  = transState machine state
                                bMachine   = B.AnyType machine
                            in  B.AtState bMachine stateName
 

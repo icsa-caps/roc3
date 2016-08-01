@@ -8,6 +8,7 @@ module TransGen where
 
 import Data.Maybe -- for fromJust
 import Data.List  -- for nub
+import Data.Char  -- for toUpper
 import qualified Ast as F
 import qualified MurphiAST as B
 
@@ -43,8 +44,10 @@ getVCName (F.VC name) = name
 
 -------------------------------
 
-transState :: F.State -> B.State
-transState = getStateName         -- currently B.State = String
+-- e.g. if I is a state for both Cache and Directory,
+-- in murphi the directory state will be D_I and the cache state C_I
+transState :: F.MachineType -> F.State -> B.State
+transState (start:_) state = (toUpper start) : '_' : getStateName state
 
 -------------------------------
 
@@ -259,7 +262,10 @@ getSymmetries fAst = let machinesAllInfo = F.machines fAst
 
 getStartstates :: F.Ast -> [B.State]
 getStartstates fAst = let machinesAllInfo = F.machines fAst
-                      in  map (getStateName . F.startstate) machinesAllInfo
+                          fStartstates    = map F.startstate machinesAllInfo
+                          machineNames    = map F.machineType machinesAllInfo
+                          machinesStartSt = zip machineNames fStartstates
+                      in  map (uncurry transState) machinesStartSt
 
 --------------------------------
 

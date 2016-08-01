@@ -110,13 +110,10 @@ instance Cl.MurphiClass Types where
 
     printMstate :: (MachineName, [StateName], [TypeDecl]) -> String
     printMstate (machine, states, fields)
-                 = let theseStates = let fstLet = toUpper $ head machine
-                                     in map (\state -> [fstLet] ++ "_" ++ state )
-                                              states
-                   in  toMachineStateStr machine ++ ":\n record\n" ++
-                       pushBy 2 ( (printEnum "state" theseStates) ++
-                                 concatWith ",\n" (map Cl.tomurphi fields))
-                       ++ "\n end;\n"
+      = toMachineStateStr machine ++ ":\n record\n" ++
+        pushBy 2 ( (printEnum "state" states) ++
+                      concatWith ",\n" (map Cl.tomurphi fields))
+        ++ "\n end;\n"
 
     finalMstates = concatln $ map printMstate mstates
 
