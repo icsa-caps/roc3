@@ -20,8 +20,8 @@ startstate: I;
   		hit;
 	}
 
-	(M, src?Fwd<Cache toSend = dst>, I) {
-		dst!Data@ch1;
+	(M, src?Fwd<Cache toSend>, I) {
+		toSend!Data@ch1;
 	}
 
 }
