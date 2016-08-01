@@ -168,8 +168,8 @@ instance Cl.MurphiClass MachineFunctions where
     = "if " ++ guardedResponses (Just guard, responses) ++ "\n" ++
       elsifResponses rest  ++ "\n" ++
       "else\n" ++
-      "   ErrorUnhandledMsg();\n" -- one ln in ouput however many (even 0) I put here
-
+      "   ErrorUnhandledMsg();\n" ++  -- one ln in ouput however many (even 0) I put here
+      "endif;\n"
 
    -----------------------------
 
@@ -192,6 +192,8 @@ instance Cl.MurphiClass MachineFunctions where
       ++ ") : boolean;\n" ++
       Cl.tomurphi localVariables ++
       "begin\n" ++
+      " switch " ++
+      indexedFormalStr machine ++ ".state" ++
       pushBy 3 (caseAllStates statesGuardsReps) ++
       "\n   else\n" ++
       "      ErrorUnhandledState();\n" ++
