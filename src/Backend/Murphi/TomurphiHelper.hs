@@ -103,7 +103,8 @@ instance Cl.MurphiClass Response where
           src1 = onlyIndex src
           dst1 = onlyIndex dst
       in
-          "Send(" ++ Cl.tomurphi src1 ++ ",\n" ++
+          "Send(" ++ mtype ++ ",\n" ++
+          "     " ++ Cl.tomurphi src1 ++ ",\n" ++
           "     " ++ Cl.tomurphi dst1 ++ ",\n" ++
           "     " ++ vc         ++ ",\n" ++
           pushBy 5 (mapconcatlnComma Cl.tomurphi params) ++ ");"
