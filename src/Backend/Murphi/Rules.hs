@@ -23,10 +23,13 @@ import TomurphiHelper
 instance Cl.MurphiClass Rules where
  tomurphi (Rules selfIssued receiveOrdNets receiveUnordNets)
    = finalSelfIssued ++
-     "-- ordered networks receive rules\n\n" ++
+     "\n----------------------------------------------------------------\n\n" ++
+     "-- ordered networks receive rules\n" ++
      finalReceiveOrdNets ++
-     "-- unordered networks receive rules" ++
-     finalReceiveUnordNets
+     "\n----------------------------------------------------------------\n\n" ++
+     "-- unordered networks receive rules\n" ++
+     finalReceiveUnordNets ++
+     "\n----------------------------------------------------------------\n\n"
 
   where
    -----------------------------
@@ -36,7 +39,7 @@ instance Cl.MurphiClass Rules where
    singleMachineSelfIssueRules :: (MachineType, [SelfIssueRule]) -> String
    singleMachineSelfIssueRules (machine, rules)
      = "-- " ++ machine ++ " self-issued rules\n"++
-       "ruleset"++ formalIndexStr machine ++ ":" ++ indexTypeStr machine
+       "ruleset "++ formalIndexStr machine ++ ":" ++ indexTypeStr machine
        ++  " do\n" ++
        -- for the time being, we won't use the alias
        --"  alias node:" ++ indexedFormalStr machine ++ " do\n\n" ++
@@ -60,23 +63,23 @@ instance Cl.MurphiClass Rules where
            allIsMember   = map (isMember "n") machines
            allProcess    = map processMessage machines
            casesMachines = printIfElse allIsMember allProcess
-           ruleName      = netName ++ "Receive"
+           ruleName      =  "\"" ++  netName ++ "Receive" ++ "\""
 
        in  "ruleset n:Node do\n" ++
            "  choose midx:" ++ netName ++ "[n] do\n" ++
-           "    alias chan:net[n]\n" ++
-           "      alias msg:chan[midx]\n\n" ++
+           "    alias chan:" ++ netName ++ "[n] do\n" ++
+           "      alias msg:chan[midx] do\n\n" ++
 
             "       rule " ++ ruleName ++ "\n" ++
-            pushBy 10 (disjunctVCs)    ++ "\n" ++
-            "       =>\n" ++
+            pushBy 10  ( "(" ++ (disjunctVCs) ++ ")" ) ++ "\n" ++
+            "       ==>\n" ++
             pushBy 10 casesMachines    ++ "\n" ++
             "       endrule;\n\n" ++
 
             "     endalias;\n"    ++
             "   endalias;\n"      ++
             "  endchoose;\n"      ++
-            "endruleset;\n"
+            "endruleset;\n\n"
 
    -- receive rules for a list of unordered nets
    allUnordNet :: [ReceiveUnordNet] -> String
@@ -88,7 +91,8 @@ instance Cl.MurphiClass Rules where
     -----------
    -- helper functions
    isMember :: String -> MachineName -> String
-   isMember alias machine = "IsMember(" ++ alias ++ ", " ++ machine ++ ")"
+   isMember alias machine = "IsMember(" ++ alias ++ ", "
+                                        ++ indexTypeStr machine ++ ")"
 
    processMessage :: MachineName -> String
    processMessage machine = "if " ++ machine ++ "Receive(msg,n) then\n" ++
@@ -110,23 +114,23 @@ instance Cl.MurphiClass Rules where
            allIsMember   = map (isMember "n") machines
            allDeQ        = map (deQ netName) machines
            casesMachines = printIfElse allIsMember allDeQ
-           ruleName      = netName ++ "Receive"
+           ruleName      = "\"" ++ netName ++ "Receive" ++ "\""
 
        in  "ruleset n:Node do\n" ++
            "  choose midx:" ++ netName ++ "[n] do\n" ++
-           "    alias chan:net[n]\n" ++
-           "      alias msg:chan[midx]\n\n" ++
+           "    alias chan:" ++ netName ++ "[n] do\n" ++
+           "      alias msg:chan[midx] do\n\n" ++
 
            "       rule " ++ ruleName ++ "\n" ++
-           "         " ++ countName netName ++ "[n] > 0\n" ++
-           "       =>\n" ++
+           "         " ++ "(" ++ countName netName ++ "[n] > 0" ++ ")\n" ++
+           "       ==>\n" ++
            pushBy 9 casesMachines ++ "\n" ++
            "       endrule;\n\n" ++
 
            "     endalias;\n"    ++
            "   endalias;\n"      ++
            "  endchoose;\n"      ++
-           "endruleset;\n"
+           "endruleset;\n\n"
 
    -- helper function
    deQ :: NetName -> MachineName -> String
@@ -149,12 +153,12 @@ instance Cl.MurphiClass Rules where
 instance Cl.MurphiClass SelfIssueRule where
   tomurphi (SelfIssueRule rulename localVars guard responses)
     = "rule \"" ++ rulename ++ "\"\n" ++
-      pushBy 2 (Cl.tomurphi guard) ++ "\n" ++
-      "=>\n" ++
-      pushBy 2 (Cl.tomurphi localVars) ++
-      "Begin\n" ++
+       pushBy 2 ( "(" ++ (Cl.tomurphi guard) ++ ")" ) ++ "\n" ++
+      "==>\n" ++
+      pushBy 2 (Cl.tomurphi localVars) ++ "\n" ++
+      "begin\n" ++
       pushBy 2 (mapconcatln Cl.tomurphi responses) ++ "\n" ++
-      "endrule;"
+      "endrule;\n\n"
 
 
 -----------------------------------------------------------------
