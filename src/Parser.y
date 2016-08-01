@@ -34,7 +34,7 @@ import Data.List
 
 
     global        { TokenGlobal }
-    vcs      { TokenVCs }
+    vcs           { TokenVCs }
     networks      { TokenNetworks }
     ordered       { TokenOrdered }
     unordered     { TokenUnordered }
@@ -48,6 +48,7 @@ import Data.List
 
     Issue       { TokenIssue }
     Receive     { TokenReceive }
+    src         { TokenSrc }
     Send        { TokenSend }
     broadcast   { TokenBroadcast }
     stall       { TokenStall }
@@ -161,7 +162,9 @@ State_Guard     : '(' iden ',' Guard ')' '{' Responses '}'              { (State
                 | '(' iden ',' Guard ',' iden ')' '{' Responses '}'     { (State $2, $4, Just (State $6), $9) }
 
 
-Guard           : Param '?' Msg '@' VC                                 { ReceiveFrom $3 (Just $1) (Just $5) }
+Guard           : src '?' Msg '@' VC                                   { ReceiveFrom $3 (Nothing) (Just $5) }
+                | src '?' Msg                                          { ReceiveFrom $3 (Nothing) (Nothing) }
+                | Param '?' Msg '@' VC                                 { ReceiveFrom $3 (Just $1) (Just $5) }
                 | Param '?' Msg                                        { ReceiveFrom $3 (Just $1) (Nothing) }
                 | '*' iden                                             { Issue $2 }
 
@@ -170,8 +173,9 @@ Msg             : iden                                              { Msg $1 []}
                 | iden '<' MsgArgs '>'                              { Msg $1 $3 }
 
 
-MsgArgs         : MsgArg                                           { [$1] }
+MsgArgs         : {-- empty --}                                    { [] }
                 | MsgArgs ',' MsgArg                               { $3 : $1 }
+                | MsgArg                                           { [$1] }
 
 
 MsgArg          : TypeDecl '=' Param                               { GuardAssign $1 $3 }
@@ -203,6 +207,7 @@ Assignment      : Param    '=' Param                               { Assign $1 $
 
 
 Param           : iden '[' num ']'                              { ArrayElem $1 $3 }
+                | src                                           { VarOrVal "src" }
                 | iden                                          { VarOrVal $1 }
 
 

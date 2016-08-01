@@ -55,6 +55,7 @@ tokens :-
 
     Issue           { \s -> TokenIssue }
     Receive         { \s -> TokenReceive }
+    src             { \s -> TokenSrc }
     Send            { \s -> TokenSend }
     broadcast       { \s -> TokenBroadcast }
     stall           { \s -> TokenStall }
@@ -105,6 +106,7 @@ data Token = TokenBegin
            | TokenSet
            | TokenIssue
            | TokenReceive
+           | TokenSrc
            | TokenSend
            | TokenBroadcast
            | TokenStall
@@ -113,9 +115,7 @@ data Token = TokenBegin
            | TokenDel
            | TokenIdentifier String
            | TokenNum Int
-
-
-           deriving (Eq,Show)
+             deriving (Eq,Show)
 
 scanTokens = alexScanTokens
 
