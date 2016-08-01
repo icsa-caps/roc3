@@ -48,10 +48,11 @@ getMStates fAst = let machines = F.machines fAst
   where
     -- get the states of a single machine, no duplicates
     mstatesSingle :: F.Machine -> [B.State]
-    mstatesSingle machine = let mfunction = F.machineFunction machine
+    mstatesSingle machine = let mfunction   = F.machineFunction machine
+                                machineName = F.machineType machine
                                 fstates   = map (\(s,_,_,_) -> s)
                                                 mfunction
-                            in  nub $ map transState fstates
+                            in  nub $ map (transState machineName) fstates
 
 
 -----------------------------------------------------------------
