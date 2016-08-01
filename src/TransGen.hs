@@ -45,9 +45,10 @@ getVCName (F.VC name) = name
 -------------------------------
 
 -- e.g. if I is a state for both Cache and Directory,
--- in murphi the directory state will be D_I and the cache state C_I
+-- in murphi the directory state will be Directory_I and
+-- for the Cache Cache_I
 transState :: F.MachineType -> F.State -> B.State
-transState (start:_) state = (toUpper start) : '_' : getStateName state
+transState machine state = machine ++ '_' : getStateName state
 
 -------------------------------
 
