@@ -194,6 +194,8 @@ transVar machine machineFields stdMsgArgs locals param
 
         msgArgsNames = map (\(B.Decl name _) -> name)
                            stdMsgArgs
+                       ++ ["src"] -- src in responses in frontend refers to
+                                -- the msg src, so in murphi it's msg.src
 
         localNames   = map (\(B.Decl name _) -> name)
                            locals
