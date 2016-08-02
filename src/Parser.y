@@ -125,8 +125,9 @@ Fields          : {-- empty --}                                     { [] }
                 | Fields1 ';'                                       { $1 }
 
 
-Fields1         : Field                                             { [$1] }
-                | Fields1 ',' Field                                 { $3 : $1 }
+Fields1         : {-- empty --}                                     { [] }
+                | Fields1 ',' Field                                 { $1 ++ [$3] }
+                | Field                                             { [$1] }
 
 Field           : TypeDecl  StartVal                                { Field $1 $2 }
 
@@ -147,8 +148,9 @@ TypeDecl        : boolean iden                                      { Boolean $2
                 | set ':' iden  TypeDecl                            { Set (Right $3) $4 }
 
 
-IdenList        : iden                                              { [$1] }
-                | IdenList ',' iden                                 { $3 : $1 }
+IdenList        : {-- empty --}                                     { [] }
+                | IdenList ',' iden                                 { $1 ++ [$3] }
+                | iden                                              { [$1] }
 
 
 Range           : '[' num ']'                                       { $2 }
@@ -174,7 +176,7 @@ Msg             : iden                                              { Msg $1 []}
 
 
 MsgArgs         : {-- empty --}                                    { [] }
-                | MsgArgs ',' MsgArg                               { $3 : $1 }
+                | MsgArgs ',' MsgArg                               { $1 ++ [$3] }
                 | MsgArg                                           { [$1] }
 
 
@@ -183,7 +185,7 @@ MsgArg          : TypeDecl '=' Param                               { GuardAssign
 
 
 Responses       : {-- empty --}                                    { [] }
-                | Responses Response1                              { $2 : $1 }
+                | Responses Response1                              { $1 ++ [$2] }
 
 
 Response1       : Response ';'                                     { $1 }
