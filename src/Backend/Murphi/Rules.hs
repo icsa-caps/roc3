@@ -118,24 +118,19 @@ instance Cl.MurphiClass Rules where
            ruleName      = "\"" ++ netName ++ "Receive" ++ "\""
 
        in  "ruleset n:Node do\n" ++
-           "  choose midx:" ++ netName ++ "[n] do\n" ++
-           "    alias chan:" ++ netName ++ "[n] do\n" ++
-           "      alias msg:chan[midx] do\n\n" ++
-
-           "       rule " ++ ruleName ++ "\n" ++
-           "         " ++ "(" ++ countName netName ++ "[n] > 0" ++ ")\n" ++
-           "       ==>\n" ++
+           "  rule " ++ ruleName ++ "\n" ++
+           "   " ++ "(" ++ countName netName ++ "[n] > 0" ++ ")\n" ++
+           "  ==>\n" ++
+           "     alias msg:" ++ netName ++ "[n][0] do\n" ++
            pushBy 9 casesMachines ++ "\n" ++
-           "       endrule;\n\n" ++
+           "     endalias;\n" ++
+           "  endrule;\n\n" ++
 
-           "     endalias;\n"    ++
-           "   endalias;\n"      ++
-           "  endchoose;\n"      ++
            "endruleset;\n\n"
 
    -- helper function
    deQ :: NetName -> MachineName -> String
-   deQ net machine = "if " ++ machine ++ "Receive then\n" ++
+   deQ net machine = "if " ++ machine ++ "Receive(msg,n) then\n" ++
                      "   Advance" ++ net ++ "(n);\n" ++
                      "endif;"
 
