@@ -51,7 +51,7 @@ instance Cl.MurphiClass Constants where
                 "NUM_VCs : " ++ show numChs ++ ";\n"
 
 
-    netMax = length machineSizes -- just #machines
+    netMax = sum onlySizes -- total #machines in the network
 
    ---- VC_<VCName> : <num>;
    ---- NUM_VCs : <num>;
