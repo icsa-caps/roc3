@@ -194,7 +194,7 @@ instance Cl.MurphiClass Variable where
  tomurphi (Simple varName)             = varName
  tomurphi (ArrayElem arrayName index)  = arrayName ++ "[" ++ show index ++ "]"
  tomurphi (MachineArray machine)       = indexedFormalStr machine
- tomurphi (MachineIndex machine index) = toMachineArrayStr machine
+ tomurphi (NonsymIndex machine index)  = machine ++ show index -- for nonsym
 
 
 ----------------------------------------------------------------

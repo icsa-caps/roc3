@@ -194,7 +194,7 @@ groupSameStart cases
    where
 
        -- we have a map where the values are lists.
-       -- Given a key,value pair we look up the key and add the
+       -- Given a key-value pair we look up the key and add the
        -- value to the list of this key
        addOne :: (Eq a, Eq b) => (a,b) -> [(a,[b])] -> [(a,[b])]
        addOne (k,v) list = let prevVal = fromJust $ lookup k list

@@ -42,6 +42,10 @@ concatcomma = concatWith ", "
 fstCap :: String -> String
 fstCap (ch:str) = (toUpper ch) : str
 
+-- used for variables
+fstLower :: String -> String
+fstLower (ch:str) = (toLower ch) : str
+
 
 printEnum :: Name -> [Val] -> String
 printEnum name values = name ++ ": enum { " ++
@@ -117,6 +121,13 @@ toMachineState = toMachineStateStr . machineName
 
 --------------------------------
 
+-- transforms a state as given by the front-end
+-- (e.g. I) to a state of this machine (e.g. D_I for directory)
+thisMachineState :: MachineType -> State -> State
+thisMachineState (start:_) state = (toUpper start) : '_' : state
+
+--------------------------------
+
 
 -- formal parameter for indexing
 formalIndexStr :: MachineType -> String
@@ -185,7 +196,7 @@ onlyIndex :: Field -> Field
 onlyIndex (Field (MachineArray machine) Global)
     = JustIndex machine Nothing -- we don't know index of nonsym
 
-onlyIndex (Field (MachineIndex machine index) Global )
+onlyIndex (Field (NonsymIndex machine index) Global )
     = JustIndex machine (Just index)
 
 onlyIndex other = other     -- don't alter other Field

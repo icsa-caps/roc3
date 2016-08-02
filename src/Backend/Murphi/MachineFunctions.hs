@@ -197,7 +197,7 @@ instance Cl.MurphiClass MachineFunctions where
       pushBy 3 (caseAllStates statesGuardsReps) ++
       "\n   else\n" ++
       "      ErrorUnhandledState();\n" ++
-      "  endswitch;\n\n" ++
+      " endswitch;\n\n" ++
       " -- Message processed\n" ++
       " return true;\n" ++
       "end;\n"

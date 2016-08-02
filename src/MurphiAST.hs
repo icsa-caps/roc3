@@ -130,7 +130,7 @@ type Dst = Field
 data Variable = Simple VarName
               | ArrayElem ArrayName Index
               | MachineArray MachineType -- machine array indexed by std index
-              | MachineIndex MachineType Index -- instance of nonsym machine
+              | NonsymIndex MachineType Index -- instance of nonsym machine
                 deriving(Show,Eq)
 
 
