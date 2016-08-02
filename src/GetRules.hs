@@ -93,11 +93,14 @@ findSelfIssued fAst
 singleSelfIssued :: F.MachineType -> [F.Field]   -- the machine and its fields
                     -> [B.MsgArg]                -- standard form of msg in Murphi
                     -> [F.MachineType]           -- list of nonsymmetric machines
-                    -> F.MachineFCase -> B.SelfIssueRule
+                    -> F.MachineFCase -> Maybe B.SelfIssueRule
+
+singleSelfIssued _ _ _ _ (_,_,_,[F.EmptyResp _]) = Nothing -- remove empty resps
+
 singleSelfIssued machine machineFields stdArgs nonsyms
                 (state1, selfIssueMsg, state2, fResps)
 
-      = B.SelfIssueRule rulename localVars bGuard bResps
+      = Just $ B.SelfIssueRule rulename localVars bGuard bResps
 
   where
     (F.Issue rulename) = selfIssueMsg
@@ -121,8 +124,10 @@ singleMachineSelfIssued :: F.MachineType -> [F.Field] ->
                            [F.MachineFCase] -> (B.MachineType,[B.SelfIssueRule])
 
 singleMachineSelfIssued machine fields stdArgs nonsyms functionCases
- = let rules = map (singleSelfIssued machine fields stdArgs nonsyms) functionCases
-   in  (machine,rules)
+ = let maybeRules  = map (singleSelfIssued machine fields stdArgs nonsyms) functionCases
+       noNothRules = filter (/=Nothing) maybeRules
+       noJustRules = map fromJust noNothRules
+   in  (machine,noJustRules)
 
 
 allSelfIssued :: [ ( F.MachineType, [F.Field], [F.MachineFCase] ) ] ->
