@@ -71,7 +71,8 @@ instance Cl.MurphiClass Rules where
            "      alias msg:chan[midx] do\n\n" ++
 
             "       rule " ++ ruleName ++ "\n" ++
-            pushBy 10  ( "(" ++ (disjunctVCs) ++ ")" ) ++ "\n" ++
+            pushBy 10  ( "(" ++ (disjunctVCs) ++
+                        " & !IsUndefined(msg.mtype)" ++ ")" ) ++ "\n" ++
             "       ==>\n" ++
             pushBy 10 casesMachines    ++ "\n" ++
             "       endrule;\n\n" ++
