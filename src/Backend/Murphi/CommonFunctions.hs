@@ -73,14 +73,15 @@ instance Cl.MurphiClass CommonFunctions where
 
    sendNext = "var\n  msg: Message;\n\nbegin\n"
 
-   sendStandardAssignments = "msg.src := src;\n" ++
-                             "msg.dst := dst;\n" ++
-                             "msg.vc  := vc;\n"
+   sendStandardAssignments = "msg.mtype := mtype;\n" ++
+                             "msg.src   := src;\n" ++
+                             "msg.dst   := dst;\n" ++
+                             "msg.vc    := vc;\n"
 
    sendEnd = "\nend;\n"
 
    msgFieldAssign :: MsgArg -> String
-   msgFieldAssign (Decl argname argtype) = "msg." ++ argname ++ ":= "
+   msgFieldAssign (Decl argname argtype) = "msg." ++ argname ++ " := "
                                             ++ argname ++ ";"
 
    assignments = mapconcatln msgFieldAssign msgArgs
