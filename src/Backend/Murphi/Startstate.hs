@@ -63,7 +63,9 @@ instance Cl.MurphiClass Startstate where
               "startstate\n\n" ++
               machinesInit     ++
               unorderedNetInit ++
-              orderedNetInit
+              orderedNetInit   ++
+              "\n\nendstartstate\n\n"
+
 
   where
    -----------------------------
