@@ -95,7 +95,9 @@ singleSelfIssued :: F.MachineType -> [F.Field]   -- the machine and its fields
                     -> [F.MachineType]           -- list of nonsymmetric machines
                     -> F.MachineFCase -> Maybe B.SelfIssueRule
 
+-- stalls and hits don't contribute to the rules.
 singleSelfIssued _ _ _ _ (_,_,_,[F.EmptyResp _]) = Nothing -- remove empty resps
+singleSelfIssued _ _ _ _ (_,_,_,[F.Stall])       = Nothing -- remove stalls
 
 singleSelfIssued machine machineFields stdArgs nonsyms
                 (state1, selfIssueMsg, state2, fResps)
