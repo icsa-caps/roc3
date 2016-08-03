@@ -129,12 +129,17 @@ bCastElemType fields name
 
         namesTypes   = zip names typeDecls
 
-        thisTypeDecl = let typeDecl = lookup name namesTypes
-                       in if typeDecl == Nothing then
+        thisTypeDecl = let maybeTypeDecl = lookup name namesTypes
+                       in if maybeTypeDecl == Nothing then
                              (error ("didn't declare the set" ++ name ++
                                    "in the fields of the machine." ++ name ++
                                    "is used in a broadcast"))
-                          else fromJust $ typeDecl
+                          else let typeDecl = fromJust maybeTypeDecl
+                               in case typeDecl of
+                                   (F.Set _ elemType) -> elemType
+                                   _                  -> (error ("broadcasting to machine field " ++ name
+                                                                  ++ "which is not a set!"))
+
 
         (B.Decl _ elemType) = transTypeDecl thisTypeDecl
 
