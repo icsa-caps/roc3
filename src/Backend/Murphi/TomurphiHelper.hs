@@ -127,9 +127,12 @@ instance Cl.MurphiClass Response where
           -- not the array indexed
           src1 = onlyIndex src
 
+-------------------------------------------------------
      in  "Cast" ++ fstCap mtype ++ fstCap setName ++
-         "(" ++ Cl.tomurphi src1 ++ "," ++ index ++ "," ++ vc ++ ");"
-
+         "(" ++ Cl.tomurphi src1 ++ "," ++ index ++ "," ++
+           vc ++ ",\n" ++
+          mapconcatlnComma Cl.tomurphi params ++ ");"
+-------------------------------------------------------
 
 
  tomurphi (Assign var value)    = Cl.tomurphi var ++ " := "

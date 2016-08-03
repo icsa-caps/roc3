@@ -47,13 +47,13 @@ instance Cl.MurphiClass MachineFunctions where
    addToSet machine (Decl setName (Set _ elemType))
      = let thisSet =indexedFormalStr machine ++ "." ++ setName
        in  "procedure addTo" ++ fstCap machine ++ setName ++ "List" ++
-           "(x: " ++ Cl.tomurphi elemType ++ ", " ++
+           "(x: " ++ Cl.tomurphi elemType ++ "; " ++
            formalIndexStr machine ++ " : " ++ indexTypeStr machine ++
-           ");\nbegin\n" ++
+           ");\nbegin\n\n" ++
            "  if MultiSetCount(i:" ++ thisSet ++ ", " ++
            thisSet ++ "[i] = x) != 0\n" ++
            "  then\n" ++ "   MultiSetAdd(x," ++ thisSet ++ ");\n" ++
-           "  endif;\nend;\n"
+           "  endif;\n\nend;\n"
 
    addToSet _  _ = error "Used MurphiPrint.addToSet on a non-set"
 
@@ -63,11 +63,11 @@ instance Cl.MurphiClass MachineFunctions where
    removeFromSet machine (Decl setName (Set _ elemType))
     = let thisSet = indexedFormalStr machine ++ "." ++ setName
       in  "procedure RemoveFrom" ++ fstCap machine ++ setName ++ "List" ++
-          "( x: " ++ Cl.tomurphi elemType ++ ", " ++
-          formalIndexStr machine ++ " : " ++ formalIndexStr machine ++
-          " );\nbegin" ++
+          "( x: " ++ Cl.tomurphi elemType ++ "; " ++
+          formalIndexStr machine ++ " : " ++ indexTypeStr machine ++
+          " );\nbegin\n\n" ++
           " MultiSetRemovePred(i:" ++ thisSet ++ "," ++  thisSet ++ "[i] = x);\n"
-          ++ "end;\n"
+          ++ "\nend;\n"
 
    removeFromSet _ _  = error "Used MurphiPrint.removeFromSet on a non-set"
 
@@ -97,10 +97,10 @@ instance Cl.MurphiClass MachineFunctions where
        in
            functionName ++
            "(src:Node;\n" ++
-            pushBy spaceNum (formalIndexStr machine ++ ":"
-                   ++ indexTypeStr machine ++ "; ") ++
-            pushBy spaceNum (declareArgs msgArgs) ++
-            pushBy spaceNum "vc:VC_Type" ++ ");\n" ++
+            ( pushBy spaceNum (formalIndexStr machine ++ ":"
+                   ++ indexTypeStr machine) ) ++ ";\n" ++
+            ( pushBy spaceNum "vc:VC_Type" ) ++ ";\n" ++
+            ( pushBy spaceNum (declareArgs msgArgs) ) ++ ");\n" ++
            "begin\n" ++
            "  for n:Node do\n" ++
            "    if  ( IsMember(n, " ++ Cl.tomurphi elemType ++  ") &\n" ++
