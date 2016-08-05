@@ -109,10 +109,10 @@ Machine         : Sym                                         { $1 }
 
 
 Nonsym          : machine iden '{' Startstate Fields States_Guards '}'                         { Machine Nonsymmetric $2 1 $4 $5 $6 }
-                | nonsymmetric machine iden ':' Range '{' Startstate Fields States_Guards '}'  { Machine Nonsymmetric $3 $5 $7 $8 $9 }
+                | nonsymmetric machine iden Range '{' Startstate Fields States_Guards '}'      { Machine Nonsymmetric $3 $4 $6 $7 $8 }
 
 
-Sym             : machine iden ':' Range '{' Startstate Fields States_Guards '}'               { Machine Symmetric $2 $4 $6 $7 $8 }
+Sym             : machine iden  Range '{' Startstate Fields States_Guards '}'                  { Machine Symmetric $2 $3 $5 $6 $7 }
 
 
 Startstate      : startstate ':' iden ';'                           { State $3 }
@@ -144,8 +144,8 @@ TypeDecl        : boolean iden                                      { Boolean $2
                 | iden iden                                         { Vertex    $1 $2 }
                 | '[' num ']' TypeDecl                              { Array  (Left $2)  $4 }
                 | '[' iden ']' TypeDecl                             { Array  (Right $2) $4 }
-                | set ':' num  TypeDecl                             { Set  (Left $3) $4}
-                | set ':' iden  TypeDecl                            { Set (Right $3) $4 }
+                | set Range TypeDecl                                { Set  (Left $2) $3}
+                | set '[' iden ']' TypeDecl                         { Set (Right $3) $5 }
 
 
 IdenList        : {-- empty --}                                     { [] }
