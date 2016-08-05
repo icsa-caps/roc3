@@ -112,7 +112,7 @@ instance Cl.MurphiClass Types where
     printMstate (machine, states, fields)
       = toMachineStateStr machine ++ ":\n record\n" ++
         pushBy 2 ( (printEnum "state" states) ++
-                      concatWith ",\n" (map Cl.tomurphi fields))
+                      concatWith "\n" (map Cl.tomurphi fields))
         ++ "\nend;\n"
 
     finalMstates = concatln $ map printMstate mstates
