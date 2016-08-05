@@ -31,6 +31,10 @@ tokens :-
     \;              { \s -> TokenSemiColon }
     \,              { \s -> TokenComa }
     \=              { \s -> TokenEq }
+    !=              { \s -> TokenNotEq}
+    ==              { \s -> TokenDoubleEq }
+    \&              { \s -> TokenAnd }
+    \|              { \s -> TokenOr }
     \?              { \s -> TokenQsMark }
     \!              { \s -> TokenExclMark }
     \*              { \s -> TokenStar }
@@ -42,7 +46,7 @@ tokens :-
     \@              { \s -> TokenAt }
 
     global          { \s -> TokenGlobal }
-    vcs        { \s -> TokenVCs }
+    vcs             { \s -> TokenVCs }
     networks        { \s -> TokenNetworks }
     ordered         { \s -> TokenOrdered }
     unordered       { \s -> TokenUnordered }
@@ -84,6 +88,10 @@ data Token = TokenBegin
            | TokenSemiColon
            | TokenComa
            | TokenEq
+           | TokenDoubleEq
+           | TokenNotEq
+           | TokenAnd
+           | TokenOr
            | TokenQsMark
            | TokenExclMark
            | TokenStar
