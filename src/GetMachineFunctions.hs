@@ -240,12 +240,12 @@ receiveInst machine machineFields stdArgs nonsyms locals (fState, withoutStart)
                        -> (Maybe B.Guard, [B.Response])
         singleGuard (fGuard, fNextSt, fResps)
          = let
-               bGuard = Just $ transReceiveMsg machine
-                                               machineFields
-                                               stdArgs
-                                               nonsyms
-                                               locals
-                                               fGuard
+               bGuard = Just $ transGuard machine
+                                          machineFields
+                                          stdArgs
+                                          nonsyms
+                                          locals
+                                          fGuard
                -- go to next state
                bNextSt = if fNextSt == Nothing then []
                          else [B.ToState (B.AnyType machine)

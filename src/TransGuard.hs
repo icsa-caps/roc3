@@ -14,6 +14,66 @@ import TransMsg
 -----------------------------------------------------------------
 -----------------------------------------------------------------
 
+transGuard :: F.MachineType -> [F.Field]  -- the machine and its fields
+              -> [B.MsgArg]               -- standard form of msg in Murphi
+              -> [F.MachineType]          -- non symmetric machines
+              -> B.LocalVariables
+              -> F.Guard -> B.Guard
+
+transGuard machine machineFields stdArgs nonsyms locals guard
+ = case guard of
+   (F.Equals param1 param2) -> let field1 = (transVar machine machineFields
+                                                      stdArgs nonsyms locals
+                                                      param1)
+
+                                   field2 = (transVar machine machineFields
+                                                      stdArgs nonsyms locals
+                                                      param2)
+
+                               in  B.Equals field1 field2
+
+   (F.NotEq param1 param2) -> let field1 = (transVar machine machineFields
+                                                     stdArgs nonsyms locals
+                                                     param1)
+
+                                  field2 = (transVar machine machineFields
+                                                     stdArgs nonsyms locals
+                                                      param2)
+
+                              in  B.NotEq field1 field2
+
+   (F.Not innerGuard)      -> B.Not (transGuard machine machineFields stdArgs
+                                                nonsyms locals
+                                                innerGuard)
+
+   (guard1 F.:&: guard2)   -> let bg1 = transGuard machine machineFields stdArgs
+                                                nonsyms locals
+                                                guard1
+
+                                  bg2 = transGuard machine machineFields stdArgs
+                                                   nonsyms locals
+                                                   guard2
+
+                              in  bg1 B.:&: bg2
+
+   (guard1 F.:|: guard2)   -> let bg1 = transGuard machine machineFields stdArgs
+                                                nonsyms locals
+                                                guard1
+
+                                  bg2 = transGuard machine machineFields stdArgs
+                                                   nonsyms locals
+                                                   guard2
+
+                              in  bg1 B.:|: bg2
+
+   msgGuard                -> transReceiveMsg machine machineFields stdArgs
+                                              nonsyms locals
+                                              msgGuard
+
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+
+
 transReceiveMsg :: F.MachineType -> [F.Field]  -- the machine and its fields
                    -> [B.MsgArg]               -- standard form of msg in Murphi
                    -> [F.MachineType]          -- non symmetric machines
