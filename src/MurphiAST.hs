@@ -294,7 +294,11 @@ type Reaction =( State, [ (Maybe Guard, [Response]) ] )
 data Guard           = Receive MType [(ArgName, Field)]
                                (Maybe Src) (Maybe VCName)
                      | AtState Machine State
+                     | Equals Field Field -- F.Param maps to B.Field
+                     | NotEq Field Field
+                     | Not Guard
                      | Guard :&: Guard
+                     | Guard :|: Guard
                        deriving(Show,Eq)
 
 -- Note on Guard, Receive: the list is the value each msg arg must have (if any)

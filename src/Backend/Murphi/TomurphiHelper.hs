@@ -233,7 +233,21 @@ instance Cl.MurphiClass Guard where
     = indexedMachineGen machine ++ ".state = " ++ state
 
   tomurphi (guard1 :&: guard2)
-    = Cl.tomurphi guard1 ++ "\n&\n" ++ Cl.tomurphi guard2
+    = "(" ++ Cl.tomurphi guard1 ++ ")" ++ "\n&\n"
+       ++ "(" ++ Cl.tomurphi guard2 ++ ")"
+
+  tomurphi (guard1 :|: guard2)
+    = "(" ++ Cl.tomurphi guard1 ++ ")" ++ "\n|\n"
+       ++ "(" ++ Cl.tomurphi guard2 ++ ")"
+
+  tomurphi (Not guard)
+    = "(" ++ "!" ++ Cl.tomurphi guard ++ ")"
+
+  tomurphi (Equals field1 field2)
+    =  "(" ++ Cl.tomurphi field1 ++ "=" ++ Cl.tomurphi field2 ++ ")"
+
+  tomurphi (NotEq field1 field2)
+    = "(" ++ Cl.tomurphi field1 ++ "!=" ++ Cl.tomurphi field2 ++ ")"
 
 -------------------------------------------------
 -- helper functions for this section
