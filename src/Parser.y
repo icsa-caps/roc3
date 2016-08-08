@@ -138,6 +138,7 @@ Field           : TypeDecl  StartVal                                { Field $1 $
 
 StartVal        : {-- empty --}                                     { Nothing }
                 | '(' iden ')'                                      { Just $2 }
+                | '(' num ')'                                       { Just (show $2) }
 
 -- may change to <iden> : <type> if hard to convert to target ast
 -- where iden is first arg (arrays are the problem)
