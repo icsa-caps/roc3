@@ -64,7 +64,7 @@ singleMFunction stdArgs nonsyms (F.Machine _ machine _ _ fields mFunction)
 
 
 
-         bcasts         = filter isBCast allFrontResps
+         bcasts         = filter (isBCast fields stdArgs locals) allFrontResps
          bcastMtypes    = map bCastMtype bcasts
          castWithMType  = zip bcastMtypes bcasts
          noDupls        = map snd $
@@ -106,18 +106,15 @@ finalBCast machine fields stdArgs resp
     in
         B.BCast machine setName elemType mtype msgArgs
 
-isBCast :: F.Response -> Bool
-isBCast (F.Broadcast _ _ _ _ ) = True
-isBCast _                      = False
 
 
 -- we assume the response is a BCast
 bCastMtype :: F.Response -> B.MType
-bCastMtype (F.Broadcast _ _ msg _) = mtypeFromMsg msg
+bCastMtype (F.Send msg _ _) = mtypeFromMsg msg
 bCastMType _   = error "used bCast on response that is not a broadcast"
 
 bCastSetName :: F.Response -> B.SetName
-bCastSetName (F.Broadcast _ dstSet _ _)  = varName dstSet
+bCastSetName (F.Send _ dstSet _)  = varName dstSet
 bCastSetName _   = error "used bCast on response that is not a broadcast"
 
 bCastElemType :: F.Fields -> F.SetName -> B.ElemType
@@ -148,7 +145,7 @@ bCastElemType fields name
 bCastMsgArgs :: [B.MsgArg] ->    -- std msg args
                 F.Response -> [Maybe B.MsgArg]
 
-bCastMsgArgs stdArgs (F.Broadcast _ _ msg _)
+bCastMsgArgs stdArgs (F.Send msg _ _)
   = let
         -- get the arguments of the broadcast
         args       = argOfMsg msg

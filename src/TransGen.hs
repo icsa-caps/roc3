@@ -26,7 +26,7 @@ isOrdered :: F.Network -> Bool
 isOrdered (F.Network F.Ord _ _) = True
 isOrdered _                     = False
 
---------------------------------
+-------------------------------
 
 backSymmetry :: F.Symmetry -> B.Symmetry
 backSymmetry (F.Symmetric)    = B.Symmetric

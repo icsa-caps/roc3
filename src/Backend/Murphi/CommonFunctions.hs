@@ -61,7 +61,7 @@ instance Cl.MurphiClass CommonFunctions where
 
    sendTop = let
                  otherMsgArgs = let decls = (mapconcatln Cl.tomurphi msgArgs)
-                                in init decls -- we remove the last ";"
+                                in if decls == [] then [] else init decls -- we remove the last ";"
                  vcDecl = if otherMsgArgs == [] then "vc: VC_Type\n"
                           else "vc: VC_Type;\n"
              in

@@ -111,8 +111,7 @@ data MsgArg      = GuardAssign TypeDecl Param  -- see note below
 -- you are not allowed to fire a rule on demand
 -- e.g. in a function body
 
-data Response   = Send Msg Dst VC
-                | Broadcast Src DstSet Msg VC
+data Response   = Send Msg Dst VC -- functions also as broadcast, depending on dst
                 | EmptyResp String  -- e.g. "hit". Ignore in target AST
                 | Add SetName (Either Param Int)
                 | Del SetName (Either Param Int)

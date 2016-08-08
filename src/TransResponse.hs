@@ -10,6 +10,7 @@ import qualified Ast as F
 import qualified MurphiAST as B
 import TransGen
 import TransMsg
+import Data.Maybe -- fromJust
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
@@ -77,29 +78,18 @@ transResponse machine machineFields stdArgs nonsyms locals resp
                                                                 nonsyms
                                                                 locals
                                                                 dst
-                                            in  B.Send bMsg bSrc bDst vcName
 
-      F.Broadcast src dstSet msg vc     ->  let bMsg    = transMsg machine
-                                                                   machineFields
-                                                                   stdArgs
-                                                                   nonsyms
-                                                                   locals
-                                                                   msg
-                                                vcName  = getVCName vc
-                                                bSrc    = transVar machine
-                                                                   machineFields
-                                                                   stdArgs
-                                                                   nonsyms
-                                                                   locals
-                                                                   src
-                                                bDstSet = transVar machine
-                                                                   machineFields
-                                                                   stdArgs
-                                                                   nonsyms
-                                                                   locals
-                                                                   dstSet
+                                                -- do we send to one machine or
+                                                -- to a set?
+                                                isBroadcast = isBCast machineFields
+                                                                      stdArgs
+                                                                      locals
+                                                                      resp
 
-                                            in  B.Broadcast bMsg bSrc bDstSet vcName
+                                            in  if isBroadcast then
+                                                    B.Broadcast bMsg bSrc bDst vcName
+                                                else
+                                                    B.Send bMsg bSrc bDst vcName
 
 
       F.Add setName (Left param )       ->  let elem = transVar machine
@@ -216,7 +206,65 @@ transResponse machine machineFields stdArgs nonsyms locals resp
 ----------------------------------------------------------------
 ----------------------------------------------------------------
 
--- Getting names and sizes (non machine specific)
+-- helper function for distinguishing send from broadcast
+isSet :: [F.Field] -> [B.MsgArg] -> B.LocalVariables
+         -> F.Param -> Bool
+
+isSet _ _ _ (F.NonSymInst _ _) = False
+isSet fields msgArgs locals (F.VarOrVal name)
+   = let allPairs = allNamesTypes fields msgArgs locals
+         value = lookup name allPairs
+
+    in   if value == Nothing then False
+         else simpleIsSet $ fromJust value
+
+
+isSet fields msgArgs locals (F.ArrayElem name _)
+   = let allPairs = allNamesTypes fields msgArgs locals
+         value = lookup name allPairs
+
+    in   if value == Nothing then False
+         else isArrayOfSets $ fromJust value
+
+
+
+
+simpleIsSet :: B.Type -> Bool
+simpleIsSet (B.Set _ _) = True
+simpleIsSet _           = False
+
+isArrayOfSets :: B.Type -> Bool
+isArrayOfSets (B.Array _ (B.Set _ _)) = True
+isArrayOfSets _                       = False
+
+
+allNamesTypes :: [F.Field] -> [B.MsgArg] -> B.LocalVariables
+                 -> [(B.Name, B.Type)]
+allNamesTypes fields msgArgs locals
+  = let machinePairs = namesTypesF $ map (\ (F.Field typeDecl _) -> typeDecl )
+                                         fields
+        msgArgPairs = namesTypesB msgArgs
+        localPairs  = namesTypesB locals
+        -- list of all (name,type)
+    in  machinePairs ++ msgArgPairs ++ localPairs
+    where
+
+        namesTypesB :: [B.TypeDecl] -> [(B.Name, B.Type)]
+        namesTypesB typeDecls = map ( \(B.Decl name btype) -> (name,btype)  )
+                                   typeDecls
+
+        namesTypesF :: [F.TypeDecl] -> [(B.Name, B.Type)]
+        namesTypesF typeDecls = namesTypesB $ map transTypeDecl typeDecls
+
+
+isBCast :: [F.Field] -> [B.MsgArg]
+            -> B.LocalVariables ->
+            F.Response -> Bool
+
+isBCast fields stdArgs locals (F.Send _ dst _)
+  = isSet fields stdArgs locals dst
+
+isBCast _ _ _ _ = False
 
 
 

@@ -29,7 +29,6 @@ msgFromGuard _                        = Nothing
 -- get msg from Response
 msgFromResp :: F.Response -> Maybe F.Msg
 msgFromResp (F.Send msg _ _)         = Just msg
-msgFromResp (F.Broadcast _ _ msg _)  = Just msg
 msgFromResp _                        = Nothing
 
 -- get msg from list of Responses
