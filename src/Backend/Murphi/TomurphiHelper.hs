@@ -134,6 +134,7 @@ instance Cl.MurphiClass Response where
           mapconcatlnComma Cl.tomurphi params ++ ");"
 -------------------------------------------------------
 
+ tomurphi (Clear field) = "undefine " ++ Cl.tomurphi field ++ ";"
 
  tomurphi (Assign var value)    = Cl.tomurphi var ++ " := "
                                   ++ Cl.tomurphi value ++ ";"

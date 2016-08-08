@@ -310,6 +310,7 @@ data Guard           = Receive MType [(ArgName, Field)]
 data Response        = ToState Machine State
                      | Send Message Src Dst VCName    -- see note below for dst
                      | Broadcast Message Src DstSet VCName
+                     | Clear Field
                      | Assign Field Field
                      | AssignInt Field IntExp
                      | Add Owner SetName Field  -- the owner of the set is the machine

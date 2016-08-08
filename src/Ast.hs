@@ -115,12 +115,17 @@ data Response   = Send Msg Dst VC -- functions also as broadcast, depending on d
                 | EmptyResp String  -- e.g. "hit". Ignore in target AST
                 | Add SetName (Either Param Int)
                 | Del SetName (Either Param Int)
+                | Clear Name
                 | Stall
                 | Assign Param Param
                 | AssignNum Param IntExp
                 | AssignLocal TypeDecl Param
                 | AssignLocalNum TypeDecl IntExp
                   deriving(Show,Eq)
+
+-- Note on clear: because we may want to clear a composite type,
+-- we can't use a parameter as argument to Clear. Param models
+-- simple types, that can be passed as arguments to functions.
 
 
 data Param      = ArrayElem ArrayName Index

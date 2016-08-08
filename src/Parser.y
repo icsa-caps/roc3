@@ -51,6 +51,7 @@ import Data.List
 
 
     Issue       { TokenIssue }
+    clear       { TokenClear }
     Receive     { TokenReceive }
     src         { TokenSrc }
     Send        { TokenSend }
@@ -212,6 +213,7 @@ Response        : Param '!' Msg '@' VC                                 { Send $3
                 | iden '.' add '(' num ')'                             { Add $1 (Right $5) }
                 | iden '.' del '(' num ')'                             { Del $1 (Right $5) }
                 | stall                                                { Stall }
+                | clear iden                                           { Clear $2 }
 
 
 Assignment      : Param    '=' Param                               { Assign $1 $3 }

@@ -119,10 +119,25 @@ transResponse machine machineFields stdArgs nonsyms locals resp
                                                 owner = B.Owner $ B.AnyType machine
                                             in  B.Del owner setName elem
 
+
       F.Del setName (Right num)         ->  let elem  = B.Field (B.Simple (show num))
                                                                 B.Global
                                                 owner = B.Owner $ B.AnyType machine
                                             in  B.Del owner setName elem
+
+      --------
+      F.Clear name                      -> let param = F.VarOrVal name
+                                              -- the arg of F.Clear is a string
+                                              -- and not F.Param because we may
+                                              -- clear composite types.
+                                              -- with transVar we find the owner
+                                               field = transVar machine
+                                                                machineFields
+                                                                stdArgs
+                                                                nonsyms
+                                                                locals
+                                                                param
+                                           in  B.Clear field
 
       F.Assign param1 param2            ->  let field1 = transVar machine
                                                                   machineFields

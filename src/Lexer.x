@@ -58,6 +58,7 @@ tokens :-
     set             { \s -> TokenSet }
 
     Issue           { \s -> TokenIssue }
+    clear           { \s -> TokenClear }
     Receive         { \s -> TokenReceive }
     src             { \s -> TokenSrc }
     Send            { \s -> TokenSend }
@@ -113,6 +114,7 @@ data Token = TokenBegin
            | TokenInt
            | TokenSet
            | TokenIssue
+           | TokenClear
            | TokenReceive
            | TokenSrc
            | TokenSend
