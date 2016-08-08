@@ -295,6 +295,8 @@ data Guard           = Receive MType [(ArgName, Field)]
                                (Maybe Src) (Maybe VCName)
                      | AtState Machine State
                      | Equals Field (Either Field IntExp) -- F.Param maps to B.Field
+                     | Greater Field (Either Field IntExp)
+                     | Less Field (Either Field IntExp)
                      | NotEq Field (Either Field IntExp)
                      | Not Guard
                      | Guard :&: Guard

@@ -295,6 +295,8 @@ data Guard           = Receive MType [(ArgName, Field)]
                                (Maybe Src) (Maybe VCName)
                      | AtState Machine State
                      | Equals Field (Either Field IntExp) -- F.Param maps to B.Field
+                     | Greater Field (Either Field IntExp)
+                     | Less Field (Either Field IntExp)
                      | NotEq Field (Either Field IntExp)
                      | Not Guard
                      | Guard :&: Guard
@@ -310,7 +312,7 @@ data Guard           = Receive MType [(ArgName, Field)]
 data Response        = ToState Machine State
                      | Send Message Src Dst VCName    -- see note below for dst
                      | Broadcast Message Src DstSet VCName
-                     | Clear Field 
+                     | Clear Field
                      | Assign Field Field
                      | AssignInt Field IntExp
                      | Add Owner SetName Field  -- the owner of the set is the machine

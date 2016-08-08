@@ -176,6 +176,10 @@ Guard           : src '?' Msg '@' VC                                   { Receive
                 | Param '?' Msg                                        { ReceiveFrom $3 (Just $1) (Nothing) }
                 | '*' iden                                             { Issue $2 }
                 | Param doubleEq Param                                 { Equals $1 (Left $3) }
+                | Param '>' Param                                      { Greater $1 (Left $3) }
+                | Param '>' IntExp                                     { Greater $1 (Right $3) }
+                | Param '<' Param                                      { Less $1 (Left $3) }
+                | Param '<' IntExp                                     { Less $1 (Right $3) }
                 | Param doubleEq IntExp                                { Equals $1 (Right $3) }
                 | Param notEq Param                                    { NotEq $1 (Left $3) }
                 | Param notEq IntExp                                   { NotEq $1 (Right $3) }

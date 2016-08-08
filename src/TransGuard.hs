@@ -34,17 +34,6 @@ transGuard machine machineFields stdArgs nonsyms locals guard
                                       in  B.Equals field1 (Left field2)
 
 
-   (F.NotEq param1 (Left param2)) -> let field1 = (transVar machine machineFields
-                                                            stdArgs nonsyms locals
-                                                            param1)
-                                          -----------------------------------
-                                         field2 = (transVar machine machineFields
-                                                            stdArgs nonsyms locals
-                                                            param2)
-                                         -----------------------------------
-                                    in  B.NotEq field1 (Left field2)
-
-
    (F.Equals param (Right intExp)) -> let field  =  (transVar machine machineFields
                                                               stdArgs nonsyms locals
                                                               param)
@@ -54,6 +43,65 @@ transGuard machine machineFields stdArgs nonsyms locals guard
                                                               intExp)
                                        -----------------------------------
                                    in  B.Equals field (Right bIntExp)
+
+
+
+   (F.Greater param1 (Left param2)) -> let field1 = (transVar machine machineFields
+                                                             stdArgs nonsyms locals
+                                                             param1)
+                                           -----------------------------------
+                                           field2 = (transVar machine machineFields
+                                                             stdArgs nonsyms locals
+                                                             param2)
+                                          -----------------------------------
+                                      in  B.Greater field1 (Left field2)
+
+
+
+   (F.Greater param (Right intExp)) -> let field  =  (transVar machine machineFields
+                                                               stdArgs nonsyms locals
+                                                               param)
+                                           -----------------------------------
+                                           bIntExp = (transExp machine machineFields
+                                                               stdArgs nonsyms locals
+                                                               intExp)
+                                           -----------------------------------
+                                       in  B.Greater field (Right bIntExp)
+
+
+   (F.Less param1 (Left param2)) -> let field1 = (transVar machine machineFields
+                                                           stdArgs nonsyms locals
+                                                           param1)
+                                        -----------------------------------
+                                        field2 = (transVar machine machineFields
+                                                           stdArgs nonsyms locals
+                                                           param2)
+                                        -----------------------------------
+                                    in  B.Less field1 (Left field2)
+
+
+
+   (F.Less param (Right intExp)) -> let field  =  (transVar machine machineFields
+                                                            stdArgs nonsyms locals
+                                                            param)
+                                        -----------------------------------
+                                        bIntExp = (transExp machine machineFields
+                                                            stdArgs nonsyms locals
+                                                            intExp)
+                                        -----------------------------------
+                                    in  B.Less field (Right bIntExp)
+
+
+
+   (F.NotEq param1 (Left param2)) -> let field1 = (transVar machine machineFields
+                                                            stdArgs nonsyms locals
+                                                            param1)
+                                          -----------------------------------
+                                         field2 = (transVar machine machineFields
+                                                            stdArgs nonsyms locals
+                                                            param2)
+                                         -----------------------------------
+                                    in  B.NotEq field1 (Left field2)
 
 
    (F.NotEq param (Right intExp)) -> let field    =  (transVar machine machineFields
@@ -67,6 +115,7 @@ transGuard machine machineFields stdArgs nonsyms locals guard
                                      in  B.NotEq field (Right bIntExp)
 
 
+   ----------
 
 
    (F.Not innerGuard)      -> B.Not (transGuard machine machineFields stdArgs

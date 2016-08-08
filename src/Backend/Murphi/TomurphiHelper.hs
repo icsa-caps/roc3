@@ -244,18 +244,39 @@ instance Cl.MurphiClass Guard where
   tomurphi (Not guard)
     = "(" ++ "!" ++ Cl.tomurphi guard ++ ")"
 
+  -------------------------------------------
+
   tomurphi (Equals field1 (Left field2))
     =  "(" ++ Cl.tomurphi field1 ++ "=" ++ Cl.tomurphi field2 ++ ")"
-
-  tomurphi (NotEq field1 (Left field2))
-    = "(" ++ Cl.tomurphi field1 ++ "!=" ++ Cl.tomurphi field2 ++ ")"
 
   tomurphi (Equals field1 (Right intExp))
     =  "(" ++ Cl.tomurphi field1 ++ "=" ++ Cl.tomurphi intExp ++ ")"
 
+  -------------------------------------------
+
+  tomurphi (NotEq field1 (Left field2))
+    = "(" ++ Cl.tomurphi field1 ++ "!=" ++ Cl.tomurphi field2 ++ ")"
+
   tomurphi (NotEq field1 (Right intExp))
     =  "(" ++ Cl.tomurphi field1 ++ "=" ++ Cl.tomurphi intExp ++ ")"
 
+  -------------------------------------------
+
+  tomurphi (Greater field1 (Left field2))
+    = Cl.tomurphi field1 ++ " > " ++ Cl.tomurphi field2
+
+  tomurphi (Greater field (Right intExp))
+    = Cl.tomurphi field1 ++ " > " ++ Cl.tomurphi intExp
+
+  -------------------------------------------
+
+  tomurphi (Less field1 (Left field2))
+    = Cl.tomurphi field1 ++ " < " ++ Cl.tomurphi field2
+
+  tomurphi (Less field (Right intExp))
+    = Cl.tomurphi field1 ++ " <" ++ Cl.tomurphi intExp
+
+  -------------------------------------------
 
 -------------------------------------------------
 -- helper functions for this section
