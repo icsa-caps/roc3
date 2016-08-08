@@ -77,8 +77,8 @@ data State  = State String
 
 data Guard       = ReceiveFrom Msg (Maybe Src) (Maybe VC) -- Nothing if we do not care about the vc     -- extend with arbitrary guards
                  | Issue String
-                 | Equals Param Param
-                 | NotEq Param Param
+                 | Equals Param (Either Param IntExp)
+                 | NotEq Param (Either Param IntExp)
                  | Not Guard
                  | Guard :&: Guard
                  | Guard :|: Guard

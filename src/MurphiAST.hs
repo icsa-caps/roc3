@@ -294,8 +294,8 @@ type Reaction =( State, [ (Maybe Guard, [Response]) ] )
 data Guard           = Receive MType [(ArgName, Field)]
                                (Maybe Src) (Maybe VCName)
                      | AtState Machine State
-                     | Equals Field Field -- F.Param maps to B.Field
-                     | NotEq Field Field
+                     | Equals Field (Either Field IntExp) -- F.Param maps to B.Field
+                     | NotEq Field (Either Field IntExp)
                      | Not Guard
                      | Guard :&: Guard
                      | Guard :|: Guard

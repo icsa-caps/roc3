@@ -161,7 +161,7 @@ Range           : '[' num ']'                                       { $2 }
 
 
 States_Guards   : State_Guard                                       { [$1] }
-                | States_Guards State_Guard                         { $2 : $1 }
+                | States_Guards State_Guard                         { $1 ++ [$2] }
 
 
 State_Guard     : '(' iden ',' Guard ')' '{' Responses '}'              { (State $2, $4, Nothing, $7) }
@@ -173,8 +173,10 @@ Guard           : src '?' Msg '@' VC                                   { Receive
                 | Param '?' Msg '@' VC                                 { ReceiveFrom $3 (Just $1) (Just $5) }
                 | Param '?' Msg                                        { ReceiveFrom $3 (Just $1) (Nothing) }
                 | '*' iden                                             { Issue $2 }
-                | Param doubleEq Param                                 { Equals $1 $3 }
-                | Param notEq Param                                    { NotEq $1 $3 }
+                | Param doubleEq Param                                 { Equals $1 (Left $3) }
+                | Param doubleEq IntExp                                { Equals $1 (Right $3) }
+                | Param notEq Param                                    { NotEq $1 (Left $3) }
+                | Param notEq IntExp                                   { NotEq $1 (Right $3) }
                 | '!' Guard                                            { Not $2 }
                 | Guard '&' Guard                                      { $1 :&: $3}
                 | Guard '|' Guard                                      { $1 :|: $3}

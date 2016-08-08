@@ -10,6 +10,7 @@ import qualified MurphiAST as B
 import Data.Maybe -- for fromJust
 import TransGen
 import TransMsg
+import TransResponse -- for transExp
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
@@ -22,25 +23,51 @@ transGuard :: F.MachineType -> [F.Field]  -- the machine and its fields
 
 transGuard machine machineFields stdArgs nonsyms locals guard
  = case guard of
-   (F.Equals param1 param2) -> let field1 = (transVar machine machineFields
-                                                      stdArgs nonsyms locals
-                                                      param1)
+   (F.Equals param1 (Left param2)) -> let field1 = (transVar machine machineFields
+                                                             stdArgs nonsyms locals
+                                                             param1)
+                                          -----------------------------------
+                                          field2 = (transVar machine machineFields
+                                                             stdArgs nonsyms locals
+                                                             param2)
+                                          -----------------------------------
+                                      in  B.Equals field1 (Left field2)
 
-                                   field2 = (transVar machine machineFields
-                                                      stdArgs nonsyms locals
-                                                      param2)
 
-                               in  B.Equals field1 field2
+   (F.NotEq param1 (Left param2)) -> let field1 = (transVar machine machineFields
+                                                            stdArgs nonsyms locals
+                                                            param1)
+                                          -----------------------------------
+                                         field2 = (transVar machine machineFields
+                                                            stdArgs nonsyms locals
+                                                            param2)
+                                         -----------------------------------
+                                    in  B.NotEq field1 (Left field2)
 
-   (F.NotEq param1 param2) -> let field1 = (transVar machine machineFields
-                                                     stdArgs nonsyms locals
-                                                     param1)
 
-                                  field2 = (transVar machine machineFields
-                                                     stdArgs nonsyms locals
-                                                      param2)
+   (F.Equals param (Right intExp)) -> let field  =  (transVar machine machineFields
+                                                              stdArgs nonsyms locals
+                                                              param)
+                                          -----------------------------------
+                                          bIntExp = (transExp machine machineFields
+                                                              stdArgs nonsyms locals
+                                                              intExp)
+                                       -----------------------------------
+                                   in  B.Equals field (Right bIntExp)
 
-                              in  B.NotEq field1 field2
+
+   (F.NotEq param (Right intExp)) -> let field    =  (transVar machine machineFields
+                                                               stdArgs nonsyms locals
+                                                               param)
+                                         -----------------------------------
+                                         bIntExp = (transExp machine machineFields
+                                                             stdArgs nonsyms locals
+                                                             intExp)
+                                         -----------------------------------
+                                     in  B.NotEq field (Right bIntExp)
+
+
+
 
    (F.Not innerGuard)      -> B.Not (transGuard machine machineFields stdArgs
                                                 nonsyms locals
@@ -49,21 +76,22 @@ transGuard machine machineFields stdArgs nonsyms locals guard
    (guard1 F.:&: guard2)   -> let bg1 = transGuard machine machineFields stdArgs
                                                 nonsyms locals
                                                 guard1
-
+                                  --------------------------------------------
                                   bg2 = transGuard machine machineFields stdArgs
                                                    nonsyms locals
                                                    guard2
-
+                                  --------------------------------------------
                               in  bg1 B.:&: bg2
+
 
    (guard1 F.:|: guard2)   -> let bg1 = transGuard machine machineFields stdArgs
                                                 nonsyms locals
                                                 guard1
-
+                                  --------------------------------------------
                                   bg2 = transGuard machine machineFields stdArgs
                                                    nonsyms locals
                                                    guard2
-
+                                  --------------------------------------------
                               in  bg1 B.:|: bg2
 
    msgGuard                -> transReceiveMsg machine machineFields stdArgs
