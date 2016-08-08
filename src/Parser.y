@@ -178,6 +178,7 @@ Guard           : src '?' Msg '@' VC                                   { Receive
                 | '!' Guard                                            { Not $2 }
                 | Guard '&' Guard                                      { $1 :&: $3}
                 | Guard '|' Guard                                      { $1 :|: $3}
+                | '(' Guard ')'                                        { $2 }
 
 
 Msg             : iden                                              { Msg $1 []}
@@ -218,6 +219,7 @@ Assignment      : Param    '=' Param                               { Assign $1 $
 
 
 Param           : iden '[' num ']'                              { ArrayElem $1 $3 }
+                | num                                           { VarOrVal (show $1) }
                 | src                                           { VarOrVal "src" }
                 | iden                                          { VarOrVal $1 }
 
