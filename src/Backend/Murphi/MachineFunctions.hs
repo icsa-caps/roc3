@@ -46,7 +46,7 @@ instance Cl.MurphiClass MachineFunctions where
    addToSet :: MachineType -> TypeDecl -> String
    addToSet machine (Decl setName (Set _ elemType))
      = let thisSet =indexedFormalStr machine ++ "." ++ setName
-       in  "procedure addTo" ++ fstCap machine ++ setName ++ "List" ++
+       in  "procedure AddTo" ++ fstCap machine ++ fstCap setName ++ "List" ++
            "(x: " ++ Cl.tomurphi elemType ++ "; " ++
            formalIndexStr machine ++ " : " ++ indexTypeStr machine ++
            ");\nbegin\n\n" ++
@@ -62,7 +62,7 @@ instance Cl.MurphiClass MachineFunctions where
    removeFromSet :: MachineType -> TypeDecl -> String
    removeFromSet machine (Decl setName (Set _ elemType))
     = let thisSet = indexedFormalStr machine ++ "." ++ setName
-      in  "procedure RemoveFrom" ++ fstCap machine ++ setName ++ "List" ++
+      in  "procedure RemoveFrom" ++ fstCap machine ++ fstCap setName ++ "List" ++
           "( x: " ++ Cl.tomurphi elemType ++ "; " ++
           formalIndexStr machine ++ " : " ++ indexTypeStr machine ++
           " );\nbegin\n\n" ++
@@ -112,12 +112,7 @@ instance Cl.MurphiClass MachineFunctions where
            "  endfor;\n" ++
            "end;\n"
        where
-           declareArgs = mapconcatln declareArg
-
-           declareArg :: Maybe MsgArg -> String
-           declareArg Nothing = ""
-           declareArg (Just arg) = Cl.tomurphi arg -- prints type decl
-
+           declareArgs = mapconcatln Cl.tomurphi
 
            -- we must transform the MsgArg to Field for
            -- the Send in the loop
@@ -125,14 +120,12 @@ instance Cl.MurphiClass MachineFunctions where
            -- Note: the argument to a function in  Murphi can't be
            -- set or array, because only simple (not composite) types can
            -- be passed as arguments to functions.
-           sendArg :: Maybe MsgArg -> Maybe Field
-           sendArg Nothing      -- "undefined". The general form of msgargs
-             = Nothing          -- is passed at the translation
-           sendArg (Just (Decl _ (Set _ _)))
+           sendArg :: MsgArg -> Maybe Field
+           sendArg (Decl _ (Set _ _))
              = error "murphi can't take a composite type (here set) as argument"
-           sendArg (Just (Decl _ (Array _ _ )))
+           sendArg (Decl _ (Array _ _ ))
              = error "murphi can't take a composite type (here array) as argument"
-           sendArg (Just (Decl name _)) -- we don't care about the type
+           sendArg (Decl name _) -- we don't care about the type
               = Just $ Field (Simple name) Global -- passed/argument
 
 

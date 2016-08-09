@@ -66,7 +66,10 @@ singleMFunction stdArgs nonsyms (F.Machine _ machine _ _ fields mFunction)
 
          bcasts         = filter (isBCast fields stdArgs locals) allFrontResps
          bcastMtypes    = map bCastMtype bcasts
-         castWithMType  = zip bcastMtypes bcasts
+         castWithMType  = zip bcastMtypes bcasts -- :: [(B.Mtype, F.Rsponse)]
+
+         -- what if the same mtype is sent to different sets?
+         -- we need to check which machine field we broadcast to
          noDupls        = map snd $
                            nubBy ( \(mtype1,_) -> \(mtype2,_)
                                      -> mtype1 == mtype2 )
@@ -102,9 +105,8 @@ finalBCast machine fields stdArgs resp
         mtype    = bCastMtype resp
         setName  = bCastSetName resp
         elemType = bCastElemType fields setName
-        msgArgs  = bCastMsgArgs stdArgs resp
     in
-        B.BCast machine setName elemType mtype msgArgs
+        B.BCast machine setName elemType mtype stdArgs
 
 
 
@@ -141,23 +143,6 @@ bCastElemType fields name
         (B.Decl _ elemType) = transTypeDecl thisTypeDecl
 
     in  elemType
-
-bCastMsgArgs :: [B.MsgArg] ->    -- std msg args
-                F.Response -> [Maybe B.MsgArg]
-
-bCastMsgArgs stdArgs (F.Send msg _ _)
-  = let
-        -- get the arguments of the broadcast
-        args       = argOfMsg msg
-
-        -- take only the formal parameters
-        formalArgs = map formalMsgArg args
-    in
-        -- look up each argument in the formal parameters
-        -- this message has. We want Nothing in the place of
-        -- non-existent arguments and Just the formal parameter
-        -- if the message has it
-        map (flip lookup (zip formalArgs formalArgs)) stdArgs
 
 ----------------------------------------------------------------
 

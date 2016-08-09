@@ -266,7 +266,7 @@ instance Cl.MurphiClass Guard where
     = Cl.tomurphi field1 ++ " > " ++ Cl.tomurphi field2
 
   tomurphi (Greater field (Right intExp))
-    = Cl.tomurphi field1 ++ " > " ++ Cl.tomurphi intExp
+    = Cl.tomurphi field ++ " > " ++ Cl.tomurphi intExp
 
   -------------------------------------------
 
@@ -274,7 +274,7 @@ instance Cl.MurphiClass Guard where
     = Cl.tomurphi field1 ++ " < " ++ Cl.tomurphi field2
 
   tomurphi (Less field (Right intExp))
-    = Cl.tomurphi field1 ++ " <" ++ Cl.tomurphi intExp
+    = Cl.tomurphi field ++ " <" ++ Cl.tomurphi intExp
 
   -------------------------------------------
 

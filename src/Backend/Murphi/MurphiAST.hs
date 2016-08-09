@@ -282,7 +282,7 @@ type ElemType = Type
 
 -- we have one bcast function for each
 -- pair of msg and the set it is addressed to
-data BCastInfo = BCast MachineType SetName ElemType MType [Maybe MsgArg]
+data BCastInfo = BCast MachineType SetName ElemType MType MsgArgs
                  deriving(Show, Eq)
 
 type ReceiveFunction = [ Reaction ]
