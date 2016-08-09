@@ -360,7 +360,7 @@ cache owner;
 
 
 (I, src?GetM, M){
-    src!Data@resp;
+    src!Data<int[0..5] ackCount = num_sharers>@resp;
     owner = src;
 }
 
@@ -380,14 +380,23 @@ cache owner;
 
 
 (S, src?GetS){
-    src!Data@resp;
+    src!Data<int[0..5] ackCount = num_sharers>@resp;
     sharers.add(src);
     num_sharers = num_sharers + 1;
 }
 
 
-(S, src?GetM, M){
-    src!Data@resp;
+(S, src?GetM & sharers.contains(src), M){
+    int[0..5] temp = num_sharers -1;
+    src!Data<int[0..5] ackCount = temp>@resp;
+    sharers!Inv@fwd;
+    clear sharers;
+    num_sharers = 0;
+    owner = src;
+}
+
+(S, src?GetM & !sharers.contains(src), M){
+    src!Data<int[0..5] ackCount = num_sharers>@resp;
     sharers!Inv@fwd;
     clear sharers;
     num_sharers = 0;
