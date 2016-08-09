@@ -1,0 +1,487 @@
+
+networks: ordered fwdNet {fwd},    //FwdGetS, FwdGetM, Inv, PutAck
+          unordered respNet{resp}, // Data, InvAck
+          unordered reqNet {req};  //GetS, GetM, PutM
+
+
+// FwdGetS, FwdGetM have as argument the 
+// requestor, that send initially the message
+// to the directory
+
+
+machine cache[4] {
+
+
+startstate: I;
+
+
+int[0..5] acksReceived (0),
+int[0..5] acksExpected (0);
+
+
+(I, *load, IS_D){
+
+	Dir[0]!GetS@req;
+}
+
+
+
+(I, *store, IM_AD){
+	Dir[0]!GetM@req;
+
+}
+
+
+// IS_D
+
+(IS_D, *load){
+	stall;
+}
+
+(IS_D, *store){
+	stall;
+}
+
+(IS_D, *replace){
+	stall;
+}
+
+(IS_D, src?Inv){
+	stall;
+}
+
+(IS_D, src?Data, S){ // src == (Dir or owner)
+			   // don't care about ackCount
+}
+
+
+
+
+
+(IM_AD, *load){
+	stall;
+}
+
+(IM_AD, *store){
+	stall;
+}
+
+(IM_AD, *replace){
+	stall;
+}
+
+(IM_AD, src?FwdGetS){
+	stall;
+}
+
+(IM_AD, src?FwdGetM){
+	stall;
+}
+
+
+(IM_AD, Dir[0]?Data<int[0..5] ackCount = 0>, M){
+
+}
+
+(IM_AD, Dir[0]?Data<int[0..5] ackCount> & ackCount!=0, IM_A){
+	acksExpected = ackCount;
+}
+
+
+(IM_AD, Dir[0]?Data<int[0..5] ackCount = 0>, M){
+	acksExpected = 0;
+}
+
+(IM_AD, src?Data, M){ // the src must be the owner of the block
+	acksExpected = 0;
+    clear acksReceived;
+}
+
+(IM_AD, src?InvAck & acksExpected != acksReceived + 1){ 
+	acksReceived = acksReceived + 1;
+}
+
+
+
+
+(IM_A, *load){
+	stall;
+}
+
+(IM_A, *store){
+	stall;
+}
+
+(IM_A, *replace){
+	stall;
+}
+
+(IM_A, src?FwdGetS){
+	stall;
+}
+
+(IM_A, src?FwdGetM){
+	stall;
+}
+
+
+(IM_A, src?InvAck & acksExpected != acksReceived + 1){ 
+	acksReceived = acksReceived + 1;
+
+}
+
+(IM_A, src?InvAck & acksExpected == acksReceived + 1, M){ 
+
+}
+
+
+
+
+(S, *load){
+	hit;
+}
+
+(S, *store, SM_AD){
+	Dir[0]!GetM@req;
+}
+
+(S, *replace, SI_A){
+	Dir[0]!PutS@req;
+}
+
+(S, src?Inv, I){
+	src!InvAck@resp;
+}
+
+
+
+
+(SM_AD, *load){
+	hit;
+}
+
+(SM_AD, *store){
+	stall;
+}
+
+(SM_AD, *replace){
+	stall;
+}
+
+(SM_AD, src?FwdGetS){
+	stall;
+}
+
+(SM_AD, src?FwdGetM){
+	stall;
+}
+
+(SM_AD, src?Inv, IM_AD){
+	src!InvAck@resp;
+}
+
+
+(SM_AD, Dir[0]?Data<int[0..5] ackCount=0>, M){
+}
+
+(SM_AD, Dir[0]?Data<int[0..5] ackCount> & ackCount != 0, SM_A){
+	acksExpected = ackCount;
+}
+
+
+(SM_AD, src?Data, M){ // src == owner
+}
+
+
+(SM_AD, src?InvAck){
+	acksReceived = acksReceived - 1;
+}
+
+
+
+
+
+(SM_A, *load){
+	hit;
+}
+
+(SM_A, *store){
+	stall;
+}
+
+(SM_A, *replace){
+	stall;
+}
+
+(SM_A, src?FwdGetS){
+	stall;
+}
+
+(SM_A, src?FwdGetM){
+	stall;
+}
+
+(SM_A, src?InvAck & acksExpected != acksReceived + 1){
+	acksReceived = acksReceived +1;
+}
+
+(SM_A, src?InvAck & acksExpected == acksReceived, M){
+}
+
+
+
+
+
+(M, *load){
+	hit;
+}
+
+(M, *store){
+	hit;
+}
+
+(M, *replacement, MI_A){
+	Dir[0]!PutM@req;
+	Dir[0]!Data@resp;
+}
+
+(M, src?FwdGetS< cache requestor >, S){
+	requestor!Data@resp;
+	Dir[0]!Data@resp;
+}
+
+(M, src?FwdGetM<cache requestor>, I){
+	requestor!Data@fwd;
+}
+
+
+
+
+
+
+(MI_A, *load){
+	hit;
+}
+
+(MI_A, *store){
+	stall;
+}
+
+(MI_A, *replace){
+	stall;
+}
+
+
+(MI_A, src?FwdGetS<cache requestor>, SI_A){
+	requestor!Data@resp;
+	Dir[0]!Data@resp;
+}
+
+(MI_A, src?FwdGetM<cache requestor>, II_A){
+	requestor!Data@resp;
+}
+
+(MI_A, src?PutAck, I){
+}
+
+
+
+
+
+(SI_A, *load){
+	hit;
+}
+
+(SI_A, *store){
+	stall;
+}
+
+(SI_A, *replace){
+	stall;
+}
+
+
+(SI_A, src?Inv, II_A){
+	src!InvAck@resp;
+}
+
+(SI_A, src?PutAck, I){
+}
+
+
+
+
+
+(II_A, *load){
+	hit;
+}
+
+(II_A, *store){
+	stall;
+}
+
+(II_A, *replace){
+	stall;
+}
+
+
+(II_A, src?PutAck, I){
+}
+
+
+
+// cache declarations ends here
+
+}
+
+
+
+
+
+
+
+
+machine Dir {
+
+
+startstate: I;
+
+set[cache] cache sharers,
+int[0..5] num_sharers (0),
+cache owner;
+
+(I, src?GetS, S){
+	src!Data@resp;
+	sharers.add(src);
+    num_sharers = num_sharers + 1;
+    
+}
+
+
+
+(I, src?GetM, M){
+    src!Data@resp;
+    owner = src;
+}
+
+
+(I, src?PutS){
+    num_sharers = num_sharers - 1; // eventually should become 0
+    src!PutAck@fwd;
+}
+
+
+(I, src?PutM & src != owner){
+    src!PutAck@fwd;
+}
+
+
+
+
+
+(S, src?GetS){
+    src!Data@resp;
+    sharers.add(src);
+    num_sharers = num_sharers + 1;
+}
+
+
+(S, src?GetM, M){
+    src!Data@resp;
+    sharers!Inv@fwd;
+    clear sharers;
+    num_sharers = 0;
+    owner = src;
+}
+
+(S, src?PutS & num_sharers != 1){
+    sharers.del(src);
+    num_sharers = num_sharers - 1;
+    src!PutAck@fwd;
+}
+
+(S, src?PutS & num_sharers != 1, I){
+    sharers.del(src);
+    num_sharers = num_sharers -1;
+    src!PutAck@fwd;
+}
+
+
+(S, src?PutM & src != owner){
+    sharers.del(src);
+    num_sharers = num_sharers - 1;
+    src!PutAck@fwd;
+}
+
+
+
+
+
+
+
+(M, src?GetS, S_D){
+    owner!FwdGetS<cache requestor = src>@fwd;
+    sharers.add(src);
+    sharers.add(owner);
+    num_sharers = num_sharers +2;
+    clear owner;
+}
+
+
+
+(M, src?GetM){
+    owner!FwdGetM<cache requestor = src>@fwd;
+    owner = src;
+}
+
+
+(M, src?PutS){
+    src!PutAck@fwd;
+    num_sharers = num_sharers - 1;
+}
+
+
+(M, src?PutM & src == owner, I){
+    clear owner;
+    src!PutAck@fwd;
+}
+
+(M, src?PutM & src!=owner){
+    src!PutAck@fwd;
+}
+
+
+
+
+
+(S_D, src?GetS){
+    stall;
+}
+
+(S_D, src?GetM){
+    stall;
+}
+
+(S_D, src?PutS){
+    sharers.del(src);
+    num_sharers = num_sharers - 1;
+    src!PutAck@fwd;
+}
+
+(S_D, src?PutM & src!=owner){
+    sharers.del(src);
+    num_sharers = num_sharers - 1;
+    src!PutAck@fwd;
+}
+
+
+(S_D, src?Data, S){
+
+}
+
+
+
+// directory declaration ends here
+
+
+}
