@@ -118,8 +118,8 @@ data Field = Field Variable Owner
 
 
 -- not used anymore for broadcasting, may be used in responses (who knows)
-data SetField = SetField Field Type   -- Type is the type of the elements
-                deriving(Show,Eq)
+--data SetField = SetField Field Type   -- Type is the type of the elements
+--                deriving(Show,Eq)
 
 
 
@@ -301,7 +301,10 @@ data Guard           = Receive MType [(ArgName, Field)]
                      | Not Guard
                      | Guard :&: Guard
                      | Guard :|: Guard
+                     | IsIn SetField Field
                        deriving(Show,Eq)
+
+type SetField = Field
 
 -- Note on Guard, Receive: the list is the value each msg arg must have (if any)
 -- we use field for the values because they may be machine fields or local vars

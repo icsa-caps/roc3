@@ -60,6 +60,7 @@ import Data.List
     Trans       { TokenTrans }
     add         { TokenAdd }
     del         { TokenDel }
+    contains    { TokenContains }
 
 
     num         { TokenNum $$ }
@@ -187,6 +188,7 @@ Guard           : src '?' Msg '@' VC                                   { Receive
                 | Guard '&' Guard                                      { $1 :&: $3}
                 | Guard '|' Guard                                      { $1 :|: $3}
                 | '(' Guard ')'                                        { $2 }
+                | iden '.' contains '(' Param ')'                      { IsIn $1 $5 }
 
 
 Msg             : iden                                              { Msg $1 []}

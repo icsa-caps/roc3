@@ -278,6 +278,14 @@ instance Cl.MurphiClass Guard where
 
   -------------------------------------------
 
+  tomurphi (IsIn setField field)
+    = let set     = Cl.tomurphi setField
+          element = Cl.tomurphi field
+      in  "(MultisetCount(i:" ++ set ++ ", " ++
+           set ++ "[i]=" ++ element ++ ") > 0)"
+
+  -------------------------------------------
+
 -------------------------------------------------
 -- helper functions for this section
 -- (didnt work in where clause)

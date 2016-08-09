@@ -84,6 +84,7 @@ data Guard       = ReceiveFrom Msg (Maybe Src) (Maybe VC) -- Nothing if we do no
                  | Not Guard
                  | Guard :&: Guard
                  | Guard :|: Guard
+                 | IsIn SetName Param
                    deriving(Show,Eq)
 
 

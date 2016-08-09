@@ -67,6 +67,7 @@ tokens :-
     Trans           { \s -> TokenTrans }
     add             { \s -> TokenAdd }
     del             { \s -> TokenDel }
+    contains        { \s -> TokenContains }
 
     @digits         { \s -> TokenNum (read s) }
     @iden           { \s -> TokenIdentifier s }
@@ -123,6 +124,7 @@ data Token = TokenBegin
            | TokenTrans
            | TokenAdd
            | TokenDel
+           | TokenContains
            | TokenIdentifier String
            | TokenNum Int
              deriving (Eq,Show)

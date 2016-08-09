@@ -143,6 +143,19 @@ transGuard machine machineFields stdArgs nonsyms locals guard
                                   --------------------------------------------
                               in  bg1 B.:|: bg2
 
+
+   (F.IsIn setName param) -> let field = transVar machine machineFields
+                                                      stdArgs nonsyms locals
+                                                      param
+                                 -- we can access
+                                 -- sets only from the machine
+                                 -- that owns them
+                                 owner = B.Owner $ B.AnyType machine
+                                 var   = B.Simple setName
+                                 bSet  = B.Field var owner
+
+                                 in  B.IsIn bSet field
+
    msgGuard                -> transReceiveMsg machine machineFields stdArgs
                                               nonsyms locals
                                               msgGuard
