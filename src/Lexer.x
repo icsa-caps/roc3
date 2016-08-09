@@ -68,6 +68,7 @@ tokens :-
     add             { \s -> TokenAdd }
     del             { \s -> TokenDel }
     contains        { \s -> TokenContains }
+    size            { \s -> TokenSetSize }
 
     @digits         { \s -> TokenNum (read s) }
     @iden           { \s -> TokenIdentifier s }
@@ -125,6 +126,7 @@ data Token = TokenBegin
            | TokenAdd
            | TokenDel
            | TokenContains
+           | TokenSetSize
            | TokenIdentifier String
            | TokenNum Int
              deriving (Eq,Show)

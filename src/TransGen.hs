@@ -179,6 +179,14 @@ transVar :: F.MachineType -> [F.Field]   -- the machine and its fields
 transVar _ _ _ _ _ (F.NonSymInst machine index) -- redundant
    = B.Field (B.NonsymIndex machine index) B.Global
 
+transVar machine _ _ _ _ (F.SetSize setName)
+  = let  -- we can access
+        -- sets only from the machine
+        -- that owns them
+        owner = B.Owner $ B.AnyType machine
+    in B.SetSize setName owner
+
+
 transVar machine machineFields stdMsgArgs nonsyms locals param
 
   = let fieldsNames  = map (\(F.Field typeDecl _) -> getTypeDeclName typeDecl)

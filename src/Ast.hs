@@ -134,6 +134,7 @@ data Response   = Send Msg Dst VC -- functions also as broadcast, depending on d
 data Param      = ArrayElem ArrayName Index
                 | NonSymInst MachineType Index -- for nonsymmetric machines
                 | VarOrVal String -- local, global, field, value
+                | SetSize SetName
                   deriving(Show,Eq)
 
 -- for transforming the AST:

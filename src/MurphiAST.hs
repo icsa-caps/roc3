@@ -102,6 +102,7 @@ data Owner = Msg
 
 data Field = Field Variable Owner
            | JustIndex MachineType (Maybe Int)
+           | SetSize SetName Owner
              deriving(Show,Eq)
 
 -- Note: SimpleIndex is used when we want to print the index of a machine

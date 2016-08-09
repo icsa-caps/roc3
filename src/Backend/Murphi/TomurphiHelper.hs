@@ -178,6 +178,9 @@ instance Cl.MurphiClass Field where
                                             Cl.tomurphi variable
  tomurphi (JustIndex machine Nothing)     = formalIndexStr machine
  tomurphi (JustIndex machine (Just num))  = machine ++ show num
+ tomurphi (SetSize setName owner)         = "MultisetCount(i:" ++
+                                            Cl.tomurphi owner
+                                            ++ setName ++ ", true" ++ ")"
 
 
 -----------------------------------------------------------------
