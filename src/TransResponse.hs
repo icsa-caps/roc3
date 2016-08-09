@@ -59,7 +59,12 @@ transResponse :: F.MachineType -> [F.Field]  -- the machine and its fields
 transResponse machine machineFields stdArgs nonsyms locals resp
   = case resp of
       F.Stall                           ->  B.Stall
-      F.Send msg dst vc                 ->  let bMsg = transMsg machine
+      F.Send msg dst vc                 ->  let -- because we use the translated
+                                                -- msg in the broadcast, it'll
+                                                -- all std msg args just like
+                                                -- send
+
+                                                bMsg = transMsg machine
                                                                 machineFields
                                                                 stdArgs
                                                                 nonsyms

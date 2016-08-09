@@ -26,7 +26,7 @@ isOrdered :: F.Network -> Bool
 isOrdered (F.Network F.Ord _ _) = True
 isOrdered _                     = False
 
--------------------------------
+--------------------------------
 
 backSymmetry :: F.Symmetry -> B.Symmetry
 backSymmetry (F.Symmetric)    = B.Symmetric
@@ -168,8 +168,7 @@ findLocal resps =
 -- given an F.Param (variable, array element, constant) and the
 -- necessary context, get the equivalent in Murphi
 -- essentially we use the context to determine the ownership of variables
--- if the F.Param is the instance of a non-symmetric machine,
--- we must use transNonSymInst. So we take cases
+
 
 transVar :: F.MachineType -> [F.Field]   -- the machine and its fields
             -> [B.MsgArg]                -- standard form of msg in Murphi
