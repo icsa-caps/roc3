@@ -7,6 +7,9 @@ networks: ordered fwdNet {fwd},    //FwdGetS, FwdGetM, Inv, PutAck
 // FwdGetS, FwdGetM have as argument the 
 // requestor, that send initially the message
 // to the directory
+// also Inv which is broadcasted to the sharers
+// takes as argument the cache that send GetM
+// to the directory
 
 
 machine cache[4] {
@@ -28,6 +31,8 @@ int[0..5] acksExpected (0);
 
 (I, *store, IM_AD){
 	Dir[0]!GetM@req;
+    acksReceived = 0;
+    acksExpected = 0;
 
 }
 
@@ -50,12 +55,12 @@ int[0..5] acksExpected (0);
 	stall;
 }
 
-(IS_D, src?Data, S){ // src == (Dir or owner)
-			   // don't care about ackCount
+(IS_D, Dir[0]?Data<int[0..5] ackCount = 0>, S){ 
 }
 
 
-
+(IS_D, src?Data & src!=Dir[0], S){ // src == owner
+}
 
 
 (IM_AD, *load){
@@ -78,26 +83,19 @@ int[0..5] acksExpected (0);
 	stall;
 }
 
-
-(IM_AD, Dir[0]?Data<int[0..5] ackCount = 0>, M){
+(IM_AD, Dir[0]?Data<int[0..5] ackCount = 0 >, M){
 
 }
 
-(IM_AD, Dir[0]?Data<int[0..5] ackCount> & ackCount!=0, IM_A){
-	acksExpected = ackCount;
-}
-
-
-(IM_AD, Dir[0]?Data<int[0..5] ackCount = 0>, M){
-	acksExpected = 0;
+(IM_AD, Dir[0]?Data<int[0..5] ackCount> & ackCount > 0 , IM_A){
+	
+       acksExpected = ackCount;
 }
 
 (IM_AD, src?Data, M){ // the src must be the owner of the block
-	acksExpected = 0;
-    clear acksReceived;
 }
 
-(IM_AD, src?InvAck & acksExpected != acksReceived + 1){ 
+(IM_AD, src?InvAck & acksExpected != acksReceived + 1){ // not last InvAck
 	acksReceived = acksReceived + 1;
 }
 
@@ -131,7 +129,7 @@ int[0..5] acksExpected (0);
 }
 
 (IM_A, src?InvAck & acksExpected == acksReceived + 1, M){ 
-
+    acksReceived = acksReceived + 1;
 }
 
 
@@ -143,14 +141,20 @@ int[0..5] acksExpected (0);
 
 (S, *store, SM_AD){
 	Dir[0]!GetM@req;
+    acksReceived = 0;
+    acksExpected = 0;
 }
 
 (S, *replace, SI_A){
-	Dir[0]!PutS@req;
+	Dir[0]!PutS@req; // makes sense to be in req vc
+                     // not specified in the book
+    acksReceived = 0;
+    acksExpected = 0;
 }
 
-(S, src?Inv, I){
-	src!InvAck@resp;
+(S, src?Inv<cache requestor>, I){ // requestor sent initially
+                                  // GetM to Dir
+	requestor!InvAck@resp;
 }
 
 
@@ -176,15 +180,15 @@ int[0..5] acksExpected (0);
 	stall;
 }
 
-(SM_AD, src?Inv, IM_AD){
-	src!InvAck@resp;
+(SM_AD, src?Inv<cache requestor>, IM_AD){
+	requestor!InvAck@resp;
 }
 
 
 (SM_AD, Dir[0]?Data<int[0..5] ackCount=0>, M){
 }
 
-(SM_AD, Dir[0]?Data<int[0..5] ackCount> & ackCount != 0, SM_A){
+(SM_AD, Dir[0]?Data<int[0..5] ackCount> & ackCount > 0, SM_A){
 	acksExpected = ackCount;
 }
 
@@ -194,7 +198,7 @@ int[0..5] acksExpected (0);
 
 
 (SM_AD, src?InvAck){
-	acksReceived = acksReceived - 1;
+	acksReceived = acksReceived + 1;
 }
 
 
@@ -226,6 +230,7 @@ int[0..5] acksExpected (0);
 }
 
 (SM_A, src?InvAck & acksExpected == acksReceived, M){
+    acksReceived = acksReceived + 1;
 }
 
 
@@ -242,7 +247,8 @@ int[0..5] acksExpected (0);
 
 (M, *replacement, MI_A){
 	Dir[0]!PutM@req;
-	Dir[0]!Data@resp;
+    acksReceived = 0;
+    acksExpected = 0;
 }
 
 (M, src?FwdGetS< cache requestor >, S){
@@ -301,8 +307,8 @@ int[0..5] acksExpected (0);
 }
 
 
-(SI_A, src?Inv, II_A){
-	src!InvAck@resp;
+(SI_A, src?Inv< cache requestor>, II_A){
+	requestor!InvAck@resp;
 }
 
 (SI_A, src?PutAck, I){
@@ -347,26 +353,23 @@ machine Dir {
 startstate: I;
 
 set[cache] cache sharers,
-int[0..5] num_sharers (0),
 cache owner;
 
 (I, src?GetS, S){
-	src!Data@resp;
+	src!Data<int[0..5] ackCount = sharers.count>@resp;
 	sharers.add(src);
-    num_sharers = num_sharers + 1;
     
 }
 
 
 
 (I, src?GetM, M){
-    src!Data<int[0..5] ackCount = num_sharers>@resp;
+    src!Data<int[0..5] ackCount = sharers.count>@resp;
     owner = src;
 }
 
 
 (I, src?PutS){
-    num_sharers = num_sharers - 1; // eventually should become 0
     src!PutAck@fwd;
 }
 
@@ -380,45 +383,40 @@ cache owner;
 
 
 (S, src?GetS){
-    src!Data<int[0..5] ackCount = num_sharers>@resp;
+    src!Data<int[0..5] ackCount = sharers.count>@resp;
     sharers.add(src);
-    num_sharers = num_sharers + 1;
 }
 
 
 (S, src?GetM & sharers.contains(src), M){
-    int[0..5] temp = num_sharers -1;
+    int[0..5] temp = sharers.count -1;
     src!Data<int[0..5] ackCount = temp>@resp;
-    sharers!Inv@fwd;
+    sharers!Inv< cache requestor = src>@fwd;
     clear sharers;
-    num_sharers = 0;
     owner = src;
 }
 
 (S, src?GetM & !sharers.contains(src), M){
-    src!Data<int[0..5] ackCount = num_sharers>@resp;
-    sharers!Inv@fwd;
+    src!Data<int[0..5] ackCount = sharers.count>@resp;
+    sharers!Inv<cache requestor = src>@fwd; // caches need to know
+                                            // where to send InvAck
     clear sharers;
-    num_sharers = 0;
     owner = src;
 }
 
-(S, src?PutS & num_sharers != 1){
+(S, src?PutS & sharers.count != 1){
     sharers.del(src);
-    num_sharers = num_sharers - 1;
     src!PutAck@fwd;
 }
 
-(S, src?PutS & num_sharers != 1, I){
+(S, src?PutS & sharers.count == 1, I){
     sharers.del(src);
-    num_sharers = num_sharers -1;
     src!PutAck@fwd;
 }
 
 
 (S, src?PutM & src != owner){
     sharers.del(src);
-    num_sharers = num_sharers - 1;
     src!PutAck@fwd;
 }
 
@@ -432,7 +430,6 @@ cache owner;
     owner!FwdGetS<cache requestor = src>@fwd;
     sharers.add(src);
     sharers.add(owner);
-    num_sharers = num_sharers +2;
     clear owner;
 }
 
@@ -446,7 +443,6 @@ cache owner;
 
 (M, src?PutS){
     src!PutAck@fwd;
-    num_sharers = num_sharers - 1;
 }
 
 
@@ -473,13 +469,11 @@ cache owner;
 
 (S_D, src?PutS){
     sharers.del(src);
-    num_sharers = num_sharers - 1;
     src!PutAck@fwd;
 }
 
 (S_D, src?PutM & src!=owner){
     sharers.del(src);
-    num_sharers = num_sharers - 1;
     src!PutAck@fwd;
 }
 
