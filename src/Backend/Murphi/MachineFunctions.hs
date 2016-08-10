@@ -51,7 +51,7 @@ instance Cl.MurphiClass MachineFunctions where
            formalIndexStr machine ++ " : " ++ indexTypeStr machine ++
            ");\nbegin\n\n" ++
            "  if MultiSetCount(i:" ++ thisSet ++ ", " ++
-           thisSet ++ "[i] = x) != 0\n" ++
+           thisSet ++ "[i] = x) = 0\n" ++
            "  then\n" ++ "   MultiSetAdd(x," ++ thisSet ++ ");\n" ++
            "  endif;\n\nend;\n"
 
@@ -90,7 +90,7 @@ instance Cl.MurphiClass MachineFunctions where
            srcField      = Field (Simple "src") Local
            dstField      = Field (Simple "n") Local
            thisSet       = indexedFormalStr machine ++ "." ++ set
-           functionName  = "procedure Cast" ++ fstCap mtype ++ fstCap set
+           functionName  = "procedure Broadcast" ++ fstCap mtype ++ fstCap set
            spaceNum      = length functionName + 1 -- 1 for (
            argsForSend   = map sendArg msgArgs -- MsgArg -> Field for Send in loop
            msg           = Message mtype argsForSend

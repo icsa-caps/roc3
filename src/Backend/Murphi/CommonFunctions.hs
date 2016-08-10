@@ -76,7 +76,7 @@ instance Cl.MurphiClass CommonFunctions where
    sendStandardAssignments = "msg.mtype := mtype;\n" ++
                              "msg.src   := src;\n" ++
                              "msg.dst   := dst;\n" ++
-                             "msg.vc    := vc;\n"
+                             "msg.vc    := vc;"
 
    sendEnd = "\nend;\n"
 
@@ -88,8 +88,8 @@ instance Cl.MurphiClass CommonFunctions where
 
    finalSend = sendTop     ++ "\n" ++
                sendNext    ++ "\n" ++
-               pushBy 5 sendStandardAssignments ++ -- contains new line
-               assignments ++ "\n" ++ -- don't need pushBy, don't know why
+               (pushBy 5 sendStandardAssignments) ++ "\n" ++
+               (pushBy 5 assignments) ++ "\n\n" ++
                pushBy 5 printedNets ++ "\n"
                ++ sendEnd
 

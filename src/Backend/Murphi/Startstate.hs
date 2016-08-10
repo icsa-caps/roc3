@@ -179,7 +179,7 @@ instance Cl.MurphiClass Startstate where
    -- set count of an ordered net to 0
    zeroCount :: OrderedNetName -> String
    zeroCount net = "for n:Node do\n" ++
-                    net ++ "count[n] := 0;\n" ++
+                    "  " ++  net ++ "count[n] := 0;\n" ++
                     "endfor;\n"
 
    -----------------------------

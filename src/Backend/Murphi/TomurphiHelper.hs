@@ -128,7 +128,7 @@ instance Cl.MurphiClass Response where
           src1 = onlyIndex src
 
 -------------------------------------------------------
-     in  "Cast" ++ fstCap mtype ++ fstCap setName ++
+     in  "Broadcast" ++ fstCap mtype ++ fstCap setName ++
          "(" ++ Cl.tomurphi src1 ++ "," ++ index ++ "," ++
            vc ++ ",\n" ++
           mapconcatlnComma Cl.tomurphi params ++ ");"
@@ -227,11 +227,13 @@ instance Cl.MurphiClass Guard where
   tomurphi (Receive mtype [] src vc)      =  guardMType mtype ++ guardMsgVC vc
                                              ++ guardMsgSrc src
 
-  tomurphi (Receive mtype argVals src vc) = let temp = map printArgCond argVals
-                                                argConds = concatWith " & " temp
-                                            in  guardMType mtype ++ " & " ++
-                                                argConds ++ guardMsgVC vc
-                                                ++ guardMsgSrc src
+  tomurphi (Receive mtype argVals src vc) = let  argConds = concat $
+                                                             map printArgCond argVals
+                                            in  guardMType mtype ++
+                                                guardMsgSrc src ++
+                                                guardMsgVC vc ++ argConds
+
+
 
   tomurphi (AtState machine state)
     = indexedMachineGen machine ++ ".state = " ++ state
@@ -261,7 +263,7 @@ instance Cl.MurphiClass Guard where
     = "(" ++ Cl.tomurphi field1 ++ "!=" ++ Cl.tomurphi field2 ++ ")"
 
   tomurphi (NotEq field1 (Right intExp))
-    =  "(" ++ Cl.tomurphi field1 ++ "=" ++ Cl.tomurphi intExp ++ ")"
+    =  "(" ++ Cl.tomurphi field1 ++ "!=" ++ Cl.tomurphi intExp ++ ")"
 
   -------------------------------------------
 
@@ -305,7 +307,7 @@ guardMsgSrc (Nothing) = ""
 guardMsgSrc (Just src) = " & msg.src = " ++ Cl.tomurphi src
 
 printArgCond :: (ArgName, Field) -> String
-printArgCond (arg, field)  = "msg." ++ arg ++ " = " ++ Cl.tomurphi field
+printArgCond (arg, field)  = " & msg." ++ arg ++ " = " ++ Cl.tomurphi field
 
 -------------------------------------------------
 
