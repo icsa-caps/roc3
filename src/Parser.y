@@ -61,7 +61,7 @@ import Data.List
     add         { TokenAdd }
     del         { TokenDel }
     contains    { TokenContains }
-    size        { TokenSetSize }
+    count       { TokenCount }
 
     num         { TokenNum $$ }
     iden        { TokenIdentifier $$ }
@@ -232,7 +232,7 @@ Param           : iden '[' num ']'                              { ArrayElem $1 $
                 | num                                           { VarOrVal (show $1) }
                 | src                                           { VarOrVal "src" }
                 | iden                                          { VarOrVal $1 }
-                | size '(' iden ')'                             { SetSize $3 }
+                | iden '.' count                                { SetSize $1 }
 
 
 IntExp          : IntExp '+' IntExp                             { Sum $1 $3 }
