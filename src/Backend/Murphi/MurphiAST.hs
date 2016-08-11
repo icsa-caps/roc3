@@ -35,6 +35,7 @@ type RuleName         = String
 type StartVal         = String
 type MType            = String --mtype in murphi
 type Responses        = [Response]
+type FormalParam      = String
 
 
 
@@ -85,7 +86,7 @@ type MsgArgs          = [MsgArg]
 
 
 -- only for Send and Broadcast
-data Message = Message MType [ Maybe Field ] -- for Owner see bellow
+data Message = Message MType [ (FormalParam,Maybe Field) ] -- for Owner see bellow
                deriving(Show,Eq)
 -- The list of Message arguments has fields, instead of variables
 -- with the owner set to Msg, in order to print them like "msg." ++ fieldName

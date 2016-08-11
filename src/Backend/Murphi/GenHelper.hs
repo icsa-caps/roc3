@@ -230,8 +230,6 @@ thrd3 (a,b,c) = c
 getMtype :: Message -> String
 getMtype (Message mtype _ ) = mtype
 
-getMsgParams :: Message -> [Maybe Field]
-getMsgParams (Message _ params) = params
 
 ----------------------------------------------------------------
 

@@ -14,6 +14,7 @@ module TomurphiHelper where
 import MurphiAST
 import qualified MurphiClass as Cl
 import GenHelper
+import Data.Maybe -- for fromJust
 
 --------------------------------
 
@@ -100,14 +101,21 @@ instance Cl.MurphiClass Response where
           -- if src and dst are explicit machines and not variables for machines,
           -- we need to print only the index of this machine,
           -- not the array indexed
-          src1 = onlyIndex src
-          dst1 = onlyIndex dst
+          src1 = Cl.tomurphi $ onlyIndex src
+          dst1 = Cl.tomurphi $ onlyIndex dst
+
+          mtypeAssign = "newMsg.mtype := " ++ mtype ++ ";\n"
+          srcAssign   = "newMsg.src   := "   ++ src1  ++ ";\n"
+          dstAssign   = "newMsg.dst   := "   ++ dst1  ++ ";\n"
+          vcAssign    = "newMsg.vc    := "    ++ vc    ++ ";\n"
+
+          otherAssign = map msgParamAssign params
+
+          setAllNewMsg = concat $ [mtypeAssign] ++ [srcAssign] ++
+                                  [dstAssign]   ++ [vcAssign]  ++
+                                  otherAssign
       in
-          "Send(" ++ mtype ++ ",\n" ++
-          "     " ++ Cl.tomurphi src1 ++ ",\n" ++
-          "     " ++ Cl.tomurphi dst1 ++ ",\n" ++
-          "     " ++ vc         ++ ",\n" ++
-          pushBy 5 (mapconcatlnComma Cl.tomurphi params) ++ ");"
+          setAllNewMsg ++ "Send(newMsg);\n"
 
 
  -- the broadcasting function we'll use in murphi depends on
@@ -125,13 +133,22 @@ instance Cl.MurphiClass Response where
           -- if src is an explicit machine and not a variable for machine,
           -- we need to print only the index of this machine,
           -- not the array indexed
-          src1 = onlyIndex src
+          src1 = Cl.tomurphi $ onlyIndex src
+
+          mtypeAssign = "newMsg.mtype := "    ++ mtype ++ ";\n"
+          srcAssign   = "newMsg.src   := "    ++ src1  ++ ";\n"
+          vcAssign    = "newMsg.vc    := "    ++ vc    ++ ";\n"
+
+          otherAssign = map msgParamAssign params
+
+          setAllNewMsg = concat $ [mtypeAssign] ++ [srcAssign] ++
+                                  [vcAssign]  ++
+                                  otherAssign
 
 -------------------------------------------------------
-     in  "Broadcast" ++ fstCap mtype ++ fstCap setName ++
-         "(" ++ Cl.tomurphi src1 ++ "," ++ index ++ "," ++
-           vc ++ ",\n" ++
-          mapconcatlnComma Cl.tomurphi params ++ ");"
+     in  setAllNewMsg ++
+         "Broadcast" ++ fstCap mtype ++ fstCap setName ++
+         "(newMsg," ++ index ++ ");\n"
 -------------------------------------------------------
 
  tomurphi (Clear field) = "undefine " ++ Cl.tomurphi field ++ ";"
@@ -169,6 +186,17 @@ instance Cl.MurphiClass Response where
  tomurphi (EmptyResp str) = "-- " ++ str -- e.g. "hit". Strings that don't
                                          -- mean anything in murphi
 
+
+ --------------------------
+ -- helper for broadcast and Send
+ -- prints assignment to msg arg
+
+msgParamAssign :: (FormalParam, Maybe Field) -> String
+msgParamAssign (formal, actual)
+  = "newMsg." ++ formal ++ " := " ++
+     (if actual == Nothing then "undefined"
+      else (Cl.tomurphi.fromJust) actual)
+     ++ ";\n"
 
 -----------------------------------------------------------------
 
@@ -318,8 +346,7 @@ printArgCond (arg, field)  = " & msg." ++ arg ++ " = " ++ Cl.tomurphi field
 -- used in self-issued rules and machine receive functions
 instance Cl.MurphiClass LocalVariables where
   tomurphi [] = ""
-  tomurphi localVariables = "var\n" ++
-                            pushBy 2 (mapconcatln Cl.tomurphi localVariables)
+  tomurphi localVariables = pushBy 2 (mapconcatln Cl.tomurphi localVariables)
 
 
 ----------------------------------------------------------------

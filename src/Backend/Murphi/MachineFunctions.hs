@@ -96,23 +96,22 @@ instance Cl.MurphiClass MachineFunctions where
            msg           = Message mtype argsForSend
        in
            functionName ++
-           "(src:Node;\n" ++
-            ( pushBy spaceNum (formalIndexStr machine ++ ":"
-                   ++ indexTypeStr machine) ) ++ ";\n" ++
-            ( pushBy spaceNum "vc:VC_Type" ) ++ ";\n" ++
-            ( pushBy spaceNum (declareArgs msgArgs) ) ++ ");\n" ++
-           "begin\n" ++
+           "(msg:Message; " ++
+            (formalIndexStr machine ++ ":"
+                   ++ indexTypeStr machine) ++  ");\n" ++
+           "\nvar\n" ++
+           "  newMsg:Message;\n" ++
+           "\nbegin\n" ++
            "  for n:Node do\n" ++
            "    if  ( IsMember(n, " ++ Cl.tomurphi elemType ++  ") &\n" ++
            "       MultiSetCount(i:" ++ thisSet ++ ", "
            ++ thisSet ++ "[i] = n) != 0 )\n" ++
            "    then\n" ++
-           ( pushBy 6 (Cl.tomurphi (Send msg srcField dstField "vc")) ) ++ "\n" ++
+           "      Send(msg);\n" ++
            "    endif;\n" ++
            "  endfor;\n" ++
            "end;\n"
        where
-           declareArgs = mapconcatln Cl.tomurphi
 
            -- we must transform the MsgArg to Field for
            -- the Send in the loop
@@ -120,13 +119,13 @@ instance Cl.MurphiClass MachineFunctions where
            -- Note: the argument to a function in  Murphi can't be
            -- set or array, because only simple (not composite) types can
            -- be passed as arguments to functions.
-           sendArg :: MsgArg -> Maybe Field
+           sendArg :: MsgArg -> (FormalParam, Maybe Field)
            sendArg (Decl _ (Set _ _))
              = error "murphi can't take a composite type (here set) as argument"
            sendArg (Decl _ (Array _ _ ))
              = error "murphi can't take a composite type (here array) as argument"
            sendArg (Decl name _) -- we don't care about the type
-              = Just $ Field (Simple name) Global -- passed/argument
+              = (name, (Just (Field (Simple name) Global))) -- passed/argument
 
 
    ----------------------------------------------------------
@@ -183,8 +182,10 @@ instance Cl.MurphiClass MachineFunctions where
     = "function " ++ machine ++ "Receive(msg:Message; " ++
       formalIndexStr machine ++ " : "++ indexTypeStr machine
       ++ ") : boolean;\n" ++
-      Cl.tomurphi localVariables ++
-      "begin\n" ++
+      "\nvar\n" ++
+      "  newMsg : Message;\n" ++
+      (pushBy 2 (Cl.tomurphi localVariables)) ++
+      "\nbegin\n" ++
       " switch " ++
       indexedFormalStr machine ++ ".state" ++
       pushBy 3 (caseAllStates statesGuardsReps) ++

@@ -151,8 +151,10 @@ instance Cl.MurphiClass SelfIssueRule where
     = "rule \"" ++ rulename ++ "\"\n" ++
        pushBy 2 ( "(" ++ (Cl.tomurphi guard) ++ ")" ) ++ "\n" ++
       "==>\n" ++
-      pushBy 2 (Cl.tomurphi localVars) ++ "\n" ++
-      "begin\n" ++
+      "var\n" ++
+      "  newMsg:Message;\n" ++
+      pushBy 2 (Cl.tomurphi localVars) ++
+      "\nbegin\n" ++
       pushBy 2 (mapconcatln Cl.tomurphi responses) ++ "\n" ++
       "endrule;\n\n"
 

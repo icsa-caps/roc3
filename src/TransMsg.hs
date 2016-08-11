@@ -123,7 +123,7 @@ transMsg machine machineFields stdArgs nonsyms locals (F.Msg mtype args)
             -- look up the name of each std argument in the previous list.
             backArgs     = map ((flip lookup) withformalsArgs) stdArgsNames
 
-      in    B.Message mtype backArgs
+      in    B.Message mtype (zip stdArgsNames backArgs)
 
   where
       -- get the argument in the backend, with the name of the formal parameter
@@ -141,7 +141,6 @@ transMsg machine machineFields stdArgs nonsyms locals (F.Msg mtype args)
 
       getArg (F.GuardAssign decl param)
         = let formal = getTypeDeclName decl
-              -- see TransGen
               field = transVar machine machineFields stdArgs nonsyms locals param
           in  (formal, field)
 

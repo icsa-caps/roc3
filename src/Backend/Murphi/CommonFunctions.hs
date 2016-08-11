@@ -59,39 +59,22 @@ instance Cl.MurphiClass CommonFunctions where
 
 
 
-   sendTop = let
-                 otherMsgArgs = let decls = (mapconcatln Cl.tomurphi msgArgs)
-                                in if decls == [] then [] else init decls -- we remove the last ";"
-                 vcDecl = if otherMsgArgs == [] then "vc: VC_Type\n"
-                          else "vc: VC_Type;\n"
-             in
-                 "Procedure Send(mtype: MessageType;\n" ++
-                 "               " ++ "src: Node;\n"    ++
-                 "               " ++ "dst: Node;\n"    ++
-                 "               " ++ vcDecl  ++
-                 pushBy 15 otherMsgArgs ++ ");"
+   sendTop =  "Procedure Send(msg:Message);\n"
 
-   sendNext = "var\n  msg: Message;\n\nbegin\n"
+   sendVar = "\nvar\n  dst: Node;\n" ++
+              "  vc: VC_Type;\n" ++
+              "\nbegin\n"
 
-   sendStandardAssignments = "msg.mtype := mtype;\n" ++
-                             "msg.src   := src;\n" ++
-                             "msg.dst   := dst;\n" ++
-                             "msg.vc    := vc;"
-
+   setVar = "dst := msg.dst;\n" ++
+            "vc  := msg.vc;\n"
    sendEnd = "\nend;\n"
 
-   msgFieldAssign :: MsgArg -> String
-   msgFieldAssign (Decl argname argtype) = "msg." ++ argname ++ " := "
-                                            ++ argname ++ ";"
-
-   assignments = mapconcatln msgFieldAssign msgArgs
 
    finalSend = sendTop     ++ "\n" ++
-               sendNext    ++ "\n" ++
-               (pushBy 5 sendStandardAssignments) ++ "\n" ++
-               (pushBy 5 assignments) ++ "\n\n" ++
-               pushBy 5 printedNets ++ "\n"
-               ++ sendEnd
+               sendVar    ++ "\n" ++
+               (pushBy 5 setVar) ++ "\n" ++
+               pushBy 5 printedNets ++ "\n" ++
+               sendEnd
 
    -----------------------------
    nets = map fst netVCs

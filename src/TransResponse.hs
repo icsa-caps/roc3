@@ -61,8 +61,8 @@ transResponse machine machineFields stdArgs nonsyms locals resp
       F.Stall                           ->  B.Stall
       F.Send msg dst vc                 ->  let -- because we use the translated
                                                 -- msg in the broadcast, it'll
-                                                -- all std msg args just like
-                                                -- send
+                                                -- have all std msg args
+                                                -- just like send
 
                                                 bMsg = transMsg machine
                                                                 machineFields
