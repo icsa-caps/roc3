@@ -55,11 +55,7 @@ int[0..5] acksExpected (0);
 	stall;
 }
 
-(IS_D, Dir[0]?Data<int[0..5] ackCount = 0>, S){ 
-}
-
-
-(IS_D, src?Data & src!=Dir[0], S){ // src == owner
+(IS_D, src?Data, S){ // src == (owner or dir)
 }
 
 
@@ -356,7 +352,7 @@ set[cache] cache sharers,
 cache owner;
 
 (I, src?GetS, S){
-	src!Data<int[0..5] ackCount = sharers.count>@resp;
+	src!Data@resp;
 	sharers.add(src);
     
 }
@@ -383,14 +379,14 @@ cache owner;
 
 
 (S, src?GetS){
-    src!Data<int[0..5] ackCount = sharers.count>@resp;
+    src!Data@resp;
     sharers.add(src);
 }
 
 
 (S, src?GetM & sharers.contains(src), M){
-    int[0..5] temp = sharers.count -1;
-    src!Data<int[0..5] ackCount = temp>@resp;
+    sharers.del(src);
+    src!Data<int[0..5] ackCount = sharers.count>@resp;
     sharers!Inv< cache requestor = src>@fwd;
     clear sharers;
     owner = src;
