@@ -85,15 +85,13 @@ instance Cl.MurphiClass MachineFunctions where
 
    -- broadcast for a single set and msg
    singleBroadcast :: BCastInfo -> String
-   singleBroadcast (BCast machine set elemType mtype msgArgs)
+   singleBroadcast (BCast machine set elemType)
      = let
            srcField      = Field (Simple "src") Local
            dstField      = Field (Simple "n") Local
            thisSet       = indexedFormalStr machine ++ "." ++ set
-           functionName  = "procedure Broadcast" ++ fstCap mtype ++ fstCap set
+           functionName  = "procedure BroadcastTo" ++ fstCap set
            spaceNum      = length functionName + 1 -- 1 for (
-           argsForSend   = map sendArg msgArgs -- MsgArg -> Field for Send in loop
-           msg           = Message mtype argsForSend
        in
            functionName ++
            "(msg:Message; " ++

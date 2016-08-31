@@ -62,21 +62,27 @@ singleMFunction stdArgs nonsyms (F.Machine _ machine _ _ fields mFunction)
          receiveFunction  = map (receiveInst machine fields stdArgs nonsyms locals)
                                 groupedReactions
 
+         --------------------------------------------------------
+         -- broadcast function
+         --------------------------------------------------------
+
+         -- take responses that are broadcasts
+         bcasts       = filter (isBCast fields stdArgs locals) allFrontResps
 
 
-         bcasts         = filter (isBCast fields stdArgs locals) allFrontResps
-         bcastMtypes    = map bCastMtype bcasts
-         castWithMType  = zip bcastMtypes bcasts -- :: [(B.Mtype, F.Rsponse)]
+         bCastSets    = map bCastSetName bcasts
+         castWithDst  = zip bCastSets bcasts -- :: [(B.SetName, F.Response)]
 
-         -- what if the same mtype is sent to different sets?
-         -- we need to check which machine field we broadcast to
-         noDupls        = map snd $
-                           nubBy ( \(mtype1,_) -> \(mtype2,_)
-                                     -> mtype1 == mtype2 )
-                                 castWithMType
+         -- we want one broadcast function for each set there is a broadcast to
+         noDupls :: [F.Response]
+         noDupls    = map snd $
+                        nubBy ( \(dst1,_) -> \(dst2,_)
+                                  -> dst1 == dst2 )
+                        castWithDst
 
-         bcastinfo      = map (finalBCast machine fields stdArgs)
-                              noDupls
+
+         bcastinfo  = map (finalBCast machine fields)
+                          noDupls
 
      in
          (machine, sets, bcastinfo, receiveFunction, locals)
@@ -84,30 +90,19 @@ singleMFunction stdArgs nonsyms (F.Machine _ machine _ _ fields mFunction)
 
 -----------------------------------------------------------------
 
--- write a method for finding pairs of messages and sets for which we need
--- a broadcast procedure
-
--- we must also find the arguments of the broadcasted message
-
--- BCastInfo =
--- BCast MachineType SetName ElemType MType [Maybe MsgArg]
-
-
 
 -- This function puts together all the functions defined below
 -- to construct a B.BCastInfo
 -- we assume the response is a F.Broadcast
-finalBCast :: F.MachineType -> F.Fields -> [B.MsgArg] -> -- std msg args
+finalBCast :: F.MachineType -> F.Fields  ->
               F.Response -> B.BCastInfo
 
-finalBCast machine fields stdArgs resp
+finalBCast machine fields resp
   = let
-        mtype    = bCastMtype resp
         setName  = bCastSetName resp
         elemType = bCastElemType fields setName
     in
-        B.BCast machine setName elemType mtype stdArgs
-
+        B.BCast machine setName elemType
 
 
 -- we assume the response is a BCast

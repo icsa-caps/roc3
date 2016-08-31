@@ -118,12 +118,9 @@ instance Cl.MurphiClass Response where
           setAllNewMsg ++ "Send(newMsg);\n"
 
 
- -- the broadcasting function we'll use in murphi depends on
- -- mtype and the set we are broadcasting to
- -- the only arguments are
- -- the index of the machine which owns the set
- -- the src
- -- and the vc
+ -- the arguments of the broadcasting function are the msg we send
+ -- this is constructed before the broadcast. We call this msg "newMsg".
+ -- It's a local variable.
  tomurphi (Broadcast (Message mtype params) src dstSet vc)
    = let
           -- get the owner of the set and its name
@@ -135,6 +132,7 @@ instance Cl.MurphiClass Response where
           -- not the array indexed
           src1 = Cl.tomurphi $ onlyIndex src
 
+          -- constuct the msg to be sent
           mtypeAssign = "newMsg.mtype := "    ++ mtype ++ ";\n"
           srcAssign   = "newMsg.src   := "    ++ src1  ++ ";\n"
           vcAssign    = "newMsg.vc    := "    ++ vc    ++ ";\n"
@@ -147,7 +145,7 @@ instance Cl.MurphiClass Response where
 
 -------------------------------------------------------
      in  setAllNewMsg ++
-         "Broadcast" ++ fstCap mtype ++ fstCap setName ++
+         "BroadcastTo" ++ fstCap setName ++
          "(newMsg," ++ index ++ ");\n"
 -------------------------------------------------------
 
