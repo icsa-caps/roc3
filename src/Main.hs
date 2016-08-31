@@ -10,8 +10,9 @@ main :: IO ()
 main = do
         args <- getArgs
         fileContents <- readFile $ (args !! 0)
+        let name = args !! 1
         --putStrLn (show $ parseAst fileContents)
         let fAst      = parseAst fileContents
             bAst      = transform fAst
             murphiSrc = tomurphiTop bAst
-        writeFile "murphiSrc.m" murphiSrc
+        writeFile (name ++ ".m") murphiSrc
