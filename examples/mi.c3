@@ -41,7 +41,7 @@ machine Cache:[4] {
   }			    
 
   (IM, src?Data@c1, M) {
-	int[0..10] integer = 5 + 3/2;
+	//int[0..10] integer = 5 + 3/2;
 	Dir[0]!Ack@c2;
   }
 
@@ -65,35 +65,53 @@ startstate: I;
  [Cache] boolean acks,               // acks is indexed by the scalarset/enum 
                                     // cache states are indexed too
 
- set:Cache Cache modifiers, 	// the size of the set is #caches
+ set:Cache Cache modifiers; 	// the size of the set is #caches
+ 	
 
- set:5 boolean other; 	      
+      
 
   (I, src?GetM, IM) {
+
 	working[1] = true;   
     	owner = src;
 	modifiers.add(src);	     
 	src!Data@c1;
+
   }
 
-  (M, src?GetM,IM) {
-    owner!Fwd_GetM<cache src, node direct>@c1; // in murphi:Send(Fwd_GetM, owner, src)
+
+
+  (M, src?GetM, IM) {
+
+    owner!Fwd_GetM<cache src, node direct>@c1; 
     Dir thisDirectory = direct;
     owner = src;	   // the argument of the message becomes the sender
     modifiers.del(src);
+
   }
 
+
+
   (IM, src?GetM@c1 ) {
+
     modifiers.add(src);
-    broadcast(dir, modifiers, NewModifier<cache src>)@c2; // broadcast to a set
-    stall;					         // msg received by every
-						         // machine in the set
-  }						         // if typeOf set != machine, 
-						         // error at some point
+    broadcast(dir, modifiers, NewModifier<cache src>)@c2; 
+
+   // broadcast to a set
+   // msg received by every machine in the set
+   // if typeOf set != machine, error at some point
+
+   }
 
 
   (IM, src?Ack@c2, M) {
+
    }
+
+
+
+
+
 }
 
 

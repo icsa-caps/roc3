@@ -1,6 +1,6 @@
 networks: unordered {ch1};
 
-machine Cache:[4] {
+machine Cache[4] { // Cache[4] -> Cache:[4]
 
 startstate: I;
 
@@ -12,8 +12,9 @@ startstate: I;
 		stall;
 	}
 
+
 	(IM, src?Data, M) {
-		dir[0]!Ack@ch1;
+		Dir[0]!Ack@ch1;
 	}
 
 	(M, *Read_Write) {
@@ -26,7 +27,7 @@ startstate: I;
 
 }
 
-machine Dir {
+nonsymmetric machine Dir[1] {
 
 startstate: I;
 
@@ -51,6 +52,3 @@ Cache owner;
 	}
 
 }
-
-
-
