@@ -288,8 +288,8 @@ are integer expressions and parameters.
 
 We call parameters the following expressions:
 
-+ array elements: < array name > "[" < index number > "]"
-+ numbers
++ array elements or an instance of a non-symmetric machine :
+  < array/machine name > "[" < index number > "]"
 + the source of a message, denoted by "src"
 + variables, which are simple identifiers
 + the number of elements in a set: < set name > ".count"
@@ -321,6 +321,7 @@ another state. The conditions we may impose are about:
 
   As we can see, the check for the virtual channel is optional. We write
   "src" when we don't want to check the message source for equality.
+  We will describe the syntax for messages in section 2.8
 
 + a message the machine decides to issue by itself. For example, in cache
   coherence protocols caches can issue a "read" or a "store".
@@ -378,6 +379,85 @@ can write either "Dir?Data" or "src?Data & src == Dir".
 ---------------------
 
 ### 2.7 Responses
+
+Recall that the syntax for < single guard-responses > i.e. a single guard
+with the responses is
+
+    < single guard-responses > ::= "(" < current state > "," < guard >
+                                   "[", < next state > "]" ")"
+                                   "{ < responses > }"
+
+The syntax for responses is:
+
+    < responses > ::= EMPTY
+                    | < responses > < response1 >
+
+    < response1 > ::= response ";"
+
+So each response is separated by a semi colon ";". So in all the examples we
+give below a semi colon must be added in the end at the actual roc3 code.
+
+The ways a machine can react at a given state are:
+
++ it can send a message to another machine, through a variable, src, or the
+  machine itself, if it is non-symmetric:
+  < response > ::= < param > "!" < msg > "@" < vc >
+  For example:
+  `Dir[0]!GetM@vc_req`
+  means the message GetM is sent to the first instance of the non-symmetric
+  machine Dir, on the channel vc_req.
+  The same syntax is used also when broadcasting a message i.e. sending it to
+  many machines. In this case, the destination of the message (on the left of
+  "!") must be the name of the set we want to broadcast to.
+
++ It can be an assignment to a variable. The non-terminal < var > is a shorthand
+  for the following:
+
+  < var > ::= < array name > "[" < index > "]"
+            | "src"
+            | < identifier >
+
+  So, the syntax is the same with < param >, without the < set name > ".count".
+  Also, an instance of a non-symmetric machine cannot be used as a variable.
+  We assign a value with an equals sign:
+
+  < assignment > ::= < var > "=" < param >
+                   | < var > "=" < int exp >
+
+  If we want to introduce a local variable that is not one of the message
+  arguments (we'll see messages can have arguments), the machine fields or "src"
+  we do with a type declaration, since the translator must know the type of the
+  new variable:
+
+  < assignment > ::= < type declaration > "=" < param >
+
+  For example: `int temp = set1.count + 2`.
+
++ We can add or delete a number or a parameter to and from a set.
+  The syntax is:
+
+  < response > ::= < set name > ".add" "(" < param > ")"
+                 | < set name > ".del" "(" < param > ")"
+                 | < set name > ".add" "(" < number > ")"
+                 | < set name > ".del" "(" < number > ")"
+
++ It can respond with a message that doesn't affect the model at all. This
+  message is a simple string:
+
+  < response > ::= < non-important msg >
+
+  Even though these messages don't affect the model-checking, they can help us
+  understand the system better.
+
++ we can undefine the value of a variable with "clear":
+
+  < response > ::= "clear" < identifier >
+
+  This helps speed up the model-checking.
+
++ it can stall, meaning it refuses to process the received message:
+  < response > ::= "stall"
+
 
 
 
