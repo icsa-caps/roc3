@@ -15,4 +15,5 @@ main = do
         let fAst      = parseAst fileContents
             bAst      = transform fAst
             murphiSrc = tomurphiTop bAst
-        writeFile (name ++ ".m") murphiSrc
+            targetName = if ('.' `elem` name) then name else name ++ ".m"
+        writeFile targetName murphiSrc
