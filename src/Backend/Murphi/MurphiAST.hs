@@ -86,9 +86,9 @@ type MsgArgs          = [MsgArg]
 
 
 -- only for Send and Broadcast
-data Message = Message MType [ (FormalParam,Maybe Field) ] -- for Owner see bellow
+data Message = Message MType [ (FormalParam, Maybe Field) ] -- for Owner see bellow
                deriving(Show,Eq)
--- The list of Message arguments has fields, instead of variables
+-- The list of Message arguments has elements of type Field, instead of Variable,
 -- with the owner set to Msg, in order to print them like "msg." ++ fieldName
 -- if we use machine fields, local vars or constants the owner
 -- is set accordingly

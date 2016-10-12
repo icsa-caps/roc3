@@ -62,7 +62,7 @@ data Field = Field TypeDecl (Maybe StartVal)
 data TypeDecl   = Boolean VarName
                 | Integer VarName Lo Hi
                 | Enum VarName [String]
-                | Vertex MachineType VarName -- TODO: check MachineType is one of the machines
+                | Vertex MachineType VarName
                 | Array (Either Size MachineType) TypeDecl
                 | Set   (Either Size MachineType) TypeDecl
                   deriving(Show,Eq)
@@ -75,7 +75,7 @@ data State  = State String
 
 
 
-data Guard       = ReceiveFrom Msg (Maybe Src) (Maybe VC) -- Nothing if we do not care about the vc     -- extend with arbitrary guards
+data Guard       = ReceiveFrom Msg (Maybe Src) (Maybe VC)
                  | Issue String
                  | Equals Param (Either Param IntExp)
                  | Greater Param (Either Param IntExp)

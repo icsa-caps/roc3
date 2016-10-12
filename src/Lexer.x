@@ -46,7 +46,6 @@ tokens :-
     \@              { \s -> TokenAt }
 
     global          { \s -> TokenGlobal }
-    vcs             { \s -> TokenVCs }
     networks        { \s -> TokenNetworks }
     ordered         { \s -> TokenOrdered }
     unordered       { \s -> TokenUnordered }
@@ -57,14 +56,9 @@ tokens :-
     int             { \s -> TokenInt }
     set             { \s -> TokenSet }
 
-    Issue           { \s -> TokenIssue }
     clear           { \s -> TokenClear }
-    Receive         { \s -> TokenReceive }
     src             { \s -> TokenSrc }
-    Send            { \s -> TokenSend }
-    broadcast       { \s -> TokenBroadcast }
     stall           { \s -> TokenStall }
-    Trans           { \s -> TokenTrans }
     add             { \s -> TokenAdd }
     del             { \s -> TokenDel }
     contains        { \s -> TokenContains }
@@ -115,14 +109,9 @@ data Token = TokenBegin
            | TokenBoolean
            | TokenInt
            | TokenSet
-           | TokenIssue
            | TokenClear
-           | TokenReceive
            | TokenSrc
-           | TokenSend
-           | TokenBroadcast
            | TokenStall
-           | TokenTrans
            | TokenAdd
            | TokenDel
            | TokenContains
