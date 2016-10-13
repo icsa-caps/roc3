@@ -1,7 +1,8 @@
 ## 1. A few words about roc3 and the motivation behind it
 
 Roc3 is a language for specifying finite state asynchronous concurrent systems
-(e.g. cache coherence protocols). Roc3 is translated to murphi, a tool for model-checking such systems.
+(e.g. cache coherence protocols). Roc3 is translated to murphi, a tool for
+model-checking such systems.
 
 More exactly, murphi is also a language for specifying systems of this kind.
 Murphi source code is translated to c++ code, which is compiled and the
@@ -27,8 +28,8 @@ We specify the syntax in a variant of Backus-Naur Form (BNF):
 * () denote grouping.
 
 
-When we use any of the above symbols in the language, we precede it by a
-backslash (\\).
+When we use any of the above symbols in the language, we enclose them in double
+quotes ("").
 
 ### 2.2 Reserved words
 
@@ -413,9 +414,9 @@ The ways a machine can react at a given state are:
 + It can be an assignment to a variable. The non-terminal < var > is a shorthand
   for the following:
 
-  < var > ::= < array name > "[" < index > "]"
-            | "src"
-            | < identifier >
+    < var > ::= < array name > "[" < index > "]"
+              | "src"
+              | < identifier >
 
   So, the syntax is the same with < param >, without the < set name > ".count".
   Also, an instance of a non-symmetric machine cannot be used as a variable.
@@ -465,14 +466,59 @@ The ways a machine can react at a given state are:
 
 ### 2.8 Messages
 
+A message in roc3 can either be a simple string or have also arguments enclosed
+in angle brackets. In BNF form:
 
+    < msg > ::= < msg type >
+              | < msg type > "<" < msg args > ">"
+
+The syntax for message arguments is
+
+   < msg args > ::= EMPTY
+                  | < msg args > "," < msg arg >
+                  | < msg arg >
+
+    < msg arg > ::= < type declaration > [ "=" < param > ]
+
+So an argument of a message is either a type declaration, or a type
+declaration followed by an equals and a param. The arguments of a message are
+separated by commas.
+
+The equals followed by a < param > can mean one of two things, depending on the
+context. If we are sending the message in question, it means that the field of
+the message declared by the type declaration will get the value of the
+parameter on the RHS of the equals. If we are receiving this message and it
+occurs in a guard, we are checking that the value of this message field is the
+same as of the parameter. For example the line
+
+    src!Data<int[0..5] ackCount = sharers.count>@resp;
+
+means that the message Data has the argument ackCount of type int, between 0 and
+5 and ackCount is set equal to the size of the set sharers. The message is sent
+though a channel called resp and the destination of the message is "src" i.e. the source of the message to which this is a response.
+
+On the other hand, the line
+
+    (A, src?SomeMsg< bool argBool = flag >, B)
+
+means that we are checking if the message argument argBool has the same value
+as flag. We also check if the message is SomeMsg and if we are in state A.
+
+It's important to notice that we cannot have numbers and integer
+expressions in general on the RHS of the equals. If we want to set the value of
+a message argument to an integer expression, we must use a local variable that
+will have this value. In a future version of roc3 we will add this option.
 
 
 ---------------------
 
+---------------------
 
+## 3 Examples
 
-
+We suggest you to take a look in the examples of roc3. We have written an MI
+and an MSI cache coherence protocol. The can be found in the `examples`
+folder.
 
 
 
