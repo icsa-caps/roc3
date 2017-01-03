@@ -143,8 +143,8 @@ instance Cl.MurphiClass Response where
                                   [vcAssign]  ++
                                   otherAssign
 
--------------------------------------------------------
-     in  setAllNewMsg ++
+     in
+         setAllNewMsg ++
          "BroadcastTo" ++ fstCap setName ++
          "(newMsg," ++ index ++ ");\n"
 -------------------------------------------------------
