@@ -284,7 +284,8 @@ type ElemType = Type
 
 -- we have one bcast function for each
 -- pair of msg and the set it is addressed to
-data BCastInfo = BCast MachineType SetName ElemType
+-- [MsgArg] is list of std msg arguments
+data BCastInfo = BCast MachineType SetName ElemType [MsgArg]
                  deriving(Show, Eq)
 
 type ReceiveFunction = [ Reaction ]

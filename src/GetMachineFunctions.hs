@@ -20,8 +20,12 @@ import TransResponse
 -----------------------------------------------------------------
 -----------------------------------------------------------------
 
--- BCastInfo = BCast MachineType SetName ElemType Message
---ReceiveFunction = [ ( State, [ (Maybe Guard, [Response]) ] ) ]
+-- change BCast to the  following
+-- BCastInfo = BCast MachineType SetName ElemType [B.MsgArg]
+-- i.e. include Message (all else the same)
+
+-- B.ReceiveFunction is
+-- ReceiveFunction = [ ( State, [ (Maybe Guard, [Response]) ] ) ]
 
 
 
@@ -33,7 +37,6 @@ getMachineFunctions fAst
       stdArgs = stdMsgArgs fAst
       machines = F.machines fAst
       nonsyms  = getNonsyms fAst
-
       in B.MachineFunctions $ map (singleMFunction stdArgs nonsyms) machines
 
 
@@ -81,7 +84,7 @@ singleMFunction stdArgs nonsyms (F.Machine _ machine _ _ fields mFunction)
                         castWithDst
 
 
-         bcastinfo  = map (finalBCast machine fields)
+         bcastinfo  = map (finalBCast machine fields stdArgs)
                           noDupls
 
      in
@@ -94,15 +97,17 @@ singleMFunction stdArgs nonsyms (F.Machine _ machine _ _ fields mFunction)
 -- This function puts together all the functions defined below
 -- to construct a B.BCastInfo
 -- we assume the response is a F.Broadcast
-finalBCast :: F.MachineType -> F.Fields  ->
-              F.Response -> B.BCastInfo
+finalBCast :: F.MachineType -> F.Fields
+              -> [B.MsgArg] -- [B.MsgArg] std msg args
+              -> F.Response
+              -> B.BCastInfo
 
-finalBCast machine fields resp
+finalBCast machine fields stdArgs resp
   = let
         setName  = bCastSetName resp
         elemType = bCastElemType fields setName
     in
-        B.BCast machine setName elemType
+        B.BCast machine setName elemType stdArgs
 
 
 -- we assume the response is a BCast

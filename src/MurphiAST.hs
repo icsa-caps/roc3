@@ -284,7 +284,8 @@ type ElemType = Type
 
 -- we have one bcast function for each
 -- pair of msg and the set it is addressed to
-data BCastInfo = BCast MachineType SetName ElemType
+-- [MsgArg] is list of std msg arguments
+data BCastInfo = BCast MachineType SetName ElemType [MsgArg]
                  deriving(Show, Eq)
 
 type ReceiveFunction = [ Reaction ]
@@ -305,6 +306,7 @@ data Guard           = Receive MType [(ArgName, Field)]
                      | Guard :|: Guard
                      | IsIn SetField Field
                        deriving(Show,Eq)
+
 type SetField = Field
 
 -- Note on Guard, Receive: the list is the value each msg arg must have (if any)
