@@ -94,7 +94,10 @@ instance Cl.MurphiClass MachineFunctions where
            thisSet       = indexedFormalStr machine ++ "." ++ set
            functionName  = "procedure BroadcastTo" ++ fstCap set
            spaceNum      = length functionName + 1 -- 1 for (
-           assignNewMsgFields = mapconcatln checkUndefAssign stdArgs
+           allMsgArgs -- must pring assignment for src, mtype, vc as well. Boolean plays no role.
+              = [(Decl "src" Boolean), (Decl "mtype" Boolean), (Decl "vc" Boolean)]
+                        ++ stdArgs
+           assignNewMsgFields = mapconcatln checkUndefAssign allMsgArgs
        in
            functionName ++
            "(msg:Message; " ++
