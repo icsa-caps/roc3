@@ -85,13 +85,16 @@ instance Cl.MurphiClass MachineFunctions where
 
    -- broadcast for a single set and msg
    singleBroadcast :: BCastInfo -> String
-   singleBroadcast (BCast machine set elemType)
+   -- TODO BCast has extra arg [MsgArg]
+   -- must change implementation
+   singleBroadcast (BCast machine set elemType stdArgs)
      = let
            srcField      = Field (Simple "src") Local
            dstField      = Field (Simple "n") Local
            thisSet       = indexedFormalStr machine ++ "." ++ set
            functionName  = "procedure BroadcastTo" ++ fstCap set
            spaceNum      = length functionName + 1 -- 1 for (
+           assignNewMsgFields = mapconcatln checkUndefAssign stdArgs
        in
            functionName ++
            "(msg:Message; " ++
@@ -100,31 +103,31 @@ instance Cl.MurphiClass MachineFunctions where
            "\nvar\n" ++
            "  newMsg:Message;\n" ++
            "\nbegin\n" ++
+           "\n  -- if a field is undefined, we must assign the undefined value explicitly\n" ++
+           (pushBy 2 assignNewMsgFields) ++ "\n" ++ -- set the values of newMsg
            "  for n:Node do\n" ++
            "    if  ( IsMember(n, " ++ Cl.tomurphi elemType ++  ") &\n" ++
            "       MultiSetCount(i:" ++ thisSet ++ ", "
            ++ thisSet ++ "[i] = n) != 0 )\n" ++
            "    then\n" ++
-           "      Send(msg);\n" ++
+           "      newMsg.dst := n;\n" ++
+           "      Send(newMsg);\n" ++
            "    endif;\n" ++
            "  endfor;\n" ++
            "end;\n"
        where
-
-           -- we must transform the MsgArg to Field for
-           -- the Send in the loop
-           -- MsgArg :: TypeDecl
-           -- Note: the argument to a function in  Murphi can't be
-           -- set or array, because only simple (not composite) types can
-           -- be passed as arguments to functions.
-           sendArg :: MsgArg -> (FormalParam, Maybe Field)
-           sendArg (Decl _ (Set _ _))
-             = error "murphi can't take a composite type (here set) as argument"
-           sendArg (Decl _ (Array _ _ ))
-             = error "murphi can't take a composite type (here array) as argument"
-           sendArg (Decl name _) -- we don't care about the type
-              = (name, (Just (Field (Simple name) Global))) -- passed/argument
-
+           -- checks if a msg arg is undefined and set the val of the newMsg arg.
+           --  If it is invalid, newMsg:=undefined
+           -- o/w murphi throws error.
+           checkUndefAssign :: MsgArg -> String
+           checkUndefAssign (Decl name _)
+            = let msgArg = "msg." ++ name
+                  newMsgArg = "newMsg." ++ name
+              in  "if isUndefined(" ++ msgArg ++ ") then\n" ++
+                  "   " ++ newMsgArg ++ " := undefined;\n" ++
+                  "else\n" ++
+                  "   " ++ newMsgArg ++ " := " ++ msgArg ++ ";\n" ++
+                  "endif;\n"
 
    ----------------------------------------------------------
    ----------------------------------------------------------
