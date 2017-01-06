@@ -118,31 +118,51 @@ transMsg machine machineFields stdArgs nonsyms locals (F.Msg mtype args)
 
             -- transform front args to B.Fields, paired
             -- with the respective formal param
-            withformalsArgs  = map getArg args
+            withformalsArgs  = map getArg args -- :: (String, Maybe B.Field)
 
             -- look up the name of each std argument in the previous list.
-            backArgs     = map ((flip lookup) withformalsArgs) stdArgsNames
+            backArgs     = map oneMaybe $ -- Maybe (Maybe B.Field) -> Maybe B.Field
+                           map ((flip lookup) withformalsArgs) stdArgsNames
 
-      in    B.Message mtype (zip stdArgsNames backArgs)
+            -- the list of msg args that are simply mentioned in the
+            -- list, they are not assigned to or checked against a value;
+            -- these shouldn't appear at all in the args of B.Message;
+            -- if we give them the value Nothing then they are set to undefined
+            -- in the responses
+            simplyReferenced = filter (\(formal,value)-> value == Nothing)
+                             $ map getArg args
 
+            -- we subtract those arguments simply referenced because these
+            -- will get a value though a direct assignment
+            argsWithAssignments = (zip stdArgsNames backArgs) \\ simplyReferenced
+
+      in    B.Message mtype  argsWithAssignments
   where
       -- get the argument in the backend, with the name of the formal parameter
       -- it corresponds to
-      getArg :: F.MsgArg -> (String, B.Field)
+      getArg :: F.MsgArg -> (String, Maybe B.Field)
       getArg (F.MsgArg typeDecl)
-        = let name = getTypeDeclName typeDecl
-              -- if we use the same name with msg arg
-              -- it'll be a simple var
-              -- (not instance of nonsymmetric machine
-              --  nor array element)
-              arg = B.Field (B.Simple name) B.Msg
-              formal = name
-          in  (formal, arg)
-
+        = let formal = getTypeDeclName typeDecl
+          in  (formal, Nothing)
+              -- in this case (above), the msg arg name is simply mentioned, but
+              -- no value is given in the list of args.
+              -- this means we should expect that a value is given
+              -- earlier in the roc3 file. Hence, we shouldn't return
+              -- a pair at all:
+              -- if we return (name, Nothing), it will be set to undefined in murphi;
+              -- if we return (name, B.Field (B.Simple name) B.Msg)
+              -- we will print newMsg.name = msg.name, which we don't want.
       getArg (F.GuardAssign decl param)
         = let formal = getTypeDeclName decl
               field = transVar machine machineFields stdArgs nonsyms locals param
-          in  (formal, field)
+          in  (formal, Just field)
+
+      oneMaybe :: Maybe (Maybe B.Field) -> Maybe B.Field
+      oneMaybe (Just Nothing) = Nothing
+      oneMaybe (Just (Just field)) = Just field
+      oneMaybe Nothing = Nothing
+
+
 
 
 -----------------------------------------------------------------

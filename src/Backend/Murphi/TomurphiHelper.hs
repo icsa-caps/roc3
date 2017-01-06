@@ -151,11 +151,30 @@ instance Cl.MurphiClass Response where
 
  tomurphi (Clear field) = "undefine " ++ Cl.tomurphi field ++ ";"
 
- tomurphi (Assign var value)    = Cl.tomurphi var ++ " := "
-                                  ++ Cl.tomurphi value ++ ";"
+ tomurphi (Assign var value)    =
+     -- check if var :: field has as owner Msg. If so, we should print
+     -- newMsg. := etc. instead of msg. := etc.
+     -- when a response assigns a value to a msg field, it is to send a
+     -- msg. The message we send is newMsg. No changes are made to msg
+   let (Field field owner) = var
+       ownerIsMsg (Field f o) = (o == Msg)
+       ownerIsMsg _ = False
+   in  if (ownerIsMsg var) then "newMsg." ++ Cl.tomurphi field
+                             ++ " := " ++ Cl.tomurphi value ++ ";"
+       else Cl.tomurphi var ++ " := "
+            ++ Cl.tomurphi value ++ ";"
 
- tomurphi (AssignInt field intExp) = Cl.tomurphi field ++ " := "
-                                     ++ Cl.tomurphi intExp ++ ";"
+ tomurphi (AssignInt field intExp)
+    =
+        let (Field var owner) = field
+            ownerIsMsg (Field f o) = (o == Msg)
+            ownerIsMsg _ = False
+        in  if (ownerIsMsg field) then "newMsg." ++ Cl.tomurphi var
+                                  ++ " := " ++ Cl.tomurphi intExp ++ ";"
+            else  Cl.tomurphi field ++ " := "
+                 ++ Cl.tomurphi intExp ++ ";"
+
+
 
 
  -- elem :: Field
