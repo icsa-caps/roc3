@@ -12,7 +12,7 @@ networks: ordered fwdNet {fwd},    //FwdGetS, FwdGetM, Inv, PutAck
 // to the directory
 
 
-machine cache[4] {
+machine cache[2] {
 
 
 startstate: I;
@@ -79,14 +79,27 @@ int[0..5] acksExpected (0);
 	stall;
 }
 
-(IM_AD, Dir[0]?Data<int[0..5] ackCount = 0 >, M){
+//(IM_AD, Dir[0]?Data<int[0..5] ackCount = 0 >, M){
+
+(IM_AD, Dir[0]?Data<int[0..5] ackCount> & ackCount == 0, M){
+
 
 }
 
-(IM_AD, Dir[0]?Data<int[0..5] ackCount> & ackCount > 0 , IM_A){
+(IM_AD, Dir[0]?Data<int[0..5] ackCount> & ackCount > 0 & ackCount != acksReceived , IM_A){
 	
        acksExpected = ackCount;
 }
+
+// LAST ADDITION
+// if we receive all the ackCounts before the data, we should
+// transition to M immediately
+(IM_AD, Dir[0]?Data<int[0..5] ackCount> & ackCount > 0 & ackCount == acksReceived , M){
+	
+}
+
+
+
 
 (IM_AD, src?Data, M){ // the src must be the owner of the block
 }
@@ -136,13 +149,13 @@ int[0..5] acksExpected (0);
 }
 
 (S, *store, SM_AD){
-	Dir[0]!GetM@req;
+    Dir[0]!GetM@req;
     acksReceived = 0;
     acksExpected = 0;
 }
 
 (S, *replace, SI_A){
-	Dir[0]!PutS@req; // makes sense to be in req vc
+    Dir[0]!PutS@req; // makes sense to be in req vc
                      // not specified in the book
     acksReceived = 0;
     acksExpected = 0;
@@ -180,8 +193,15 @@ int[0..5] acksExpected (0);
 	requestor!InvAck@resp;
 }
 
+//(SM_AD, Dir[0]?Data<int[0..5] ackCount=0>, M){
+(SM_AD, Dir[0]?Data<int[0..5] ackCount> & ackCount==0, M){
+}
 
-(SM_AD, Dir[0]?Data<int[0..5] ackCount=0>, M){
+// LAST ADDITION
+// if we receive all the ackCounts before the data, we should
+// transition to M immediately
+(SM_AD, Dir[0]?Data<int[0..5] ackCount> & ackCount > 0 & ackCount == acksReceived , M){
+	
 }
 
 (SM_AD, Dir[0]?Data<int[0..5] ackCount> & ackCount > 0, SM_A){
@@ -225,7 +245,7 @@ int[0..5] acksExpected (0);
 	acksReceived = acksReceived +1;
 }
 
-(SM_A, src?InvAck & acksExpected == acksReceived, M){
+(SM_A, src?InvAck & acksExpected == acksReceived + 1, M){
     acksReceived = acksReceived + 1;
 }
 
@@ -242,18 +262,18 @@ int[0..5] acksExpected (0);
 }
 
 (M, *replacement, MI_A){
-	Dir[0]!PutM@req;
+    Dir[0]!PutM@req;
     acksReceived = 0;
     acksExpected = 0;
 }
 
 (M, src?FwdGetS< cache requestor >, S){
-	requestor!Data@resp;
-	Dir[0]!Data@resp;
+    requestor!Data@resp;
+    Dir[0]!Data@resp;
 }
 
 (M, src?FwdGetM<cache requestor>, I){
-	requestor!Data@fwd;
+    requestor!Data@fwd;
 }
 
 
@@ -262,25 +282,25 @@ int[0..5] acksExpected (0);
 
 
 (MI_A, *load){
-	hit;
+   hit;
 }
 
 (MI_A, *store){
-	stall;
+   stall;
 }
 
 (MI_A, *replace){
-	stall;
+   stall;
 }
 
 
 (MI_A, src?FwdGetS<cache requestor>, SI_A){
-	requestor!Data@resp;
-	Dir[0]!Data@resp;
+   requestor!Data@resp;
+   Dir[0]!Data@resp;
 }
 
 (MI_A, src?FwdGetM<cache requestor>, II_A){
-	requestor!Data@resp;
+   requestor!Data@resp;
 }
 
 (MI_A, src?PutAck, I){
@@ -303,7 +323,7 @@ int[0..5] acksExpected (0);
 }
 
 
-(SI_A, src?Inv< cache requestor>, II_A){
+(SI_A, src?Inv< cache requestor >, II_A){
 	requestor!InvAck@resp;
 }
 
