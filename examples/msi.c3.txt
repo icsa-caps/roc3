@@ -30,7 +30,7 @@ int[0..5] acksExpected (0);
 
 
 (I, *store, IM_AD){
-	Dir[0]!GetM@req;
+    Dir[0]!GetM@req;
     acksReceived = 0;
     acksExpected = 0;
 
@@ -91,12 +91,6 @@ int[0..5] acksExpected (0);
        acksExpected = ackCount;
 }
 
-// LAST ADDITION
-// if we receive all the ackCounts before the data, we should
-// transition to M immediately
-(IM_AD, Dir[0]?Data<int[0..5] ackCount> & ackCount > 0 & ackCount == acksReceived , M){
-	
-}
 
 
 
@@ -107,6 +101,15 @@ int[0..5] acksExpected (0);
 (IM_AD, src?InvAck & acksExpected != acksReceived + 1){ // not last InvAck
 	acksReceived = acksReceived + 1;
 }
+
+// LAST ADDITION
+// Q: shouldn't we also expect the data? how do we transition directly to M?
+// this guard is in the murphi file by Marco
+(IM_AD, src?InvAck & acksExpected == acksReceived + 1, M){ // last InvAck
+	acksReceived = acksReceived + 1;
+}
+
+
 
 
 
@@ -420,12 +423,16 @@ cache owner;
     owner = src;
 }
 
-(S, src?PutS & sharers.count != 1){
+
+// need to check if the src is in the sharers. If it isn't we don't invalidate
+
+(S, src?PutS & ( (sharers.count != 1) | (!sharers.contains(src)) )  ){
     sharers.del(src);
     src!PutAck@fwd;
 }
 
-(S, src?PutS & sharers.count == 1, I){
+// if this was the last sharer, invalidate
+(S, src?PutS & sharers.count == 1 & sharers.contains(src), I){
     sharers.del(src);
     src!PutAck@fwd;
 }
