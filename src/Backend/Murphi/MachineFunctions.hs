@@ -85,8 +85,6 @@ instance Cl.MurphiClass MachineFunctions where
 
    -- broadcast for a single set and msg
    singleBroadcast :: BCastInfo -> String
-   -- TODO BCast has extra arg [MsgArg]
-   -- must change implementation
    singleBroadcast (BCast machine set elemType stdArgs)
      = let
            srcField      = Field (Simple "src") Local
