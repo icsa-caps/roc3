@@ -12,7 +12,7 @@ networks: ordered fwdNet {fwd},    //FwdGetS, FwdGetM, Inv, PutAck
 // to the directory
 
 
-machine cache[2] {
+machine cache[3] {
 
 
 startstate: I;
@@ -276,7 +276,7 @@ int[0..5] acksExpected (0);
 }
 
 (M, src?FwdGetM<cache requestor>, I){
-    requestor!Data@fwd;
+    requestor!Data@resp;
 }
 
 
