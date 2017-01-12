@@ -1,3 +1,8 @@
+// This is the MSI protocol from the book
+
+
+
+
 
 networks: ordered fwdNet {fwd},    //FwdGetS, FwdGetM, Inv, PutAck
           unordered respNet{resp}, // Data, InvAck
@@ -12,7 +17,7 @@ networks: ordered fwdNet {fwd},    //FwdGetS, FwdGetM, Inv, PutAck
 // to the directory
 
 
-machine cache[3] {
+machine cache[4] {
 
 
 startstate: I;
@@ -79,7 +84,7 @@ int[0..5] acksExpected (0);
 	stall;
 }
 
-//(IM_AD, Dir[0]?Data<int[0..5] ackCount = 0 >, M){
+
 
 (IM_AD, Dir[0]?Data<int[0..5] ackCount> & ackCount == 0, M){
 
@@ -102,9 +107,7 @@ int[0..5] acksExpected (0);
 	acksReceived = acksReceived + 1;
 }
 
-// LAST ADDITION
-// Q: shouldn't we also expect the data? how do we transition directly to M?
-// this guard is in the murphi file by Marco
+
 (IM_AD, src?InvAck & acksExpected == acksReceived + 1, M){ // last InvAck
 	acksReceived = acksReceived + 1;
 }
@@ -196,13 +199,10 @@ int[0..5] acksExpected (0);
 	requestor!InvAck@resp;
 }
 
-//(SM_AD, Dir[0]?Data<int[0..5] ackCount=0>, M){
+
 (SM_AD, Dir[0]?Data<int[0..5] ackCount> & ackCount==0, M){
 }
 
-// LAST ADDITION
-// if we receive all the ackCounts before the data, we should
-// transition to M immediately
 (SM_AD, Dir[0]?Data<int[0..5] ackCount> & ackCount > 0 & ackCount == acksReceived , M){
 	
 }
