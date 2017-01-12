@@ -18,7 +18,7 @@ networks of finite state machines.
 
 
 What you need
----
+-------
 
 You need Haskell, the programming language the translator is written in. You
 can download it from here:
@@ -40,14 +40,8 @@ tool from here:
 
 
 
-Folders
----
-
-
-
-
 How to use it
----
+------
 We provide details on how to run the application on a unix based environment.
 
 The executable is in `dist/build/roc3` and should not be moved to another
@@ -62,12 +56,16 @@ Note: you can omit the extention ".m" when specifying the name of the target
 file.
 
 The roc3 language
----
-See the wiki page (add link here) for the language specification.
+-----
+See the wiki page for the language specification.
+
+Code structure
+------
+See the file code_stucture.
 
 License
- ---
+-----
 
 
 Authors
----
+----
