@@ -9,7 +9,7 @@
 
 
 
-module Backend.Murphi.MurphiPrint where
+module Backend.Murphi.Print.MurphiPrint(printMurphiProgram) where
 
 import  MurphiAST
 import qualified MurphiClass as Cl
@@ -35,8 +35,8 @@ import Invariants
 
 
 -- top printing method for murphi
-tomurphiTop :: Program -> String
-tomurphiTop (Program constants
+printMurphiProgram :: Program -> String
+printMurphiProgram (Program constants
                    types
                    variables
                    commonFunctions

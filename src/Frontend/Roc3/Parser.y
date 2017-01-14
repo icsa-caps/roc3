@@ -1,5 +1,9 @@
 {
-module Parser where
+-- if any change is made to the parser, type at the terminal
+-- happy Parser.y
+-- to replace Parser.hs file. The cabal file should generate this automatically,
+-- but it doesn't; this happened after introducing multiple directories.
+module Frontend.Roc3.Parser where
 import Lexer
 import Ast
 import Data.List

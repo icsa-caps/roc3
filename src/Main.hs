@@ -1,9 +1,9 @@
 module Main where
 
 import System.Environment
-import Parser
-import TransMurphi
-import Backend.Murphi.MurphiPrint
+import Backend.Murphi.AST_Translation.TransMurphi
+import Backend.Murphi.Print.MurphiPrint
+import Frontend.Roc3.Parser
 
 
 main :: IO ()
@@ -14,6 +14,6 @@ main = do
         --putStrLn (show $ parseAst fileContents)
         let fAst      = parseAst fileContents
             bAst      = transform fAst
-            murphiSrc = tomurphiTop bAst
+            murphiSrc = printMurphiProgram bAst
             targetName = if ('.' `elem` name) then name else name ++ ".m"
         writeFile targetName murphiSrc

@@ -1,4 +1,4 @@
-module TransMurphi(transform) where
+module Backend.Murphi.AST_Translation.TransMurphi(transform) where
 
 -----------------------------------------------------------------
 
