@@ -45,6 +45,7 @@ This is the list of reserved words in the language:
 * contains
 * count
 
+------------------
 
 ### 2.3 Root of syntactic tree, message networks and VCs
 
@@ -225,7 +226,7 @@ The current and the next state of a machine are simple strings.If the machine st
 
 #### 2.6.2 Guards
 
-##### 2.6.2.0 Prelims: Integer expressions and parameters
+##### Prelims: Integer expressions and parameters
 
 Two constructs of the language we encounter for the first time in the guards
 are integer expressions and parameters.
@@ -253,7 +254,7 @@ Formally, their syntax is:
 
 ------------------------------
 
-##### 2.6.2.1 Guards
+##### Guards
 
 In the guards, we specify on what conditions a machine will transition to another state. The conditions we may impose are about:
 
@@ -420,8 +421,6 @@ means that we are checking if the message argument argBool has the same value as
 
 It's important to notice that we cannot have numbers and integer expressions in general on the RHS of the equals. If we want to set the value of a message argument to an integer expression, we must use a local variable that will have this value. In a future version of roc3 we will add this option.
 
-
----------------------
 
 ---------------------
 
