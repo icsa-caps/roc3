@@ -46,6 +46,8 @@ printMurphiProgram (Program constants
                    invariants )
 
     = separatingLine ++
+      skeletonSource ++
+      separatingLine ++
      "-- Constants {{{\n"
          ++ separatingLine
          ++ Cl.tomurphi constants
@@ -90,4 +92,8 @@ printMurphiProgram (Program constants
          separatingLine
            = "----------------------------------------" ++ -- 40 -
              "--------------------------------------\n"    -- another 40 -
+         skeletonSource
+           = "The skeleton is heavilly base on Protocol Framework from\n" ++
+             "http://users.ece.cmu.edu/~bgold/teaching/coherence.html"
+
 -----------------------------------------------------------------
