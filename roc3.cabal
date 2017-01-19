@@ -21,5 +21,5 @@ executable roc3
   other-modules:       Parser, Lexer
   -- other-extensions:
   build-depends:       base, array, split
-  hs-source-dirs:      src, src/Backend/Murphi/Print, src/Backend/Murphi/AST_Translation, src/Frontend/Roc
+  hs-source-dirs:      src, src/Backend/Murphi/Print, src/Backend/Murphi/AST_Translation, src/Frontend/Roc3
   default-language:    Haskell2010
