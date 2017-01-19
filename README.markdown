@@ -44,16 +44,15 @@ How to use it
 ------
 We provide details on how to run the application on a unix based environment.
 
-The executable is in `dist/build/roc3` and should not be moved to another
-folder. To run the application type
+First you need to download the repository. At a terminal window, navigate to the directory where you have placed the downloaded code. Type the command ``` cabal build```. This should build the executable.
+
+The executable is in `dist/build/roc3` and should not be moved to another folder. To run the application type
 
 `roc3 < name of roc3 file > < name of target file > `
 
-This will produce a compilable murphi source file. To actually do the
-model checking, consult the murphi documentation.
+This will produce a compilable murphi source file. To actually do the model checking, consult the murphi documentation.
 
-Note: you can omit the extention ".m" when specifying the name of the target
-file.
+Note: you can omit the extention ".m" when specifying the name of the target file.
 
 The roc3 language
 -----
