@@ -64,7 +64,8 @@ See the file code_stucture.
 
 License
 -----
-
+Apache-2
 
 Authors
 ----
+Kyriakos Katsamaktsis, Dr. Marco Elver, Dr. Vijayanand Nagarajan, The University of Edinburgh
