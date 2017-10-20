@@ -63,6 +63,8 @@ tokens :-
     del             { \s -> TokenDel }
     contains        { \s -> TokenContains }
     count           { \s -> TokenCount }
+    all		    { \s -> TokenAll }
+    self	    { \s -> TokenSelf }
 
     @digits         { \s -> TokenNum (read s) }
     @iden           { \s -> TokenIdentifier s }
@@ -116,6 +118,8 @@ data Token = TokenBegin
            | TokenDel
            | TokenContains
            | TokenCount
+	   | TokenAll
+	   | TokenSelf
            | TokenIdentifier String
            | TokenNum Int
              deriving (Eq,Show)

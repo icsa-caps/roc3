@@ -187,8 +187,11 @@ instance Cl.MurphiClass MachineFunctions where
       "\nvar\n" ++
       "  newMsg : Message;\n" ++
       (pushBy 2 (Cl.tomurphi localVariables)) ++
-      "\nbegin\n" ++
-      " switch " ++
+      "\nbegin" ++
+      "\n alias" ++
+      "\n   self:" ++ formalIndexStr machine ++
+      "\n do" ++
+      "\n switch " ++
       indexedFormalStr machine ++ ".state" ++
       pushBy 3 (caseAllStates statesGuardsReps) ++
       "\n   else\n" ++
@@ -196,6 +199,7 @@ instance Cl.MurphiClass MachineFunctions where
       " endswitch;\n\n" ++
       " -- Message processed\n" ++
       " return true;\n" ++
+      " endalias;\n" ++
       "end;\n"
 
 

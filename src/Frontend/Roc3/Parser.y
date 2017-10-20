@@ -60,6 +60,8 @@ import Data.List
     del         { TokenDel }
     contains    { TokenContains }
     count       { TokenCount }
+    all         { TokenAll }
+    self        { TokenSelf }
 
     num         { TokenNum $$ }
     iden        { TokenIdentifier $$ }
@@ -217,6 +219,8 @@ Param           : iden '[' num ']'                              { ArrayElem $1 $
                 | src                                           { VarOrVal "src" }
                 | iden                                          { VarOrVal $1 }
                 | iden '.' count                                { SetSize $1 }
+		| all                                           { VarOrVal "all" }
+                | self                                          { VarOrVal "self" }
 
 
 IntExp          : IntExp '+' IntExp                             { Sum $1 $3 }

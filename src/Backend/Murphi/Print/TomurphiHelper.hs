@@ -103,7 +103,7 @@ instance Cl.MurphiClass Response where
           -- not the array indexed
           src1 = Cl.tomurphi $ onlyIndex src
           dst1 = Cl.tomurphi $ onlyIndex dst
-
+          
           mtypeAssign = "newMsg.mtype := " ++ mtype ++ ";\n"
           srcAssign   = "newMsg.src   := "   ++ src1  ++ ";\n"
           dstAssign   = "newMsg.dst   := "   ++ dst1  ++ ";\n"
@@ -111,11 +111,28 @@ instance Cl.MurphiClass Response where
 
           otherAssign = map msgParamAssign params
 
+          -- bFor = "for n:Node do\n" ++
+          --        "if n != " ++ src1 ++ " then\n"
+          -- eFor = "endif;\n endfor;\n"
+          bFor = "for n:Node do\n"
+          eFor = "endfor;\n"
+          dFor = "newMsg.dst   := n;\n"
+
+          finalSend = "Send(newMsg);\n"
+
           setAllNewMsg = concat $ [mtypeAssign] ++ [srcAssign] ++
                                   [dstAssign]   ++ [vcAssign]  ++
-                                  otherAssign
+                                  otherAssign ++ [finalSend]
+
+          setAllNewFor = concat $ [bFor] ++
+                                  [mtypeAssign] ++ [srcAssign] ++
+                                  [dFor]   ++ [vcAssign]  ++
+                                  otherAssign ++ [finalSend] ++
+                                  [eFor]
       in
-          setAllNewMsg ++ "Send(newMsg);\n"
+          if (dst1 == "all")
+            then setAllNewFor 
+            else setAllNewMsg
 
 
  -- the arguments of the broadcasting function are the msg we send

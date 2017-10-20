@@ -18,7 +18,7 @@ cabal-version:       >=1.10
 executable roc3
   main-is:             Main.hs
   build-tools:         alex, happy
-  other-modules:       Parser, Lexer
+  --other-modules:       Parser, Lexer
   -- other-extensions:
   build-depends:       base, array, split
   hs-source-dirs:      src, src/Backend/Murphi/Print, src/Backend/Murphi/AST_Translation, src/Frontend/Roc3
