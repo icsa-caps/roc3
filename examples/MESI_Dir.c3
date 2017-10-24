@@ -9,7 +9,7 @@ networks: ordered fwdNet {fwd},    //FwdGetS, FwdGetM, Inv, PutAck
           unordered reqNet {req};  //GetS, GetM, PutM
 
 
-machine cache[2] {
+machine cache[3] {
 
 
 startstate: I;
@@ -52,11 +52,21 @@ int[0..5] acksExpected (0);
 	stall;
 }
 
+(IS_D, src?FwdGetS){
+    stall;
+}
+
+(IS_D, src?FwdGetM){
+    stall;
+}
+
 (IS_D, src?Data<boolean exclusive> & exclusive==false, S){
 }
 
 (IS_D, src?Data<boolean exclusive> & exclusive==true, E){ 
 }
+
+
 
 (IM_AD, *load){
 	stall;
@@ -265,12 +275,12 @@ int[0..5] acksExpected (0);
 }
 
 (M, src?FwdGetS<cache requestor >, S){
-    requestor!Data@resp;
+    requestor!Data<boolean exclusive = false>@resp;
     Dir[0]!Data@resp;
 }
 
 (M, src?FwdGetM<cache requestor>, I){
-    requestor!Data@resp;
+    requestor!Data<boolean exclusive = false>@resp;
 }
 
 
@@ -288,12 +298,12 @@ int[0..5] acksExpected (0);
 }
 
 (E, src?FwdGetS<cache requestor >, S){
-    requestor!Data@resp;
+    requestor!Data<boolean exclusive = false>@resp;
     Dir[0]!Data@resp;
 }
 
 (E, src?FwdGetM<cache requestor>, I){
-    requestor!Data@resp;
+    requestor!Data<boolean exclusive = false>@resp;
 }
 
 
@@ -310,12 +320,12 @@ int[0..5] acksExpected (0);
 }
 
 (MI_A, src?FwdGetS<cache requestor>, SI_A){
-   requestor!Data@resp;
+   requestor!Data<boolean exclusive = false>@resp;
    Dir[0]!Data@resp;
 }
 
 (MI_A, src?FwdGetM<cache requestor>, II_A){
-   requestor!Data@resp;
+   requestor!Data<boolean exclusive = false>@resp;
 }
 
 (MI_A, src?PutAck, I){
@@ -336,12 +346,12 @@ int[0..5] acksExpected (0);
 }
 
 (EI_A, src?FwdGetS<cache requestor>, SI_A){
-   requestor!Data@resp;
+   requestor!Data<boolean exclusive = false>@resp;
    Dir[0]!Data@resp;
 }
 
 (EI_A, src?FwdGetM<cache requestor>, II_A){
-   requestor!Data@resp;
+   requestor!Data<boolean exclusive = false>@resp;
 }
 
 (EI_A, src?PutAck, I){
@@ -445,7 +455,7 @@ cache owner;
 }
 
 (S, src?GetM & !sharers.contains(src), M){
-    src!Data<int[0..5] ackCount = sharers.count>@resp;
+    src!Data<int[0..5] ackCount = sharers.count, boolean exclusive = false>@resp;
     sharers!Inv<cache requestor = src>@fwd; // caches need to know
                                             // where to send InvAck
     clear sharers;
